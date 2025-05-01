@@ -1,0 +1,10 @@
+{
+       "package": "GoMud-Mapper",
+       "title": "GoMud Mapper",
+       "description": "Custom GMCP mapper for GoMud, based on the IRE GMCP mapper script.",
+       "version": "1.0.0",
+       "author": "Morquin - forked from the IRE Mudlet Mapper",
+       "icon": "gomud-mapper.png",
+       "dependencies": "",
+       "outputFile": true
+}
