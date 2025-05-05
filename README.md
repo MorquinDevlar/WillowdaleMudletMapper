@@ -1,2 +1,1 @@
-# MudletMapper
-Custom Mudlet mapper script for GoMud
+Custom GMCP mapper for GoMud, based on the IRE GMCP mapper script.
