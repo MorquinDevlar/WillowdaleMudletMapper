@@ -14,13 +14,9 @@ local function s(loc)
   if not allok then
     mmp.echo("Couldn't load the map :(")
   else
-    mmp.lockWormholes();
-    mmp.lockSewers();
-    mmp.lockPebble();
-    if mmp.settings.waterwalk then
-      mmp.enableWaterWalk()
-    else
-      mmp.disableWaterWalk()
+    -- Apply any GoMud-specific map settings here
+    if mmp.settings.lockspecials then
+      mmp.lockSpecials()
     end
     if loc ~= "" then
       mmp.echo("Map loaded.")

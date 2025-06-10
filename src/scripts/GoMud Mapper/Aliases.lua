@@ -78,11 +78,9 @@ function mmp.roomFind(query, lines)
   end
   cecho("<DarkSlateGrey>You know the following relevant rooms:\n")
 
-  local function showmeropis(roomid)
-    if mmp.game ~= "achaea" then
-      return ''
-    end
-    return mmp.oncontinent(getRoomArea(roomid), "Main") and '' or ' (Meropis)'
+  local function showcontinent(roomid)
+    -- GoMud continent display can be added here
+    return ''
   end
 
   local i = 1
@@ -106,7 +104,7 @@ function mmp.roomFind(query, lines)
         string.format(
           "<DarkSlateGrey>%s%s<DarkSlateGrey>\n",
           mmp.cleanAreaName(tostring(mmp.areatabler[getRoomArea(roomid)])),
-          showmeropis(roomid)
+          showcontinent(roomid)
         ),
         [[mmp.echoPath(mmp.currentroom, ]] .. roomid .. [[)]],
         "Display directions from here to " .. roomname,
@@ -131,7 +129,7 @@ function mmp.roomFind(query, lines)
         string.format(
           "<DarkSlateGrey>) in <LightSlateGray>%s%s<DarkSlateGrey>.",
           mmp.cleanAreaName(tostring(mmp.areatabler[getRoomArea(roomid)])),
-          showmeropis(roomid)
+          showcontinent(roomid)
         )
       )
       fg("DarkSlateGrey")

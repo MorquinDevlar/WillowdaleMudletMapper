@@ -142,39 +142,19 @@ function mmp.roomexists(num)
 end
 
 function mmp.getcontinents()
-  local tmp = getRoomUserData(1, "areaContinents")
-  if tmp == "" then return {} end
-
-  return yajl.to_value(tmp)
+  -- Continents are not used in GoMud
+  return {}
 end
 
 -- patches welcome to finish this function.
 function mmp.removecontinent(area, continent)
-  local continents = mmp.getcontinents()
-
-  if not next(continents) then return nil, "no continents are known" end
-  if not continents[continent] then return nil, "no such continent is recorded" end
-
-  local index = mmp.indexof_valueonly(continents[continent], area)
-  if not index then return nil, "this area is not on that continent" end
-  table.remove(continents[continent], index)
-  local tmp = yajl.to_string(continents)
-  setRoomUserData(1, "areaContinents", tmp)
-  return true
+  -- Continents are not used in GoMud
+  return nil, "continents are not used in GoMud"
 end
 
 function mmp.addcontinent(areaid, continent)
-  local continents = mmp.getcontinents()
-
-  if not next(continents) then return nil, "no continents are known" end
-  if not continents[continent] then continents[continent] = {} end
-
-  local index = mmp.indexof_valueonly(continents[continent], areaid)
-  if index then return nil, "this area is already on that continent" end
-  continents[continent][#continents[continent] + 1] = areaid
-  local tmp = yajl.to_string(continents)
-  setRoomUserData(1, "areaContinents", tmp)
-  return true
+  -- Continents are not used in GoMud
+  return nil, "continents are not used in GoMud"
 end
 
 function mmp.indexof_valueonly(data, value)
@@ -187,20 +167,13 @@ end
 
 -- checks if given area ID is on the given continent. Returns true only if certainly knows
 function mmp.oncontinent(areaid, continent)
-  local continents = mmp.getcontinents()
-  if not continents[continent] then return nil, "no such continent is recorded" end
-
-  return mmp.indexof_valueonly(continents[continent], areaid)
+  -- Continents are not used in GoMud
+  return false
 end
 
 function mmp.getareacontinents(areaid)
-  local areaContinents = {}
-  for continentName, areas in pairs(mmp.getcontinents()) do
-    if mmp.indexof_valueonly(areas, areaid) then
-      areaContinents[#areaContinents + 1] = continentName
-    end
-  end
-  return areaContinents
+  -- Continents are not used in GoMud
+  return {}
 end
 
 -- accepts areaname or ID

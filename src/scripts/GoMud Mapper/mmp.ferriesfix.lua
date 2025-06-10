@@ -1,10 +1,4 @@
 function mmp.ferriesfix()
-  if table.is_empty(mmp.ferry_rooms) then
-    local tmp = getRoomUserData(1, "ferry rooms")
-    if tmp ~= "" then
-      for _, i in ipairs(yajl.to_value(tmp)) do
-        mmp.ferry_rooms[i] = true
-      end
-    end
-  end
+  -- This function is no longer needed for GoMud
+  -- Keeping empty function to avoid breaking references
 end

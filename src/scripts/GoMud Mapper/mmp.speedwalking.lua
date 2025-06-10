@@ -18,9 +18,6 @@ function mmp.gotoRoom(where, dashtype, gotoType)
     mmp.speedWalkDir = {}
     mmp.speedWalkCounter = 0
     raiseEvent("mmapper failed path")
-    if mmp.settings.shackle then
-      expandAlias("wear shackle")
-    end
     -- allow mapper 'addons' to unlink their special exits
     raiseEvent("mmp clear externals")
     return
@@ -220,38 +217,11 @@ function mmp.swim()
   if not mmp.speedWalkDir[mmp.speedWalkCounter] then
     return
   end
-  send(
-    "swim " ..
-    mmp.speedWalkDir[mmp.speedWalkCounter]:gsub("sprint ", ""):gsub("dash ", ""):gsub("gallop ", ""):gsub(
-      "runaway ", ""
-    ),
-    false
-  )
+  send("swim " .. mmp.speedWalkDir[mmp.speedWalkCounter], false)
   if mmp.settings.showcmds then
     cecho(
       string.format(
         "<red>(<maroon>%d - <dark_slate_grey>swim %s<red>)",
-        #mmp.speedWalkDir - mmp.speedWalkCounter + 1,
-        mmp.speedWalkDir[mmp.speedWalkCounter]:gsub("sprint ", ""):gsub("dash ", ""):gsub("gallop ", ""):gsub(
-          "runaway ", ""
-        )
-      )
-    )
-  end
-  mmp.hasty = true
-  mmp.setmovetimer(2.5)
-end
-
-function mmp.enterGrate()
-  -- not going anywhere? don't do anything
-  if not mmp.speedWalkDir[mmp.speedWalkCounter] then
-    return
-  end
-  send("enter grate " .. mmp.speedWalkDir[mmp.speedWalkCounter], false)
-  if mmp.settings.showcmds then
-    cecho(
-      string.format(
-        "<red>(<maroon>%d - <dark_slate_grey>enter grate %s<red>)",
         #mmp.speedWalkDir - mmp.speedWalkCounter + 1,
         mmp.speedWalkDir[mmp.speedWalkCounter]
       )
@@ -261,26 +231,23 @@ function mmp.enterGrate()
   mmp.setmovetimer(2.5)
 end
 
+function mmp.enterGrate()
+  -- This function is no longer needed for GoMud
+  -- Keeping empty function to avoid breaking references
+end
+
 function mmp.openDoor()
   -- not going anywhere? don't do anything
   if not mmp.speedWalkDir[mmp.speedWalkCounter] then
     return
   end
-  send(
-    "open door " ..
-    mmp.speedWalkDir[mmp.speedWalkCounter]:gsub("sprint ", ""):gsub("dash ", ""):gsub("gallop ", ""):gsub(
-      "runaway ", ""
-    ),
-    false
-  )
+  send("open door " .. mmp.speedWalkDir[mmp.speedWalkCounter], false)
   if mmp.settings.showcmds then
     cecho(
       string.format(
         "<red>(<maroon>%d - <dark_slate_grey>open door %s<red>)",
         #mmp.speedWalkDir - mmp.speedWalkCounter + 1,
-        mmp.speedWalkDir[mmp.speedWalkCounter]:gsub("sprint ", ""):gsub("dash ", ""):gsub("gallop ", ""):gsub(
-          "runaway ", ""
-        )
+        mmp.speedWalkDir[mmp.speedWalkCounter]
       )
     )
 end
@@ -293,21 +260,13 @@ function mmp.unlockDoor()
   if not mmp.speedWalkDir[mmp.speedWalkCounter] then
     return
   end
-  send(
-    "unlock door " ..
-    mmp.speedWalkDir[mmp.speedWalkCounter]:gsub("sprint ", ""):gsub("dash ", ""):gsub("gallop ", ""):gsub(
-      "runaway ", ""
-    ),
-    false
-  )
+  send("unlock door " .. mmp.speedWalkDir[mmp.speedWalkCounter], false)
   if mmp.settings.showcmds then
     cecho(
       string.format(
         "<red>(<maroon>%d - <dark_slate_grey>unlock door %s<red>)",
         #mmp.speedWalkDir - mmp.speedWalkCounter,
-        mmp.speedWalkDir[mmp.speedWalkCounter]:gsub("sprint ", ""):gsub("dash ", ""):gsub("gallop ", ""):gsub(
-          "runaway ", ""
-        )
+        mmp.speedWalkDir[mmp.speedWalkCounter]
       )
     )
   end
@@ -333,9 +292,6 @@ function mmp.stop()
   mmp.specials = {}
   mmp.echo("Stopped walking.")
   raiseEvent("mmapper stopped")
-  if mmp.settings.shackle then
-    expandAlias("wear shackle")
-  end
 end
 
 -- GoMud and other games can implement their own balance checking
@@ -369,8 +325,8 @@ function mmp.speedwalking(event, num)
   end
   mmp.currentroom = num
   mmp.currentroomname = getRoomName(num)
-  -- Try to track if we're flying or not, for Imperian wings
-  -- This is to avoid being "off path" if we FLY due to wings.
+  -- Try to track if we're flying or not
+  -- This is to avoid being "off path" if we FLY due to flight mechanics.
   local madeflight = false
   if gmcp.Room then
     local flying = false
@@ -411,14 +367,7 @@ function mmp.speedwalking(event, num)
       mmp.inside = true
       raiseEvent("mmapper went inside")
     end
-    if
-      #table.n_union(
-        mmp.getareacontinents(getRoomArea(mmp.previousroom)),
-        mmp.getareacontinents(getRoomArea(num))
-      ) ~= #mmp.getareacontinents(getRoomArea(num))
-    then
-      raiseEvent("mmapper changed continent")
-    end
+    -- Continent change detection removed - not used in GoMud
     -- the event could cancel speedwalking - in this case quit
     if mmp.ignore_speedwalking then
       mmp.ignore_speedwalking = nil
@@ -441,9 +390,6 @@ function mmp.speedwalking(event, num)
     local walktime = stopStopWatch(mmp.speedWalkWatch)
     mmp.echo(string.format("We've arrived! Took us %.1fs.\n", walktime))
     raiseEvent("mmapper arrived")
-    if mmp.settings.shackle then
-      expandAlias("wear shackle")
-    end
     mmp.speedWalkPath = {}
     mmp.speedWalkDir = {}
     mmp.speedWalkCounter = 0
@@ -451,11 +397,7 @@ function mmp.speedwalking(event, num)
   elseif mmp.speedWalkPath[mmp.speedWalkCounter] == num then
     mmp.speedWalkCounter = mmp.speedWalkCounter + 1
     tempPromptTrigger(mmp.move, 1)
-  elseif
-    #mmp.speedWalkPath > 0 and
-    not mmp.ferry_rooms[num] and
-    not (gmcp.Room.Info.details and table.contains(gmcp.Room.Info.details, "ferry"))
-  then
+  elseif #mmp.speedWalkPath > 0 then
     -- ended up somewhere we didn't want to be, and this isn't a ferry room?
     speedWalkMoved = false
     -- re-calculate path then
@@ -482,20 +424,10 @@ function doSpeedWalk(dashtype)
   speedWalkDir, speedWalkPath = {}, {}
   resetStopWatch(mmp.speedWalkWatch)
   startStopWatch(mmp.speedWalkWatch)
-  if
-    mmp.settings["gallop"] or
-    mmp.settings["dash"] or
-    mmp.settings.sprint or
-    mmp.settings.runaway or
-    dashtype
-  then
+  if dashtype then
     mmp.fixPath(
       mmp.currentroom,
       mmp.speedWalkPath[#mmp.speedWalkPath],
-      (mmp.settings["gallop"] and "gallop") or
-      (mmp.settings["dash"] and "dash") or
-      (mmp.settings.sprint and "sprint") or
-      (mmp.settings.runaway and "runaway") or
       dashtype
     )
   end
@@ -504,9 +436,6 @@ function doSpeedWalk(dashtype)
     mmp.autowalking = false
     mmp.echo("Couldn't find a path to the destination :(")
     raiseEvent("mmapper failed path")
-    if mmp.settings.shackle then
-      expandAlias("wear shackle")
-    end
     return
   end
   -- this is a fix: convert nums to actual numbers
@@ -515,9 +444,6 @@ function doSpeedWalk(dashtype)
   end
   mmp.autowalking = true
   raiseEvent("s")
-  if mmp.settings.shackle then
-    expandAlias("remove shackle")
-  end
   if not mmp.paused then
     mmp.echon("Starting speedwalk from " .. (atcp.RoomNum or gmcp.Room.Info.num) .. " to ")
     cechoLink(
@@ -549,9 +475,6 @@ function mmp.failpath()
     mmp.echo(string.format("Can't continue further! Took us %.1fs to get here.\n", walktime))
   end
   mmp.autowalking = false
-  if mmp.settings.shackle then
-    expandAlias("wear shackle")
-  end
   mmp.speedWalkPath = {}
   mmp.speedWalkDir = {}
   mmp.speedWalkCounter = 0

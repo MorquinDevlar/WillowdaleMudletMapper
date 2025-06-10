@@ -12,7 +12,7 @@ function mmp.doLock(what, lock, filter)
          for exit, cmd in pairs(exits) do
            if type(cmd) == "table" then cmd = next(cmd) end
 
-           if (not filter and not (cmd:lower():find("pathfind", 1, true) or cmd:lower():find("worm warp", 1, true) or cmd:lower():find("enter grate", 1, true))) or (filter and cmd:lower():find(filter, 1, true)) then
+           if (not filter) or (filter and cmd:lower():find(filter, 1, true)) then
              lockSpecialExit(rooms[i], exit, cmd, lock)
              c = c + 1
            end
