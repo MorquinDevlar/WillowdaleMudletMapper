@@ -1,7 +1,6 @@
 local ferryCommands = {
-  ["buy passage to"] = {"achaea"},
-  ["takeoff to"] = {"starmourn"},
-  ["station transfer to"] = {"starmourn"}
+  -- GoMud-specific ferry commands can be added here
+  -- Example: ["ferry to"] = {"gomud"},
 }
 local c = 0
 local weight = 200

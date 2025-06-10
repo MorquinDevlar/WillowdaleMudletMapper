@@ -149,8 +149,9 @@ function mmp.mappingNewroom(_, num)
               end
             end
           else
+            -- GoMud doesn't use wilderness coordinate system
+            -- This is kept for potential future use
             local x, y = tostring(num):match(".-(%d%d%d)(%d%d%d)$")
-            -- Achaea's coordinates seem to be in the 4th quadrant, while Mudlets 0,0 is in the middle of the map. Invert y so going north-south looks alright
             s = makeroom(mmp.previousroom, num, x, y * -1, 0)
           end
         end
@@ -337,14 +338,7 @@ function mmp.mappingNewroom(_, num)
             s = s .. (#s > 0 and " " or "") .. "Updated room to be outdoors."
           end
 
-          -- check server area name (Achaea only for now)
-          if mmp.game == "achaea" then
-            local serverArea = gmcp.Room.Info.area
-            if serverArea ~= getRoomUserData(num, "Game Area") then
-              setRoomUserData(num, "Game Area", serverArea)
-              s = s .. (#s > 0 and " " or "") .. "Updated game area to " .. serverArea .. "."
-            end
-          end
+          -- GoMud can add game area tracking here if needed
           -- check for wilderness exits
           if getRoomChar(num) ~= "W" and table.contains(gmcp.Room.Info.details, "wilderness") then
             setRoomChar(num, "W")

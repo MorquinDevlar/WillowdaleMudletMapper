@@ -338,9 +338,8 @@ function mmp.stop()
   end
 end
 
--- Aetolia and Lusternia support showing balances in GMCP. This is easy to support, so we do!
+-- GoMud and other games can implement their own balance checking
 -- if we can't move, setup a polling timer to prompt walking when we can again.
--- popular systems that expose balance & equilibrium values can be added here as well, perhaps though a similarly-named function.
 
 function mmp.canmove(fromtimer)
   if mmp.mapperCanMove and mmp.mapperCanMove() then
@@ -353,41 +352,11 @@ function mmp.canmove(fromtimer)
     tempTimer(0.2, [[mmp.canmove(true)]])
     return false
   end
-  if not gmcp.Char then
-    return true
-  end
-  -- Achaea
-  -- Lusternia
- if
-    (
-      gmcp.Char and
-      (not gmcp.Char.Vitals.bal or gmcp.Char.Vitals.bal == "1") and
-      (not gmcp.Char.Vitals.eq or gmcp.Char.Vitals.eq == "1") and
-      (not gmcp.Char.Vitals.balance or gmcp.Char.Vitals.balance == "1") and
-      (not gmcp.Char.Vitals.equilibrium or gmcp.Char.Vitals.equilibrium == "1") and
-      (not gmcp.Char.Vitals.right_arm or gmcp.Char.Vitals.right_arm == "1") and
-      (not gmcp.Char.Vitals.left_arm or gmcp.Char.Vitals.left_arm == "1") and
-      (not gmcp.Char.Vitals.right_leg or gmcp.Char.Vitals.right_leg == "1") and
-      (not gmcp.Char.Vitals.left_leg or gmcp.Char.Vitals.left_leg == "1") and
-      (not gmcp.Char.Vitals.psisuper or gmcp.Char.Vitals.psisuper ~= "0") and
-      (not gmcp.Char.Vitals.psisub or gmcp.Char.Vitals.psisub ~= "0") and
-      (not gmcp.Char.Vitals.psiid or gmcp.Char.Vitals.psiid ~= "0") and
-      (not gmcp.Char.Balance or gmcp.Char.Balance.List.balance == "1") and
-      (not gmcp.Char.Balance or gmcp.Char.Balance.List.equilibrium == "1") and
-      (not gmcp.Char.Balance or gmcp.Char.Balance.List.rarm == "1") and
-      (not gmcp.Char.Balance or gmcp.Char.Balance.List.larm == "1") and
-      (not gmcp.Char.Balance or gmcp.Char.Balance.List.legs == "1") and
-      (not gmcp.Char.Vitals.prone or (gmcp.Char.Vitals.prone == "0" or gmcp.Char.Vitals.prone == 0)
-    ))
-  then
-    if fromtimer then
-      mmp.move()
-    else
-      return true
-    end
+  -- Default behavior: assume we can move
+  if fromtimer then
+    mmp.move()
   else
-    tempTimer(0.2, [[mmp.canmove(true)]])
-    return false
+    return true
   end
 end
 
@@ -481,9 +450,6 @@ function mmp.speedwalking(event, num)
     mmp.autowalking = false
   elseif mmp.speedWalkPath[mmp.speedWalkCounter] == num then
     mmp.speedWalkCounter = mmp.speedWalkCounter + 1
-    tempPromptTrigger(mmp.move, 1)
-  elseif mmp.game == "imperian" and madeflight then
-    mmp.echo("We began flying!")
     tempPromptTrigger(mmp.move, 1)
   elseif
     #mmp.speedWalkPath > 0 and
@@ -638,17 +604,10 @@ function mmp.fixPath(rFrom, rTo, dashtype)
           table.insert(currentPath, string.format("%s %s", dashtype, mmp.speedWalkDir[index]))
           currentIds[#currentIds + 1] = mmp.speedWalkPath[index + repCount - 1]
         else
-          -- Final room in this direction continues onwards, don't dash unless on achaea
-          if mmp.game == "achaea" then
-            table.insert(
-              currentPath, string.format("%s %s %s", dashtype, mmp.speedWalkDir[index], repCount)
-            )
-            currentIds[#currentIds + 1] = mmp.speedWalkPath[index + repCount - 1]
-          else
-            for i = 1, repCount do
-              table.insert(currentPath, mmp.speedWalkDir[index])
-              currentIds[#currentIds + 1] = mmp.speedWalkPath[index + i - 1]
-            end
+          -- Final room in this direction continues onwards, don't dash
+          for i = 1, repCount do
+            table.insert(currentPath, mmp.speedWalkDir[index])
+            currentIds[#currentIds + 1] = mmp.speedWalkPath[index + i - 1]
           end
         end
         index = index + repCount

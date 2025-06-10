@@ -72,17 +72,9 @@ function mmp.downloadedFile(_, filename)
     local ok = loadMap(filename)
 
     if ok then
-      if mmp.game ~= "starmourn" then
-        local wc = mmp.lockWormholes()
-  	local ws = mmp.lockSewers()
-        mmp.lockPebble()
-        if mmp.game == "achaea" and wc == 0 and ws == 0 then -- in achaea, using crowdmap, if we didn't get any special exits - it means Mudlet needs to be updated
-          mmp.echo("Sorry, it seems your Mudlet isn't compatible with the new crowdmap format - and the map cannot be loaded fully. Please update your Mudlet:\n  http://www.mudlet.org/download/")
-          return
-        end
-      end
-
-      if mmp.settings.waterwalk then mmp.enableWaterWalk() else mmp.disableWaterWalk() end
+      -- GoMud-specific map post-processing can be added here
+      
+      if mmp.settings.lockspecials then mmp.lockSpecials() end
 
       mmp.echo("Map loaded fine - enjoy!")
 
@@ -109,15 +101,9 @@ function mmp.downloadedFile(_, filename)
 
         local ok = loadMap(']]..filename..[[')
         if ok then
-        local wc = mmp.lockWormholes()
-	    local ws = mmp.lockSewers()
-        mmp.lockPebble()
-        if mmp.game == "achaea" and wc == 0 and ws == 0 then -- in achaea, using crowdmap, if we didn't get any special exits - it means Mudlet needs to be updated
-          mmp.echo("Sorry, it seems your Mudlet isn't compatible with the new crowdmap format - and the map cannot be loaded fully. Please update your Mudlet:\n  http://www.mudlet.org/download/")
-          return
-        end
-
-        if mmp.settings.waterwalk then mmp.enableWaterWalk() else mmp.disableWaterWalk() end
+        -- GoMud-specific map post-processing can be added here
+        
+        if mmp.settings.lockspecials then mmp.lockSpecials() end
 
         mmp.echo("Map loaded successfully!")
 

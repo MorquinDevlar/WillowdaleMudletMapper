@@ -29,17 +29,10 @@ function mmp.checkforupdate()
       end
     end
     if mmp.settings.crowdmap then
-      if game == "stickmud" then
-        downloadFile(
-          mmp.mapfile, "http://stickmud.github.io/StickMUDCrowdmap/Map/version.txt"
-        )
-      end
+      -- GoMud crowdmap support can be added here in the future
     elseif mmp.settings.updatemap then
-      downloadFile(mmp.mapfile, "http://www." .. game .. ".com/maps/MD5SUM")
+      -- GoMud map update support can be added here in the future
     end
-    downloadFile(
-      mmp.mapperfile, "http://ire-mudlet-mapping.github.io/ire-mapping-script/downloads/version"
-    )
     mmp.checkingupdates = true
   end
 end
@@ -69,12 +62,7 @@ end
 
 function mmp.retrievecrowdchangelog()
   mmp.crowdchangelogfile = downloadfolder .. "crowdchangelogfile"
-  if mmp.game == "stickmud" then
-    downloadFile(
-      mmp.crowdchangelogfile,
-      "http://stickmud.github.io/StickMUDCrowdmap/Map/changelog.txt"
-    )
-  end
+  -- GoMud-specific crowdmap changelog download can be added here
 end
 
 -- downloads the public crowdsources map!
@@ -108,9 +96,7 @@ function mmp.downloadcrowdmap(newversion)
   end
   f:write(newversion)
   f:close()
-  if mmp.game == "stickmud" then
-    downloadFile(mmp.crowdmapfile, "http://stickmud.github.io/StickMUDCrowdmap/Map/map")
-  end
+  -- GoMud-specific crowdmap download can be added here
   mmp.echo("Downloading the latest crowdmap...")
 end
 
