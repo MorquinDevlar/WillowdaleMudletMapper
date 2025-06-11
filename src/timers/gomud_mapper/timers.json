@@ -1,9 +1,9 @@
 [
        {
-              "name": "gomud_mapper",
+              "name": "check_for_updates_periodically",
               "isActive": "yes",
               "command": "",
-              "hours": "0",
+              "hours": "1",
               "minutes": "0",
               "seconds": "0",
               "milliseconds": "0",

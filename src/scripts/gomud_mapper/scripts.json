@@ -1,0 +1,68 @@
+[
+       {
+              "name": "core",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "yes"
+       },
+       {
+              "name": "display",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "yes"
+       },
+       {
+              "name": "game_specific",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "yes"
+       },
+       {
+              "name": "mapping",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "yes"
+       },
+       {
+              "name": "navigation",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "yes"
+       },
+       {
+              "name": "tracking",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "yes"
+       },
+       {
+              "name": "updates",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "yes"
+       },
+       {
+              "name": "game_specific",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "mmp.clearlastupdate",
+              "isActive": "yes",
+              "eventHandlerList": [
+                     "sysExitEvent"
+              ],
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "mmp.mapdata_changed",
+              "isActive": "yes",
+              "eventHandlerList": [
+                     "mapDataChanged"
+              ],
+              "script": "",
+              "isFolder": "no"
+       }
+]

@@ -1,0 +1,26 @@
+[
+       {
+              "name": "display",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "yes"
+       },
+       {
+              "name": "mapping",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "yes"
+       },
+       {
+              "name": "navigation",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "yes"
+       },
+       {
+              "name": "utility",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "yes"
+       }
+]

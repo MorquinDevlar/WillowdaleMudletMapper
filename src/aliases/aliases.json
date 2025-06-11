@@ -1,6 +1,6 @@
 [
        {
-              "name": "GoMud-Mapper",
+              "name": "gomud_mapper",
               "isActive": "yes",
               "script": "",
               "isFolder": "yes"

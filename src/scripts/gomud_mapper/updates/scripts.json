@@ -1,0 +1,35 @@
+[
+       {
+              "name": "check_for_updates",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "mmp.checkupdatestart",
+              "isActive": "yes",
+              "eventHandlerList": [
+                     "mmp logged in"
+              ],
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "mmp.downloadedfile",
+              "isActive": "yes",
+              "eventHandlerList": [
+                     "sysDownloadDone"
+              ],
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "mmp.seedownloaderrors",
+              "isActive": "no",
+              "eventHandlerList": [
+                     "sysDownloadError"
+              ],
+              "script": "",
+              "isFolder": "no"
+       }
+]

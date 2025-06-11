@@ -1,0 +1,32 @@
+[
+       {
+              "name": "directions_translating_functions",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "mmp.centerroominfo",
+              "isActive": "yes",
+              "eventHandlerList": [
+                     "gmcp.Room.Info"
+              ],
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "mmp.roomlook",
+              "isActive": "yes",
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "mmp.speedwalking",
+              "isActive": "yes",
+              "eventHandlerList": [
+                     "gmcp.Room.Info"
+              ],
+              "script": "",
+              "isFolder": "no"
+       }
+]

@@ -1,0 +1,20 @@
+[
+       {
+              "name": "mmp.gomudstopspeedwalkforwrongdir",
+              "isActive": "yes",
+              "eventHandlerList": [
+                     "gmcp.Room.WrongDir"
+              ],
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "mmp.registergomudenvdata",
+              "isActive": "yes",
+              "eventHandlerList": [
+                     "mmp logged in"
+              ],
+              "script": "",
+              "isFolder": "no"
+       }
+]

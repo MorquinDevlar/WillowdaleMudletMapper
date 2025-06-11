@@ -1,0 +1,51 @@
+[
+       {
+              "name": "get_dirs",
+              "isActive": "yes",
+              "regex": "^showpath(?: (\\d+))?(?: (\\d+))?$",
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "go_to_id_or_area",
+              "isActive": "yes",
+              "regex": "^goto (.+)$",
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "measure_getpath",
+              "isActive": "yes",
+              "regex": "^getpath (?:from )?(\\d+) (?:to )?(\\d+)$",
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "set_exit_weight",
+              "isActive": "yes",
+              "regex": "^rwe(?: (\\d+))? (\\d+) (.+)$",
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "set_room_weight",
+              "isActive": "yes",
+              "regex": "^rw(?: (\\w+))? (\\d+)$",
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "stop_walking",
+              "isActive": "yes",
+              "regex": "^mstop$",
+              "script": "",
+              "isFolder": "no"
+       },
+       {
+              "name": "weight_ferry_exits",
+              "isActive": "yes",
+              "regex": "^weight ferry exits$",
+              "script": "",
+              "isFolder": "no"
+       }
+]
