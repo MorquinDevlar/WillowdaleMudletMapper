@@ -20,7 +20,7 @@ def check_directory(dir_path):
         with open(json_path, 'r') as f:
             data = json.load(f)
             for item in data:
-                if item.get('isFolder') \!= 'yes':
+                if item.get('isFolder') != 'yes':
                     json_names.append(item['name'])
     
     print(f"Lua files: {lua_files}")
