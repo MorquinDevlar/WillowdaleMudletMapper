@@ -30,12 +30,6 @@
               "isFolder": "yes"
        },
        {
-              "name": "tracking",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "yes"
-       },
-       {
               "name": "updates",
               "isActive": "yes",
               "script": "",
