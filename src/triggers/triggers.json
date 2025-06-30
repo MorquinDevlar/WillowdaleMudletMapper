@@ -1,14 +1,14 @@
 [
-       {
-              "name": "gomud_mapper",
-              "isActive": "yes",
-              "pattern": "",
-              "triggerType": "0",
-              "multiLine": "0",
-              "mStayOpen": "0",
-              "mKeepFiring": "0",
-              "lineDelta": "0",
-              "script": "",
-              "isFolder": "yes"
-       }
+    {
+        "name": "gomud_mapper",
+        "isActive": "yes",
+        "pattern": "",
+        "triggerType": "0",
+        "multiLine": "0",
+        "mStayOpen": "0",
+        "mKeepFiring": "0",
+        "lineDelta": "0",
+        "script": "",
+        "isFolder": "yes"
+    }
 ]

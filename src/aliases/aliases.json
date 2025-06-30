@@ -1,8 +1,8 @@
 [
-       {
-              "name": "gomud_mapper",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "yes"
-       }
+    {
+        "name": "gomud_mapper",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "yes"
+    }
 ]

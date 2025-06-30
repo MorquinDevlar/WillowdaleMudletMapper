@@ -1,100 +1,100 @@
 [
-       {
-              "name": "area_list",
-              "isActive": "yes",
-              "regex": "^area list$",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "check_wholist",
-              "isActive": "yes",
-              "regex": "^who b$",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "find_single_exits",
-              "isActive": "yes",
-              "regex": "^find single exits$",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "list_continents",
-              "isActive": "yes",
-              "regex": "^(?:acl|area continents)$",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "list_map_features",
-              "isActive": "yes",
-              "regex": "^feature list$",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "list_special_exits",
-              "isActive": "yes",
-              "regex": "^spe list(?: (.+))?$",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "load_a_map",
-              "isActive": "yes",
-              "regex": "^map load(?: (.+))?$",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "option",
-              "isActive": "yes",
-              "regex": "^mconfig( (\\w+) (.*))?$",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "reload_mapper",
-              "isActive": "yes",
-              "regex": "^mmp reload$",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "room_find",
-              "isActive": "yes",
-              "regex": "^(?:rf|room find) (.+)$",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "room_list",
-              "isActive": "yes",
-              "regex": "^room list(?: (.+))?$",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "save_a_map",
-              "isActive": "yes",
-              "regex": "^map save(?: (json|all))?(?: (.+))?$",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "set_debug_mode",
-              "isActive": "yes",
-              "regex": "^(?:mdg|mdebug) (on|off)$",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "toggle_pause",
-              "isActive": "yes",
-              "regex": "^mpp(?:\\s?(on|off))?$",
-              "script": "",
-              "isFolder": "no"
-       }
+    {
+        "name": "area_list",
+        "isActive": "yes",
+        "regex": "^area list$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "check_wholist",
+        "isActive": "yes",
+        "regex": "^who b$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "find_single_exits",
+        "isActive": "yes",
+        "regex": "^find single exits$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "list_continents",
+        "isActive": "yes",
+        "regex": "^(?:acl|area continents)$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "list_map_features",
+        "isActive": "yes",
+        "regex": "^feature list$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "list_special_exits",
+        "isActive": "yes",
+        "regex": "^spe list(?: (.+))?$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "load_a_map",
+        "isActive": "yes",
+        "regex": "^map load(?: (.+))?$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "option",
+        "isActive": "yes",
+        "regex": "^mconfig( (\\w+) (.*))?$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "reload_mapper",
+        "isActive": "yes",
+        "regex": "^mmp reload$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "room_find",
+        "isActive": "yes",
+        "regex": "^(?:rf|room find) (.+)$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "room_list",
+        "isActive": "yes",
+        "regex": "^room list(?: (.+))?$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "save_a_map",
+        "isActive": "yes",
+        "regex": "^map save(?: (json|all))?(?: (.+))?$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "set_debug_mode",
+        "isActive": "yes",
+        "regex": "^(?:mdg|mdebug) (on|off)$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "toggle_pause",
+        "isActive": "yes",
+        "regex": "^mpp(?:\\s?(on|off))?$",
+        "script": "",
+        "isFolder": "no"
+    }
 ]

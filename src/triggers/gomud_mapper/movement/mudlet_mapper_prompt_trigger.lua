@@ -2,27 +2,38 @@
 mmp.firstAlert = false
 -- handle alertness
 if mmp.alertness and next(mmp.alertness) then
+	local dirs = {}
+	for direction, _ in pairs(mmp.alertness) do
+		dirs[#dirs + 1] = direction
+	end
+	local people = select(2, next(mmp.alertness)) or {}
 
-  local dirs = {}
-  for direction, _ in pairs(mmp.alertness) do dirs[#dirs+1] = direction end
-  local people = select(2, next(mmp.alertness)) or {}
+	moveCursor(0, getLineNumber())
 
-  moveCursor(0, getLineNumber())
+	if ndb then
+		local getcolor = ndb.getcolor
+		for i = 1, #people do
+			people[i] = getcolor(people[i]) .. people[i]
+		end
+	end
 
-  if ndb then
-    local getcolor = ndb.getcolor
-    for i = 1, #people do
-      people[i] = getcolor(people[i])..people[i]
-    end
-  end
+	cinsertText(
+		"<red>[<cyan>"
+			.. table.concat(dirs, ", ")
+			.. " <red>-"
+			.. (#dirs > 1 and "\n  " or "")
+			.. " <white>"
+			.. ((svo and svo.concatand) and svo.concatand(people) or table.concat(people, ", "))
+			.. "<cyan> ("
+			.. #people
+			.. ")<red>]\n"
+	)
 
-  cinsertText("<red>[<cyan>" .. table.concat(dirs, ', ') .. " <red>-"..(#dirs > 1 and ("\n  ") or '').." <white>" .. ((svo and svo.concatand) and svo.concatand(people) or table.concat(people, ', ')) .. "<cyan> ("..#people..")<red>]\n")
+	moveCursorEnd()
 
-  moveCursorEnd()
+	mmp.alertness = nil
 
-  mmp.alertness = nil
-
-  raiseEvent("mmapper updated pdb")
+	raiseEvent("mmapper updated pdb")
 end
 
 -- reset names we last seen, so scripts can be efficient
@@ -31,4 +42,4 @@ end
 --  mmp.pdb_lastupdate = {}
 --end
 
-disableTrigger"Mudlet Mapper prompt trigger"
+disableTrigger("Mudlet Mapper prompt trigger")

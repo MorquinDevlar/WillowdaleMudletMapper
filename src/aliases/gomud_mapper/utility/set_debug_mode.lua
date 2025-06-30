@@ -1,7 +1,7 @@
 if matches[2] == "on" then
-  mmp.debug = true
+	mmp.debug = true
 else
-  mmp.debug = false
+	mmp.debug = false
 end
 
-mmp.echo("Debug & performance telemetry "..(mmp.debug and "enabled" or "disabled")..".")
+mmp.echo("Debug & performance telemetry " .. (mmp.debug and "enabled" or "disabled") .. ".")

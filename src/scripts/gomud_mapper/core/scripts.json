@@ -1,38 +1,38 @@
 [
-       {
-              "name": "api",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "create_option_table",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "initialize",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "load_settings",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "mconfig_settings_functions",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "utilities",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "no"
-       }
+    {
+        "name": "api",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "create_option_table",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "initialize",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "load_settings",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "mconfig_settings_functions",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "utilities",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    }
 ]

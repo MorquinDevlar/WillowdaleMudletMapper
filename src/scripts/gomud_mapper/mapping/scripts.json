@@ -1,72 +1,65 @@
 [
-       {
-              "name": "fix_exit_locking_funcs",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "fix_setexit",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "lock_area",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "map_features",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "mm_mapping",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "mmp.loadoptions",
-              "isActive": "yes",
-              "eventHandlerList": [
-                     "sysLoadEvent"
-              ],
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "mmp.mappingnewroom",
-              "isActive": "yes",
-              "eventHandlerList": [
-                     "gmcp.Room.Info",
-                     "RoomNum"
-              ],
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "mmp.regenerateareas",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "mmp.relockareas",
-              "isActive": "yes",
-              "script": "",
-              "isFolder": "no"
-       },
-       {
-              "name": "mmp.saveoptions",
-              "isActive": "yes",
-              "eventHandlerList": [
-                     "sysExitEvent"
-              ],
-              "script": "",
-              "isFolder": "no"
-       }
+    {
+        "name": "fix_exit_locking_funcs",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "fix_setexit",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "lock_area",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "map_features",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "mm_mapping",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "mmp.loadoptions",
+        "isActive": "yes",
+        "eventHandlerList": ["sysLoadEvent"],
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "mmp.mappingnewroom",
+        "isActive": "yes",
+        "eventHandlerList": ["gmcp.Room.Info", "RoomNum"],
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "mmp.regenerateareas",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "mmp.relockareas",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "mmp.saveoptions",
+        "isActive": "yes",
+        "eventHandlerList": ["sysExitEvent"],
+        "script": "",
+        "isFolder": "no"
+    }
 ]

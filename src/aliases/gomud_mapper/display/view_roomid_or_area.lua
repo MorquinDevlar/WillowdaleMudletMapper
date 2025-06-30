@@ -5,5 +5,5 @@ if not where then
 elseif tonumber(where) then -- view a room ID
 	centerview(where)
 else -- view an area
-	mmp.viewArea (where)
+	mmp.viewArea(where)
 end

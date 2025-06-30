@@ -3,23 +3,25 @@
 --                                             --
 -- Note that you can also use external Scripts --
 -------------------------------------------------
-local spairs = spairs or function(tbl, order)
-  local keys = table.keys(tbl)
-  if order then
-    table.sort(keys, function(a,b) return order(tbl, a, b) end)
-  else
-    table.sort(keys)
-  end
+local spairs = spairs
+	or function(tbl, order)
+		local keys = table.keys(tbl)
+		if order then
+			table.sort(keys, function(a, b)
+				return order(tbl, a, b)
+			end)
+		else
+			table.sort(keys)
+		end
 
-  local i = 0
-  return function()
-    i = i + 1
-    if keys[i] then
-      return keys[i], tbl[keys[i]]
-    end
-  end
-end
-
+		local i = 0
+		return function()
+			i = i + 1
+			if keys[i] then
+				return keys[i], tbl[keys[i]]
+			end
+		end
+	end
 
 function mmp.createOption(startingValue, onChangeFunc, allowedVarTypes, use, checkOption, games)
 	if allowedVarTypes then -- make sure our starting Value follows type rules
@@ -37,7 +39,9 @@ function mmp.createOption(startingValue, onChangeFunc, allowedVarTypes, use, che
 		allowedVarTypes = allowedVarTypes,
 		use = use or "",
 		games = games,
-		checkOption = checkOption or function() return true end
+		checkOption = checkOption or function()
+			return true
+		end,
 	}
 
 	return option
@@ -45,7 +49,6 @@ end
 
 function mmp.createOptionsTable(defaultTable)
 	local index = {} -- index to store the default table at in our proxy table
-
 
 	local proxyTable = {} -- This is the table that is returned to the user
 
@@ -56,10 +59,12 @@ function mmp.createOptionsTable(defaultTable)
 	end
 
 	proxyTable.dispOption = function(opt, val)
-		if not opt or not val then return end
+		if not opt or not val then
+			return
+		end
 		echo("Name: " .. string.title(opt) .. string.rep(" ", 10 - string.len(opt)))
 		echo("Val: " .. tostring(val.value))
-		echo(string.rep(" ", 10 - string.len(tostring(val.value))) ..  "- " .. val.use .. "\n")
+		echo(string.rep(" ", 10 - string.len(tostring(val.value))) .. "- " .. val.use .. "\n")
 	end
 
 	function proxyTable:showAllOptions(game)
@@ -73,7 +78,6 @@ function mmp.createOptionsTable(defaultTable)
 		for k, v in spairs(self["_customOptions"]) do
 			self.dispOption(k, v)
 		end
-
 	end
 
 	function proxyTable:getAllOptions()
@@ -85,7 +89,7 @@ function mmp.createOptionsTable(defaultTable)
 		return t
 	end
 
-   function proxyTable:setOption(option, value, silent)
+	function proxyTable:setOption(option, value, silent)
 		if self[option] == nil then
 			proxyTable.disp("No such option!\n")
 			return
@@ -93,7 +97,12 @@ function mmp.createOptionsTable(defaultTable)
 
 		-- otherwise, set the option
 		if self["_customOptions"][option] then
-			if not (table.contains(self["_customOptions"][option].allowedVarTypes, type(value)) and self["_customOptions"][option].checkOption(value)) then
+			if
+				not (
+					table.contains(self["_customOptions"][option].allowedVarTypes, type(value))
+					and self["_customOptions"][option].checkOption(value)
+				)
+			then
 				proxyTable.disp("You can't set '" .. option .. "' to that!\n")
 				return
 			end
@@ -102,17 +111,25 @@ function mmp.createOptionsTable(defaultTable)
 				self["_customOptions"][option].onChange(option, value)
 			end
 		else
-			if not (table.contains(self[index][option].allowedVarTypes, type(value)) and self[index][option].checkOption(value)) then
+			if
+				not (
+					table.contains(self[index][option].allowedVarTypes, type(value))
+					and self[index][option].checkOption(value)
+				)
+			then
 				proxyTable.disp("You can't set '" .. option .. "' to that!\n")
 				return
 			end
 			rawset(self[index][option], "value", value)
 			local opt = rawget(self[index], option)
-			if opt.onChange  and not silent then opt.onChange(option, value) end
+			if opt.onChange and not silent then
+				opt.onChange(option, value)
+			end
 		end
-		if mmp and mmp.clearpathcache then mmp.clearpathcache() end
+		if mmp and mmp.clearpathcache then
+			mmp.clearpathcache()
+		end
 	end
-
 
 	proxyTable._customOptions = {}
 
@@ -120,28 +137,34 @@ function mmp.createOptionsTable(defaultTable)
 		__index = function(t, k)
 			local custOp = rawget(t, "_customOptions")
 			if custOp[k] then
-			 	local opt = custOp[k]
-				if opt then return opt.value else return nil end
+				local opt = custOp[k]
+				if opt then
+					return opt.value
+				else
+					return nil
+				end
 			else
 				local opt = t[index][k]
-				if opt then return opt.value else return nil end
+				if opt then
+					return opt.value
+				else
+					return nil
+				end
 			end
 		end,
 
-		__newindex = function (t, k, v)
+		__newindex = function(t, k, v)
 			if t[index][k] then
 				proxyTable.dispDefaultWriteError()
 			else
 				t["_customOptions"][k] = v
 			end
-		end
+		end,
 	}
-
 
 	proxyTable[index] = defaultTable
 
 	setmetatable(proxyTable, mt)
 
 	return proxyTable
-
 end
