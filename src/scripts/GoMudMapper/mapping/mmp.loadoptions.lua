@@ -1,4 +1,30 @@
 function mmp.loadoptions()
+	-- Ensure mmp is properly initialized before loading options
+	if not mmp then
+		return
+	end
+	
+	-- If settings don't exist yet, we need to initialize them
+	if not mmp.settings then
+		-- Force initialization by setting firstRun to true
+		local oldFirstRun = mmp.firstRun
+		mmp.firstRun = true
+		
+		if mmp.startup then
+			mmp.startup()
+		end
+		
+		-- If settings still don't exist, return
+		if not mmp.settings then
+			return
+		end
+		
+		-- Restore firstRun if it was false
+		if oldFirstRun == false then
+			mmp.firstRun = false
+		end
+	end
+	
 	local loadTable = mmp.loadlocks()
 
 	if loadTable.options then
