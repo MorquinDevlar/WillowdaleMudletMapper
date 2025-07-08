@@ -1,8 +1,8 @@
 {
        "package": "GoMudMapper",
-       "title": "GoMud Mapper v. 2.0.0",
+       "title": "GoMud Mapper",
        "description": "Custom GMCP mapper for GoMud.",
-       "version": "2.0.0",
+       "version": "2.0.1",
        "author": "Morquin - forked from the IRE Mudlet Mapper",
        "icon": "gomud-mapper-icon.png",
        "dependencies": "",
