@@ -2,7 +2,7 @@
     {
         "name": "GoMudMapper",
         "isActive": "yes",
-        "script": "",
+        "script": "mudlet = mudlet or {};mudlet.mapper_script = true;mmp = mmp or {}",
         "isFolder": "yes"
     }
 ]

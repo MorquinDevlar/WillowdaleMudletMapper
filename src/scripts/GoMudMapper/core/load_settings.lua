@@ -25,12 +25,18 @@ mmp.lagtable = {
     [4] = { description = "Bad. Terrible. Terribad.", time = 5 },
     [5] = { description = "Carrier Pigeon", time = 10 },
 }
-local newversion = "2.0.1"
+local newversion = "2.0.2"
 if mmp.version and mmp.version ~= newversion then
     if not mmp.game then
-        mmp.echo(
-            "Mapper script updated - Thanks! I don't know what game are you connected to, though - so please reconnect, if you could."
-        )
+        -- Check if this is GoMud via GMCP
+        if gmcp and gmcp.Game and gmcp.Game.Info and gmcp.Game.Info.engine == "GoMud" then
+            mmp.game = "GoMud"
+            mmp.echo("Mapper script updated - thanks! You don't need to restart.")
+        else
+            mmp.echo(
+                "Mapper script updated - Thanks! I don't know what game are you connected to, though - so please reconnect, if you could."
+            )
+        end
     else
         mmp.echo("Mapper script updated - thanks! You don't need to restart.")
     end
