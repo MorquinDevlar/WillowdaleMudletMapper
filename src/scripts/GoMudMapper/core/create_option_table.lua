@@ -68,13 +68,16 @@ function mmp.createOptionsTable(defaultTable)
 	end
 
 	function proxyTable:showAllOptions(game)
-		proxyTable.disp("Available options: \n")
+		-- Display header using mapper color scheme
+		decho("<112,229,0>Setting:               <255,255,255>State:          <128,128,128>Option:\n")
+		decho("<128,128,128>" .. string.rep("-", 60) .. "\n")
+		
+		-- Display all options
 		for k, v in spairs(self[index]) do
 			if not game or not v.games or v.games[game] then
 				self.dispOption(k, v)
 			end
 		end
-		echo("\n")
 		for k, v in spairs(self["_customOptions"]) do
 			self.dispOption(k, v)
 		end
@@ -88,11 +91,40 @@ function mmp.createOptionsTable(defaultTable)
 
 		return t
 	end
+	
+	function proxyTable:getOptionDef(option)
+		-- Check custom options first
+		if self["_customOptions"][option] then
+			return self["_customOptions"][option]
+		-- Then check default options
+		elseif self[index][option] then
+			return self[index][option]
+		end
+		return nil
+	end
 
 	function proxyTable:setOption(option, value, silent)
 		if self[option] == nil then
 			proxyTable.disp("No such option!\n")
 			return
+		end
+		
+		-- Convert on/off to boolean for boolean options
+		local optionDef = self["_customOptions"][option] or self[index][option]
+		if optionDef and optionDef.allowedVarTypes and table.contains(optionDef.allowedVarTypes, "boolean") then
+			if value == "on" then
+				value = true
+			elseif value == "off" then
+				value = false
+			elseif type(value) == "string" then
+				-- Try to parse other string boolean values
+				local lowerValue = value:lower()
+				if lowerValue == "true" or lowerValue == "yes" or lowerValue == "1" then
+					value = true
+				elseif lowerValue == "false" or lowerValue == "no" or lowerValue == "0" then
+					value = false
+				end
+			end
 		end
 
 		-- otherwise, set the option

@@ -3,7 +3,7 @@ function mmp.gomudstopspeedwalkforwrongdir()
 		return
 	end
 	if #mmp.speedWalkPath > 0 then
-		echo("Can't go \"" .. gmcp.Room.WrongDir .. '". Stopping speedwalk.')
+		echo("Can't go \"" .. gmcp.Room.Wrongdir.dir .. '". Stopping speedwalk.')
 		mmp.stop()
 	end
 end

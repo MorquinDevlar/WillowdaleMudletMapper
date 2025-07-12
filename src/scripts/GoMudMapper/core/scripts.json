@@ -12,6 +12,12 @@
         "isFolder": "no"
     },
     {
+        "name": "option_definitions",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
         "name": "initialize",
         "isActive": "yes",
         "script": "",
@@ -24,7 +30,25 @@
         "isFolder": "no"
     },
     {
+        "name": "mmp.setenvcolors",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "mmp.setgame",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
         "name": "mconfig_settings_functions",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "mmp.packageinstalled",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"

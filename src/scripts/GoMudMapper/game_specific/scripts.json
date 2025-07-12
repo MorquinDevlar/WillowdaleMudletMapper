@@ -2,7 +2,7 @@
     {
         "name": "mmp.gomudstopspeedwalkforwrongdir",
         "isActive": "yes",
-        "eventHandlerList": ["gmcp.Room.WrongDir"],
+        "eventHandlerList": ["gmcp.Room.Wrongdir"],
         "script": "",
         "isFolder": "no"
     },

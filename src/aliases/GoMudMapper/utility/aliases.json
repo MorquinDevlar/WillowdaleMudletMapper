@@ -51,7 +51,14 @@
     {
         "name": "option",
         "isActive": "yes",
-        "regex": "^mconfig( (\\w+) (.*))?$",
+        "regex": "^mconfig(?: (\\w+)(?: (.*))?)?$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "mmp_game",
+        "isActive": "yes",
+        "regex": "^mmp game$",
         "script": "",
         "isFolder": "no"
     },

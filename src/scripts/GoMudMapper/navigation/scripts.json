@@ -24,5 +24,12 @@
         "eventHandlerList": ["gmcp.Room.Info"],
         "script": "",
         "isFolder": "no"
+    },
+    {
+        "name": "mmp.updatedoors",
+        "isActive": "yes",
+        "eventHandlerList": ["gmcp.Room.Info.Exits"],
+        "script": "",
+        "isFolder": "no"
     }
 ]

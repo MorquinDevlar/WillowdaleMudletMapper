@@ -23,7 +23,7 @@ function mmp.roomlook(input)
 		local env = getRoomEnv(num)
 		local envname = (mmp.envidsr and mmp.envidsr[env]) or "?"
 		-- generate a report
-		mmp.echo(string.format("Room: %s #: %d area: %s (%d)", name, num, tostring(mmp.areatabler[areanum]), areanum))
+		mmp.echo(string.format("Room: %s #: %d area: %s (%d)", name, num, tostring(mmp.areatabler and mmp.areatabler[areanum] or "?"), areanum))
 		mmp.echo(
 			string.format(
 				"Coordinates: x:%d, y:%d, z:%d, locked: %s, weight: %s",
@@ -52,7 +52,7 @@ function mmp.roomlook(input)
 					leadsto,
 					(
 						(getRoomArea(leadsto) or "?") == areanum and ""
-						or " (in " .. (mmp.areatabler[getRoomArea(leadsto)] or "?") .. ")"
+						or " (in " .. (mmp.areatabler and mmp.areatabler[getRoomArea(leadsto)] or "?") .. ")"
 					),
 					(
 						(not exitweights[mmp.anytoshort(exit)] or exitweights[mmp.anytoshort(exit)] == 0) and ""
@@ -170,7 +170,7 @@ function mmp.roomlook(input)
 				cecho(
 					string.format(
 						"<DarkSlateGrey>) in the <LightSlateGray>%s<DarkSlateGrey>.\n",
-						tostring(mmp.areatabler[getRoomArea(roomid)])
+						tostring(mmp.areatabler and mmp.areatabler[getRoomArea(roomid)] or "?")
 					)
 				)
 			end
@@ -187,7 +187,7 @@ function mmp.roomlook(input)
 				cecho(
 					string.format(
 						"<DarkSlateGrey>) in the <LightSlateGray>%s<DarkSlateGrey>.\n",
-						tostring(mmp.areatabler[getRoomArea(roomid)])
+						tostring(mmp.areatabler and mmp.areatabler[getRoomArea(roomid)] or "?")
 					)
 				)
 			end

@@ -25,12 +25,12 @@ mmp.lagtable = {
     [4] = { description = "Bad. Terrible. Terribad.", time = 5 },
     [5] = { description = "Carrier Pigeon", time = 10 },
 }
-local newversion = "2.0.2"
+local newversion = "__VERSION__"
 if mmp.version and mmp.version ~= newversion then
     if not mmp.game then
         -- Check if this is GoMud via GMCP
-        if gmcp and gmcp.Game and gmcp.Game.Info and gmcp.Game.Info.engine == "GoMud" then
-            mmp.game = "GoMud"
+        if gmcp and gmcp.Game and gmcp.Game.Info and gmcp.Game.Info.engine then
+            mmp.setGame(gmcp.Game.Info.engine)
             mmp.echo("Mapper script updated - thanks! You don't need to restart.")
         else
             mmp.echo(
@@ -54,78 +54,55 @@ function mmp.startup()
     if not mmp.firstRun then
         return
     end
-    local private_settings = {}
 
-    --General settings
-
-    private_settings["echocolour"] = mmp.createOption(
-        "cyan",
-        mmp.changeEchoColour,
-        { "string" },
-        "Set the color for room number echos?",
-        function(newSetting)
-            return color_table[newSetting] ~= nil
-        end
-    )
-    private_settings["crowdmap"] = mmp.createOption(
-        false,
-        mmp.changeMapSource,
-        { "boolean" },
-        "Use a crowd-sourced map instead of games default?",
-        nil,
-        { gomud = true }
-    )
-    private_settings["showcmds"] = mmp.createOption(true, mmp.changeBoolFunc, { "boolean" }, "Show walking commands?")
-    private_settings["laglevel"] = mmp.createOption(
-        1,
-        mmp.changeLaglevel,
-        { "number" },
-        "How laggy is your connection, (fast 1<->5 slow)?",
-        mmp.verifyLaglevel
-    )
-    private_settings["slowwalk"] =
-        mmp.createOption(false, mmp.setSlowWalk, { "boolean" }, "Walk slowly instead of as quick as possible?")
-    private_settings["fastwalk"] = mmp.createOption(
-        false,
-        mmp.changeBoolFunc,
-        { "boolean" },
-        "Walk as quick as possible instead of waiting for prompts?"
-    )
-    private_settings["updatemap"] =
-        mmp.createOption(true, mmp.changeUpdateMap, { "boolean" }, "Check for new maps from your MUD?")
-    private_settings["autopositionrooms"] = mmp.createOption(
-        true,
-        mmp.setAutoPositionRooms,
-        { "boolean" },
-        "Auto position rooms when mapping?",
-        nil,
-        { gomud = true }
-    )
-    private_settings["debug"] = mmp.createOption(false, mmp.changeBoolFunc, { "boolean" }, "Enable debug messages?")
-
-    --Settings that lock things
-
-    private_settings["lockspecials"] =
-        mmp.createOption(false, mmp.lockSpecials, { "boolean" }, "Lock all special exits?")
+    -- Load options from the simple definition table
+    local private_settings = mmp.convertOptionsFromDefinitions()
 
     mmp.settings = mmp.createOptionsTable(private_settings)
     mmp.settings.disp = mmp.echo
-    mmp.game = false
-    mmp.settings.dispOption = function(opt, val)
-        cecho(
-            "<green>"
-            .. val.use
-            .. "<white> ("
-            .. opt
-            .. ") "
-            .. string.rep(" ", 50 - val.use:len() - opt:len())
-            .. tostring(val.value)
-            .. "\n"
-        )
+
+    -- Detect game type if not already set
+    if not mmp.game then
+        if gmcp and gmcp.Game and gmcp.Game.Info and gmcp.Game.Info.engine then
+            mmp.setGame(gmcp.Game.Info.engine)
+        else
+            mmp.game = false
+        end
     end
+
+    mmp.settings.dispOption = function(opt, val)
+        -- Format boolean values as on/off
+        local displayValue = val.value
+        if type(val.value) == "boolean" then
+            displayValue = val.value and "on" or "off"
+        end
+
+        -- Determine options available
+        local options = ""
+        if val.allowedVarTypes and table.contains(val.allowedVarTypes, "boolean") then
+            options = "on|off"
+        elseif opt == "laglevel" then
+            options = "1-5"
+        elseif opt == "echocolour" then
+            options = "See mcolor for options"
+        else
+            options = tostring(displayValue)
+        end
+
+        -- Display in columns: Setting, State, Option
+        -- Using mapper's color scheme: light green for settings, white for values, dim gray for options
+        decho(string.format("<112,229,0>%-22s <255,255,255>%-15s <128,128,128>%s\n", opt, tostring(displayValue), options))
+    end
+
     mmp.settings.dispDefaultWriteError = function()
         mmp.echo("Please use the mconfig alias to set options!")
     end
+
+    -- Set environment colors if they're defined
+    if mmp.setEnvironmentColors then
+        mmp.setEnvironmentColors()
+    end
+
     raiseEvent("mmp areas changed")
     mmp.firstRun = false
     mmp.echon("Mudlet Mapper script for GoMud (" .. tostring(mmp.version) .. ") loaded! (")

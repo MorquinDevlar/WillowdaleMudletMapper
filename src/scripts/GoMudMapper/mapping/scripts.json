@@ -39,13 +39,14 @@
     {
         "name": "mmp.mappingnewroom",
         "isActive": "yes",
-        "eventHandlerList": ["gmcp.Room.Info", "RoomNum"],
+        "eventHandlerList": ["gmcp.Room.Info.Exits", "RoomNum"],
         "script": "",
         "isFolder": "no"
     },
     {
         "name": "mmp.regenerateareas",
         "isActive": "yes",
+        "eventHandlerList": ["mmp areas changed"],
         "script": "",
         "isFolder": "no"
     },

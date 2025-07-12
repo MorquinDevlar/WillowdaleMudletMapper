@@ -8,8 +8,8 @@ local function makeroom(oldid, newid, x, y, z)
 	local fgr, fgg, fgb = unpack(color_table.red)
 	local bgr, bgg, bgb = unpack(color_table.blue)
 	highlightRoom(newid, fgr, fgg, fgb, bgr, bgg, bgb, 1, 100, 100)
-	if mmp.envids[gmcp.Room.Info.environment] then
-		setRoomEnv(newid, mmp.envids[gmcp.Room.Info.environment])
+	if gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic and mmp.envids and mmp.envids[gmcp.Room.Info.Basic.environment] then
+		setRoomEnv(newid, mmp.envids[gmcp.Room.Info.Basic.environment])
 	else
 		setRoomEnv(newid, getRoomEnv(oldid))
 	end
@@ -91,26 +91,39 @@ function mmp.mappingnewroom(_, num)
 		-- wilderness mapping right now is UNFINISHED! It does not handle the grid breakup. So, please don't try it, and please won't whine about it.
 
 		local function inwilderness()
-			return (gmcp.Room.Info.coords == "" and gmcp.Room.Info.area == "")
+			return (gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.coordinates == "" and gmcp.Room.Info.Basic.area == "")
 		end
 
 		local getRoomName, getRoomCoordinates, getRoomsByPosition = getRoomName, getRoomCoordinates, getRoomsByPosition
-		local num = tonumber(num) or tonumber(gmcp.Room.Info.num)
-		local currentexits = gmcp.Room.Info.exits
+		local num = tonumber(num) or (gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic and tonumber(gmcp.Room.Info.Basic.id))
+		local currentexits = gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Exits or {}
 		local s = ""
+		
+		-- Debug: Show what exits we received from GMCP
+		if mmp.settings.debug then
+			local exitList = {}
+			for exit, exitData in pairs(currentexits) do
+				table.insert(exitList, string.format("%s->%d", exit, exitData.room_id))
+			end
+			if #exitList > 0 then
+				mmp.echo("GMCP exits for room " .. tostring(num) .. ": " .. table.concat(exitList, ", "))
+			else
+				mmp.echo("No GMCP exits received for room " .. tostring(num))
+			end
+		end
 
 		-- GoMUD-specific coordinate handling
 		local currentRoomArea, currentRoomX, currentRoomY, currentRoomZ
 		if mmp.game == "gomud" then
-			if gmcp.Room.Info.coords and gmcp.Room.Info.coords ~= "" then
+			if gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.coordinates and gmcp.Room.Info.Basic.coordinates ~= "" then
 				-- Try with spaces pattern
 				currentRoomArea, currentRoomX, currentRoomY, currentRoomZ =
-					gmcp.Room.Info.coords:match("([^,]+), ([^,]+), ([^,]+), ([^,]+)")
+					gmcp.Room.Info.Basic.coordinates:match("([^,]+), ([^,]+), ([^,]+), ([^,]+)")
 
 				-- If that fails, try without spaces
 				if not (currentRoomArea and currentRoomX and currentRoomY and currentRoomZ) then
 					currentRoomArea, currentRoomX, currentRoomY, currentRoomZ =
-						gmcp.Room.Info.coords:match("([^,]+),([^,]+),([^,]+),([^,]+)")
+						gmcp.Room.Info.Basic.coordinates:match("([^,]+),([^,]+),([^,]+),([^,]+)")
 				end
 
 				if currentRoomArea and currentRoomX and currentRoomY and currentRoomZ then
@@ -119,14 +132,29 @@ function mmp.mappingnewroom(_, num)
 
 					-- INVERT the Y coordinate to match Mudlet's coordinate system
 					currentRoomY = currentRoomY * -1
+					
+					if mmp.settings.debug then
+						mmp.echo(string.format("Parsed coordinates for room %d: area='%s', x=%d, y=%d (inverted from %d), z=%d", 
+							num, currentRoomArea, currentRoomX, currentRoomY, currentRoomY * -1, currentRoomZ))
+					end
 
 					-- Update the current room's coordinates if they're different
-					if mmp.roomexists(num) then
+					-- Only do this if autopositionrooms is enabled
+					if mmp.settings.autopositionrooms and mmp.roomexists(num) then
 						local mx, my, mz = getRoomCoordinates(num)
 						if mx ~= currentRoomX or my ~= currentRoomY or mz ~= currentRoomZ then
+							if mmp.settings.debug then
+								mmp.echo(string.format("Moving room %d from (%d,%d,%d) to (%d,%d,%d)", 
+									num, mx, my, mz, currentRoomX, currentRoomY, currentRoomZ))
+							end
 							setRoomCoordinates(num, currentRoomX, currentRoomY, currentRoomZ)
 							setRoomUserData(num, "Area", currentRoomArea)
+							s = s .. (#s > 0 and " " or "") .. string.format("Repositioned room to %d,%d,%d.", currentRoomX, currentRoomY, currentRoomZ)
 						end
+					end
+				else
+					if mmp.settings.debug then
+						mmp.echo("Failed to parse coordinates from: " .. (gmcp.Room.Info.Basic.coordinates or "nil"))
 					end
 				end
 			end
@@ -136,9 +164,25 @@ function mmp.mappingnewroom(_, num)
 			-- see if we can create and link this room with an existing one
 			-- wilderness and non-wilderness rooms require different methods of calculating relative coordinates
 			if not inwilderness() then
-				for exit, id in pairs(currentexits) do
+				for exit, exitData in pairs(currentexits) do
+					local id = exitData.room_id
 					if mmp.roomexists(id) then
+						-- getshiftedcoords internally reverses the direction, so if we have exit 'east' to room 'id',
+						-- it will place the new room to the west of room 'id' (which is correct)
 						s = makeroom(id, num, getshiftedcoords(exit, getRoomCoordinates(id)))
+						-- After creating the room, check if we need to add a door
+						if exitData.details and exitData.details.type == "door" and exitData.details.state then
+							local state = exitData.details.state
+							if state == "closed" or state == "locked" then
+								local shortExit = mmp.anytoshort(exit)
+								local doorType = state == "locked" and 3 or 2 -- 3 = locked, 2 = closed
+								if mmp.settings.debug then
+									mmp.echo("Creating " .. state .. " door: " .. exit .. " exit (short: " .. shortExit .. ", type: " .. doorType .. ") in room " .. num)
+								end
+								setDoor(num, shortExit, doorType)
+								s = s .. (#s > 0 and " " or "") .. "Added " .. state .. " door on " .. exit .. " exit."
+							end
+						end
 					end
 				end
 			else
@@ -151,7 +195,7 @@ function mmp.mappingnewroom(_, num)
 		-- if we created it, and some data could be filled in
 		if mmp.roomexists(num) then
 			-- cleanup the room name
-			local rootroomname = mmp.cleanroomname(gmcp.Room.Info.name)
+			local rootroomname = mmp.cleanroomname(gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.name or "")
 			-- match exact case, so mappers alertness' works properly
 			if getRoomName(num) ~= rootroomname then
 				setRoomName(num, rootroomname)
@@ -162,7 +206,8 @@ function mmp.mappingnewroom(_, num)
 			if not inwilderness() then
 				local x = getRoomExits(num) or {}
 				-- check for missing exits
-				for exit, id in pairs(currentexits) do
+				for exit, exitData in pairs(currentexits) do
+					local id = exitData.room_id
 					if id == 0 then
 						s = s
 							.. (#s > 0 and " " or "")
@@ -173,30 +218,32 @@ function mmp.mappingnewroom(_, num)
 						if not x[mmp.anytolong(exit)] then
 							if not mmp.roomexists(id) then
 								if mmp.game == "gomud" then
-									-- GoMUD-specific room creation using exitsv2 data
-									-- Use exitsv2 data for relative coordinates if available
+									-- GoMUD-specific room creation
+									-- Check if we should use absolute positioning or standard directional positioning
 									if
-										gmcp.Room.Info.exitsv2
-										and gmcp.Room.Info.exitsv2[exit]
+										mmp.settings.autopositionrooms
+										and exitData.delta_x
+										and exitData.delta_y
+										and exitData.delta_z
 										and currentRoomX
 										and currentRoomY
 										and currentRoomZ
 									then
-										local exitInfo = gmcp.Room.Info.exitsv2[exit]
-										local newX = currentRoomX + exitInfo.dx
+										-- Use absolute positioning from GMCP delta data
+										local newX = currentRoomX + exitData.delta_x
 
-										-- currentRoomY already has inverted sign, and dy also needs inverted sign
-										local newY = currentRoomY + (exitInfo.dy * -1)
-										local newZ = currentRoomZ + exitInfo.dz
+										-- currentRoomY already has inverted sign, and delta_y also needs inverted sign
+										local newY = currentRoomY + (exitData.delta_y * -1)
+										local newZ = currentRoomZ + exitData.delta_z
 
 										s = makeroom(num, id, newX, newY, newZ)
 										setRoomUserData(id, "Area", currentRoomArea)
 									else
-										-- Fall back to original calculation if exitsv2 data isn't available
+										-- Use standard directional positioning (+1 in direction)
 										s = makeroom(
 											num,
 											id,
-											getshiftedcoords(mmp.ranytolong(exit), getRoomCoordinates(num))
+											getshiftedcoords(exit, getRoomCoordinates(num))
 										)
 									end
 								else
@@ -204,7 +251,7 @@ function mmp.mappingnewroom(_, num)
 									s = makeroom(
 										num,
 										id,
-										getshiftedcoords(mmp.ranytolong(exit), getRoomCoordinates(num))
+										getshiftedcoords(exit, getRoomCoordinates(num))
 									)
 								end
 							end
@@ -218,6 +265,17 @@ function mmp.mappingnewroom(_, num)
 									.. " ("
 									.. id
 									.. ")."
+								
+								-- Check if this exit has a door (closed or locked status)
+								if exitData.status and (exitData.status == "closed" or exitData.status == "locked") then
+									local shortExit = mmp.anytoshort(exit)
+									local doorType = exitData.status == "locked" and 3 or 2 -- 3 = locked, 2 = closed
+									if mmp.settings.debug then
+							mmp.echo("Creating " .. exitData.status .. " door: " .. exit .. " exit (short: " .. shortExit .. ", type: " .. doorType .. ") in room " .. num)
+						end
+									setDoor(num, shortExit, doorType)
+									s = s .. (#s > 0 and " " or "") .. "Added " .. exitData.status .. " door on " .. exit .. " exit."
+								end
 							else
 								s = s
 									.. (#s > 0 and " " or "")
@@ -227,6 +285,40 @@ function mmp.mappingnewroom(_, num)
 										id,
 										exit
 									)
+							end
+						else
+							-- Exit already exists, check if we need to update door status
+							if exitData.status and (exitData.status == "closed" or exitData.status == "locked") then
+								local shortExit = mmp.anytoshort(exit)
+								local doorStatus = getDoors(num)
+								if not doorStatus[shortExit] or doorStatus[shortExit] == 0 then
+									-- No door exists, add one
+									local doorType = exitData.status == "locked" and 3 or 2 -- 3 = locked, 2 = closed
+									if mmp.settings.debug then
+										mmp.echo("Creating " .. exitData.status .. " door on existing exit: " .. exit .. " (short: " .. shortExit .. ", type: " .. doorType .. ") in room " .. num)
+									end
+									setDoor(num, shortExit, doorType)
+									s = s .. (#s > 0 and " " or "") .. "Added " .. exitData.status .. " door on existing " .. exit .. " exit."
+								else
+									if mmp.settings.debug then
+										mmp.echo("Door already exists: " .. exit .. " in room " .. num)
+									end
+								end
+							elseif exitData.status == "open" then
+								-- Exit is open, remove door if it exists
+								local shortExit = mmp.anytoshort(exit)
+								local doorStatus = getDoors(num)
+								if doorStatus[shortExit] and doorStatus[shortExit] > 0 then
+									if mmp.settings.debug then
+										mmp.echo("Removing door: " .. exit .. " (short: " .. shortExit .. ") is now open in room " .. num)
+									end
+									setDoor(num, shortExit, 0) -- 0 = no door
+									s = s .. (#s > 0 and " " or "") .. "Removed door from " .. exit .. " exit (now open)."
+								end
+							else
+								if mmp.settings.debug then
+									mmp.echo("Exit " .. exit .. " has status: " .. tostring(exitData.status) .. " in room " .. num)
+								end
 							end
 						end
 					end
@@ -309,7 +401,10 @@ function mmp.mappingnewroom(_, num)
 			-- check for unexisting exits
 			if mmp.settings["autoclear"] then
 				for exit, id in pairs(getRoomExits(num)) do
-					if not currentexits[mmp.anytoshort(exit)] then
+					-- getRoomExits returns exits in long form (e.g., "east", "west")
+					-- currentexits from GMCP also uses long form as keys
+					-- So we should check against the long form directly
+					if not currentexits[exit] then
 						mmp.setExit(num, -1, exit)
 						s = s
 							.. (#s > 0 and " " or "")
@@ -321,12 +416,12 @@ function mmp.mappingnewroom(_, num)
 				end
 			end
 			-- check for environment update, if we have environments mapped out
-			if mmp.envids[gmcp.Room.Info.environment] and mmp.envids[gmcp.Room.Info.environment] ~= getRoomEnv(num) then
-				setRoomEnv(num, mmp.envids[gmcp.Room.Info.environment])
-				s = s .. (#s > 0 and " " or "") .. "Updated environment name to " .. gmcp.Room.Info.environment .. "."
+			if gmcp.Room.Info.Basic and mmp.envids and mmp.envids[gmcp.Room.Info.Basic.environment] and mmp.envids[gmcp.Room.Info.Basic.environment] ~= getRoomEnv(num) then
+				setRoomEnv(num, mmp.envids[gmcp.Room.Info.Basic.environment])
+				s = s .. (#s > 0 and " " or "") .. "Updated environment name to " .. gmcp.Room.Info.Basic.environment .. "."
 			end
 			-- check indoors status
-			local indoors = table.contains(gmcp.Room.Info.details, "indoors")
+			local indoors = gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.details and table.contains(gmcp.Room.Info.Basic.details, "indoors")
 			if indoors and (getRoomUserData(num, "indoors") == "" or getRoomUserData(num, "outdoors") ~= "") then
 				setRoomUserData(num, "indoors", "y")
 				clearRoomUserDataItem(num, "outdoors")
@@ -341,7 +436,7 @@ function mmp.mappingnewroom(_, num)
 
 			-- GoMud can add game area tracking here if needed
 			-- check for wilderness exits
-			if getRoomChar(num) ~= "W" and table.contains(gmcp.Room.Info.details, "wilderness") then
+			if getRoomChar(num) ~= "W" and gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.details and table.contains(gmcp.Room.Info.Basic.details, "wilderness") then
 				setRoomChar(num, "W")
 				s = s .. (#s > 0 and " " or "") .. "Added the wilderness mark."
 			end
