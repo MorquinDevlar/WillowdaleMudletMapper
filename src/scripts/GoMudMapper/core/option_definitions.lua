@@ -36,18 +36,22 @@ mmp.option_definitions = {
         onChange = mmp.changeLaglevel
     },
     
-    slowwalk = {
-        default = false,
-        type = "boolean",
-        description = "Walk slowly instead of as quick as possible?",
-        onChange = mmp.setSlowWalk
-    },
-    
-    fastwalk = {
-        default = false,
-        type = "boolean",
-        description = "Walk as quick as possible instead of waiting for prompts?",
-        onChange = mmp.changeBoolFunc
+    walkspeed = {
+        default = "normal",
+        type = "string",
+        description = "Walking speed (slow/normal/fast)?",
+        validate = function(v) 
+            return v == "slow" or v == "normal" or v == "fast" 
+        end,
+        onChange = function(name, value)
+            if value == "slow" then
+                mmp.echo("Walking speed set to slow - will pause between moves")
+            elseif value == "fast" then
+                mmp.echo("Walking speed set to fast - will move without waiting for prompts")
+            else
+                mmp.echo("Walking speed set to normal - will wait for prompts between moves")
+            end
+        end
     },
     
     updatemap = {
@@ -98,6 +102,21 @@ mmp.option_definitions = {
                 mmp.echo("Rooms will now be positioned using absolute coordinates from GMCP")
             else
                 mmp.echo("Rooms will now be positioned using standard directional offsets (+1)")
+            end
+        end
+    },
+    
+    autocreateareas = {
+        default = false,
+        type = "boolean",
+        description = "Auto create areas based on GMCP area information when mapping?",
+        games = {"gomud"},
+        onChange = function(name, option)
+            mmp.changeBoolFunc(name, option)
+            if option then
+                mmp.echo("Areas will now be automatically created based on GMCP area information")
+            else
+                mmp.echo("Areas will need to be created manually")
             end
         end
     }

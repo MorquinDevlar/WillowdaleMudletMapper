@@ -1,10 +1,15 @@
 --mmp.mappingNewroom
 
-local function makeroom(oldid, newid, x, y, z)
+local function makeroom(oldid, newid, x, y, z, targetAreaId)
 	assert(x and y and z, "makeroom: need all 3 coordinates")
 	addRoom(newid)
 	setRoomCoordinates(newid, x, y, z)
-	setRoomArea(newid, getRoomArea(oldid))
+	-- Use target area if provided, otherwise inherit from old room
+	if targetAreaId then
+		setRoomArea(newid, targetAreaId)
+	else
+		setRoomArea(newid, getRoomArea(oldid))
+	end
 	local fgr, fgg, fgb = unpack(color_table.red)
 	local bgr, bgg, bgb = unpack(color_table.blue)
 	highlightRoom(newid, fgr, fgg, fgb, bgr, bgg, bgb, 1, 100, 100)
@@ -236,14 +241,45 @@ function mmp.mappingnewroom(_, num)
 										local newY = currentRoomY + (exitData.delta_y * -1)
 										local newZ = currentRoomZ + exitData.delta_z
 
-										s = makeroom(num, id, newX, newY, newZ)
-										setRoomUserData(id, "Area", currentRoomArea)
+										-- Check if exit leads to a different area
+										local targetAreaId = nil
+										if mmp.settings.autocreateareas and exitData.details and exitData.details.leads_to_area then
+											local targetAreaName = exitData.details.leads_to_area
+											-- Try to create the area if it doesn't exist
+											targetAreaId = mmp.areatable[targetAreaName]
+											if not targetAreaId then
+												targetAreaId = addAreaName(targetAreaName)
+												if targetAreaId then
+													mmp.echo(string.format("Created new area: %s (ID: %d)", targetAreaName, targetAreaId))
+													mmp.regenerateareas()
+												end
+											end
+										end
+										
+										s = makeroom(num, id, newX, newY, newZ, targetAreaId)
+										setRoomUserData(id, "Area", exitData.details and exitData.details.leads_to_area or currentRoomArea)
 									else
 										-- Use standard directional positioning (+1 in direction)
+										-- Check if exit leads to a different area
+										local targetAreaId = nil
+										if mmp.settings.autocreateareas and exitData.details and exitData.details.leads_to_area then
+											local targetAreaName = exitData.details.leads_to_area
+											-- Try to create the area if it doesn't exist
+											targetAreaId = mmp.areatable[targetAreaName]
+											if not targetAreaId then
+												targetAreaId = addAreaName(targetAreaName)
+												if targetAreaId then
+													mmp.echo(string.format("Created new area: %s (ID: %d)", targetAreaName, targetAreaId))
+													mmp.regenerateareas()
+												end
+											end
+										end
+										
 										s = makeroom(
 											num,
 											id,
-											getshiftedcoords(exit, getRoomCoordinates(num))
+											getshiftedcoords(exit, getRoomCoordinates(num)),
+											targetAreaId
 										)
 									end
 								else

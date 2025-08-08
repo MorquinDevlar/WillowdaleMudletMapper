@@ -75,14 +75,5 @@ function mmp.changeMapSource()
 	end
 end
 
-function mmp.setSlowWalk()
-	if mmp.settings.slowwalk then
-		mmp.echo(
-			"Will walk 'slowly' - that is, only try to move in a direction once per room, and move again once we've arrived. This will make us better walkers when it's very laggy, as we won't spam directions unnecessarily and miss certain turns - but it does mean that if we fail to move for some reason, we won't retry again either at all."
-		)
-	else
-		mmp.echo("Will walk as quick as we can!")
-	end
-end
 
 -- GoMud-specific settings functions can be added here

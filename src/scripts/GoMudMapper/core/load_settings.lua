@@ -85,6 +85,8 @@ function mmp.startup()
             options = "1-5"
         elseif opt == "echocolour" then
             options = "See mcolor for options"
+        elseif opt == "walkspeed" then
+            options = "slow|normal|fast"
         else
             options = tostring(displayValue)
         end

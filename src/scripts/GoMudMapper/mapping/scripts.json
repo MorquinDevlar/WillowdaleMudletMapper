@@ -62,5 +62,11 @@
         "eventHandlerList": ["sysExitEvent"],
         "script": "",
         "isFolder": "no"
+    },
+    {
+        "name": "mmp.roomArea",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
     }
 ]

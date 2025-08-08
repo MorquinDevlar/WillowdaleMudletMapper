@@ -137,16 +137,15 @@ function mmp.setmovetimer(time, ignoreLatency)
 	if mmp.movetimer then
 		killTimer(mmp.movetimer)
 	end
-	if mmp.settings.slowwalk and not mmp.hasty then
+	-- Handle walk speed settings
+	if mmp.settings.walkspeed == "slow" and not mmp.hasty then
+		return
+	elseif mmp.settings.walkspeed == "fast" then
+		-- Skip timer for fast mode
 		return
 	end
 
-	-- Skip timer for fastwalk mode
-	if mmp.settings.fastwalk then
-		return
-	end
-
-	-- Normal timer logic for regular walking
+	-- Normal timer logic for normal walking
 	local laglevel = mmp.settings.laglevel or 1
 	time = time or mmp.lagtable[laglevel].time
 	local latency = ignoreLatency and 0 or getNetworkLatency()
@@ -189,9 +188,9 @@ function mmp.move()
 		cmd = mmp.speedWalkDir[mmp.speedWalkCounter]
 	end
 	cmd = cmd or ""
-	-- In fastwalk mode, don't set a timer - just send the command
+	-- In fast mode, don't set a timer - just send the command
 	-- The next GMCP room event will trigger the next move
-	if not mmp.settings.fastwalk then
+	if mmp.settings.walkspeed ~= "fast" then
 		-- timeout before loadstring, so it can set its own if it would like to.
 		mmp.setmovetimer()
 	end
@@ -297,8 +296,10 @@ function mmp.stop()
 	--if mmp.movetimer then killTimer( mmp.movetimer ) end
 	mmp.autowalking = false
 	-- clear all the temps we've got
-	for trigger, ID in pairs(mmp.specials) do
-		killTrigger(ID)
+	if mmp.specials then
+		for trigger, ID in pairs(mmp.specials) do
+			killTrigger(ID)
+		end
 	end
 	mmp.specials = {}
 	mmp.echo("Stopped walking.")
@@ -536,7 +537,7 @@ function mmp.speedwalking(event, num)
 			mmp.autowalking = false
 		else
 			-- For faster movement, call mmp.move directly instead of waiting for prompt
-			if mmp.settings.fastwalk then
+			if mmp.settings.walkspeed == "fast" then
 				mmp.move()
 			else
 				tempPromptTrigger(mmp.move, 1)
@@ -608,8 +609,8 @@ function doSpeedWalk(dashtype)
 		mmp.speedWalkCounter = 1
 		if mmp.canmove() then
 			mmp.hasty = true
-			if mmp.settings.fastwalk then
-				-- In fastwalk mode, send the first command immediately
+			if mmp.settings.walkspeed == "fast" then
+				-- In fast mode, send the first command immediately
 				mmp.move()
 			else
 				mmp.setmovetimer(0.1, true)
@@ -623,9 +624,15 @@ function doSpeedWalk(dashtype)
 end
 
 function mmp.failpath()
-	if mmp.movetimer then
+	if mmp.speedWalkWatch then
 		local walktime = stopStopWatch(mmp.speedWalkWatch)
-		mmp.echo(string.format("Can't continue further! Took us %.1fs to get here.\n", walktime))
+		if walktime then
+			mmp.echo(string.format("Can't continue further! Took us %.1fs to get here.\n", walktime))
+		else
+			mmp.echo("Can't continue further!")
+		end
+	else
+		mmp.echo("Can't continue further!")
 	end
 	mmp.autowalking = false
 	mmp.speedWalkPath = {}
