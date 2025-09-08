@@ -87,7 +87,7 @@ mmp.option_definitions = {
         default = false,
         type = "boolean",
         description = "Use a crowd-sourced map instead of games default?",
-        games = {"gomud"},
+        games = {"gomud", "GoMud"},  -- Support both cases
         onChange = mmp.changeMapSource
     },
     
@@ -95,7 +95,7 @@ mmp.option_definitions = {
         default = true,
         type = "boolean",
         description = "Auto position rooms using GMCP coordinates when mapping?",
-        games = {"gomud"},
+        games = {"gomud", "GoMud"},  -- Support both cases
         onChange = function(name, option)
             mmp.changeBoolFunc(name, option)
             if option then
@@ -110,7 +110,7 @@ mmp.option_definitions = {
         default = false,
         type = "boolean",
         description = "Auto create areas based on GMCP area information when mapping?",
-        games = {"gomud"},
+        games = {"gomud", "GoMud"},  -- Support both cases
         onChange = function(name, option)
             mmp.changeBoolFunc(name, option)
             if option then
