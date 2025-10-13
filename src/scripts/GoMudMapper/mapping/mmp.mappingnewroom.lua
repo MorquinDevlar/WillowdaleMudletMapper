@@ -119,7 +119,7 @@ function mmp.mappingnewroom(_, num)
 
 		-- GoMUD-specific coordinate handling
 		local currentRoomArea, currentRoomX, currentRoomY, currentRoomZ
-		if mmp.game == "gomud" then
+		if mmp.game then
 			if gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.coordinates and gmcp.Room.Info.Basic.coordinates ~= "" then
 				-- Try with spaces pattern
 				currentRoomArea, currentRoomX, currentRoomY, currentRoomZ =
@@ -135,12 +135,9 @@ function mmp.mappingnewroom(_, num)
 					currentRoomX, currentRoomY, currentRoomZ =
 						tonumber(currentRoomX), tonumber(currentRoomY), tonumber(currentRoomZ)
 
-					-- INVERT the Y coordinate to match Mudlet's coordinate system
-					currentRoomY = currentRoomY * -1
-					
 					if mmp.settings.debug then
-						mmp.echo(string.format("Parsed coordinates for room %d: area='%s', x=%d, y=%d (inverted from %d), z=%d", 
-							num, currentRoomArea, currentRoomX, currentRoomY, currentRoomY * -1, currentRoomZ))
+						mmp.echo(string.format("Parsed coordinates for room %d: area='%s', x=%d, y=%d, z=%d",
+							num, currentRoomArea, currentRoomX, currentRoomY, currentRoomZ))
 					end
 
 					-- Update the current room's coordinates if they're different
@@ -149,7 +146,7 @@ function mmp.mappingnewroom(_, num)
 						local mx, my, mz = getRoomCoordinates(num)
 						if mx ~= currentRoomX or my ~= currentRoomY or mz ~= currentRoomZ then
 							if mmp.settings.debug then
-								mmp.echo(string.format("Moving room %d from (%d,%d,%d) to (%d,%d,%d)", 
+								mmp.echo(string.format("Moving room %d from (%d,%d,%d) to (%d,%d,%d)",
 									num, mx, my, mz, currentRoomX, currentRoomY, currentRoomZ))
 							end
 							setRoomCoordinates(num, currentRoomX, currentRoomY, currentRoomZ)
@@ -222,72 +219,67 @@ function mmp.mappingnewroom(_, num)
 					else
 						if not x[mmp.anytolong(exit)] then
 							if not mmp.roomexists(id) then
-								if mmp.game == "gomud" then
-									-- GoMUD-specific room creation
-									-- Check if we should use absolute positioning or standard directional positioning
-									if
-										mmp.settings.autopositionrooms
-										and exitData.delta_x
-										and exitData.delta_y
-										and exitData.delta_z
-										and currentRoomX
-										and currentRoomY
-										and currentRoomZ
-									then
-										-- Use absolute positioning from GMCP delta data
-										local newX = currentRoomX + exitData.delta_x
+								-- Check if we should use absolute positioning from delta data or standard directional positioning
+								if
+									mmp.settings.autopositionrooms
+									and exitData.delta_x
+									and exitData.delta_y
+									and exitData.delta_z
+									and currentRoomX
+									and currentRoomY
+									and currentRoomZ
+								then
+									-- Use absolute positioning from GMCP delta data
+									-- Delta values match Mudlet's coordinate system directly (no inversion needed)
+									local newX = currentRoomX + exitData.delta_x
+									local newY = currentRoomY + exitData.delta_y
+									local newZ = currentRoomZ + exitData.delta_z
 
-										-- currentRoomY already has inverted sign, and delta_y also needs inverted sign
-										local newY = currentRoomY + (exitData.delta_y * -1)
-										local newZ = currentRoomZ + exitData.delta_z
-
-										-- Check if exit leads to a different area
-										local targetAreaId = nil
-										if mmp.settings.autocreateareas and exitData.details and exitData.details.leads_to_area then
-											local targetAreaName = exitData.details.leads_to_area
-											-- Try to create the area if it doesn't exist
-											targetAreaId = mmp.areatable[targetAreaName]
-											if not targetAreaId then
-												targetAreaId = addAreaName(targetAreaName)
-												if targetAreaId then
-													mmp.echo(string.format("Created new area: %s (ID: %d)", targetAreaName, targetAreaId))
-													mmp.regenerateareas()
-												end
-											end
-										end
-										
-										s = makeroom(num, id, newX, newY, newZ, targetAreaId)
-										setRoomUserData(id, "Area", exitData.details and exitData.details.leads_to_area or currentRoomArea)
-									else
-										-- Use standard directional positioning (+1 in direction)
-										-- Check if exit leads to a different area
-										local targetAreaId = nil
-										if mmp.settings.autocreateareas and exitData.details and exitData.details.leads_to_area then
-											local targetAreaName = exitData.details.leads_to_area
-											-- Try to create the area if it doesn't exist
-											targetAreaId = mmp.areatable[targetAreaName]
-											if not targetAreaId then
-												targetAreaId = addAreaName(targetAreaName)
-												if targetAreaId then
-													mmp.echo(string.format("Created new area: %s (ID: %d)", targetAreaName, targetAreaId))
-													mmp.regenerateareas()
-												end
-											end
-										end
-										
-										s = makeroom(
-											num,
-											id,
-											getshiftedcoords(exit, getRoomCoordinates(num)),
-											targetAreaId
-										)
+									if mmp.settings.debug then
+										mmp.echo(string.format("Creating room %d at (%d,%d,%d) using delta (%d,%d,%d) from room %d at (%d,%d,%d)",
+											id, newX, newY, newZ, exitData.delta_x, exitData.delta_y, exitData.delta_z,
+											num, currentRoomX, currentRoomY, currentRoomZ))
 									end
+
+									-- Check if exit leads to a different area
+									local targetAreaId = nil
+									if mmp.settings.autocreateareas and exitData.details and exitData.details.leads_to_area then
+										local targetAreaName = exitData.details.leads_to_area
+										-- Try to create the area if it doesn't exist
+										targetAreaId = mmp.areatable[targetAreaName]
+										if not targetAreaId then
+											targetAreaId = addAreaName(targetAreaName)
+											if targetAreaId then
+												mmp.echo(string.format("Created new area: %s (ID: %d)", targetAreaName, targetAreaId))
+												mmp.regenerateareas()
+											end
+										end
+									end
+
+									s = makeroom(num, id, newX, newY, newZ, targetAreaId)
+									setRoomUserData(id, "Area", exitData.details and exitData.details.leads_to_area or currentRoomArea)
 								else
-									-- Standard room creation for other games
+									-- Use standard directional positioning (+1 in direction)
+									-- Check if exit leads to a different area
+									local targetAreaId = nil
+									if mmp.settings.autocreateareas and exitData.details and exitData.details.leads_to_area then
+										local targetAreaName = exitData.details.leads_to_area
+										-- Try to create the area if it doesn't exist
+										targetAreaId = mmp.areatable[targetAreaName]
+										if not targetAreaId then
+											targetAreaId = addAreaName(targetAreaName)
+											if targetAreaId then
+												mmp.echo(string.format("Created new area: %s (ID: %d)", targetAreaName, targetAreaId))
+												mmp.regenerateareas()
+											end
+										end
+									end
+
 									s = makeroom(
 										num,
 										id,
-										getshiftedcoords(exit, getRoomCoordinates(num))
+										getshiftedcoords(exit, getRoomCoordinates(num)),
+										targetAreaId
 									)
 								end
 							end
