@@ -1,5 +1,6 @@
 function mmp.registergomudenvdata(_, game)
-    if game ~= "gomud" then
+    -- Check if this is a GoMud-based game by checking the engine type
+    if not (gmcp and gmcp.Game and gmcp.Game.Info and gmcp.Game.Info.engine == "GoMud") then
         return
     end
     mmp.envids = {
