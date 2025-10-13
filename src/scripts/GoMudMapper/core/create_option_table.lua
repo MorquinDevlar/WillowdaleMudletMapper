@@ -74,7 +74,7 @@ function mmp.createOptionsTable(defaultTable)
 		
 		-- Display all options
 		for k, v in spairs(self[index]) do
-			if not game or not v.games or v.games[game] then
+			if not game or not v.games or v.games["all"] or v.games[game] then
 				self.dispOption(k, v)
 			end
 		end

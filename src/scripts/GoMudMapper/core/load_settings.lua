@@ -18,19 +18,12 @@ mmp.speedWalkCounter = 0
 mmp.speedWalk = mmp.speedWalk or {}
 mmp.speedWalkPath = mmp.speedWalkPath or {}
 mmp.speedWalkDir = mmp.speedWalkDir or {}
-mmp.lagtable = {
-    [1] = { description = "Normal, default level.", time = 0.5 },
-    [2] = { description = "Decent, but slightly laggy.", time = 1 },
-    [3] = { description = "Noticeably laggy with occasional spikes.", time = 2 },
-    [4] = { description = "Bad. Terrible. Terribad.", time = 5 },
-    [5] = { description = "Carrier Pigeon", time = 10 },
-}
 local newversion = "__VERSION__"
 if mmp.version and mmp.version ~= newversion then
     if not mmp.game then
-        -- Check if this is GoMud via GMCP
-        if gmcp and gmcp.Game and gmcp.Game.Info and gmcp.Game.Info.engine then
-            mmp.setGame(gmcp.Game.Info.engine)
+        -- Check if we can detect the game via GMCP
+        if mmp.detectGameFromGMCP then
+            mmp.detectGameFromGMCP()
             mmp.echo("Mapper script updated - thanks! You don't need to restart.")
         else
             mmp.echo(
@@ -63,8 +56,8 @@ function mmp.startup()
 
     -- Detect game type if not already set
     if not mmp.game then
-        if gmcp and gmcp.Game and gmcp.Game.Info and gmcp.Game.Info.engine then
-            mmp.setGame(gmcp.Game.Info.engine)
+        if mmp.detectGameFromGMCP then
+            mmp.detectGameFromGMCP()
         else
             mmp.game = false
         end
@@ -81,12 +74,10 @@ function mmp.startup()
         local options = ""
         if val.allowedVarTypes and table.contains(val.allowedVarTypes, "boolean") then
             options = "on|off"
-        elseif opt == "laglevel" then
-            options = "1-5"
         elseif opt == "echocolour" then
             options = "See mcolor for options"
-        elseif opt == "walkspeed" then
-            options = "slow|normal|fast"
+        elseif opt == "walkdelay" then
+            options = "0-5 seconds"
         else
             options = tostring(displayValue)
         end

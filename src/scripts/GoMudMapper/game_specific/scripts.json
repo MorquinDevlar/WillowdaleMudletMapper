@@ -1,5 +1,12 @@
 [
     {
+        "name": "mmp.gamedetection",
+        "isActive": "yes",
+        "eventHandlerList": ["gmcp.Game.Info"],
+        "script": "",
+        "isFolder": "no"
+    },
+    {
         "name": "mmp.gomudstopspeedwalkforwrongdir",
         "isActive": "yes",
         "eventHandlerList": ["gmcp.Room.Wrongdir"],

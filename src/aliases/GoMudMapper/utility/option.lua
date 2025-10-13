@@ -5,7 +5,7 @@
 -- Check if game is detected
 if not mmp.game then
 	mmp.echo("Game not detected. Please reconnect to your MUD so the mapper can identify which game you're playing.")
-	mmp.echo("Games should either set gmcp.Game.Info.engine or use a login trigger to set mmp.game")
+	mmp.echo("The mapper uses gmcp.Game.Info.name to identify the specific game.")
 	return
 end
 
@@ -37,10 +37,10 @@ if option and (not val or val == "") then
 		-- Show accepted values
 		if optionDef.allowedVarTypes and table.contains(optionDef.allowedVarTypes, "boolean") then
 			decho("<112,229,0>Accepted values: <128,128,128>on, off\n")
-		elseif option == "laglevel" then
-			decho("<112,229,0>Accepted values: <128,128,128>1-5 (1=fast, 5=very slow)\n")
 		elseif option == "echocolour" then
 			decho("<112,229,0>Accepted values: <128,128,128>Any valid color name (see 'mcolor' for options)\n")
+		elseif option == "walkdelay" then
+			decho("<112,229,0>Accepted values: <128,128,128>0-5 (0=instant, 0.3=normal, 1+=slow)\n")
 		end
 	else
 		mmp.echo("Unknown option: " .. option)

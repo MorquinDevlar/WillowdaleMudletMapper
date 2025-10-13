@@ -35,45 +35,5 @@ function mmp.changeEchoColour()
 	mmp.echo("Now displaying echos in <" .. mmp.settings.echocolour .. ">" .. mmp.settings.echocolour)
 end
 
-function mmp.changeLaglevel()
-	local laglevel = mmp.settings.laglevel
-	local laginfo = mmp.lagtable[laglevel]
-	mmp.echo(
-		string.format("Lag level set to [%d]: %s (%ss timer)", laglevel, laginfo.description, tostring(laginfo.time))
-	)
-end
-
-function mmp.verifyLaglevel(value)
-	if mmp.lagtable[value] then
-		return true
-	end
-	return false
-end
-
--- GoMud-specific lock functions can be added here
-
-function mmp.lockSpecials()
-	local lock = mmp.settings.lockspecials and true or false
-	mmp.doLock("special exits", lock)
-end
-
-function mmp.changeMapSource()
-	local use = mmp.settings.crowdmap and true or false
-	if use and mmp.game ~= "gomud" then
-		mmp.echo("Crowdsourced map support for GoMud is not yet available.")
-		mmp.settings.crowdmap = false
-	elseif use and not loadMap then
-		mmp.echo(
-			"Sorry - your Mudlet is too old and can't load maps. Please update: http://forums.mudlet.org/viewtopic.php?f=5&t=1874"
-		)
-		mmp.settings.crowdmap = false
-	elseif use then
-		mmp.echo("Will use the crowdsourced map for updates instead!")
-		mmp.checkforupdate()
-	else
-		mmp.echo("Will use the default game map for updates.")
-	end
-end
-
 
 -- GoMud-specific settings functions can be added here

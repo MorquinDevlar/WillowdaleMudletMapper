@@ -15,16 +15,15 @@ if mmp.game then
     end
 else
     mmp.echo("No game detected yet.")
-    mmp.echo("The mapper will try to detect your game from GMCP when you connect.")
-    mmp.echo("Your game should set gmcp.Game.Info.engine to identify itself.")
+    mmp.echo("The mapper will detect your game from GMCP when you connect.")
     
     -- Show current GMCP status if available
     if gmcp and gmcp.Game and gmcp.Game.Info then
-        if gmcp.Game.Info.engine then
-            mmp.echo(string.format("GMCP reports engine as: %s", gmcp.Game.Info.engine))
+        if gmcp.Game.Info.name then
+            mmp.echo(string.format("GMCP reports game as: %s", gmcp.Game.Info.name))
             mmp.echo("Try reconnecting to properly initialize the mapper.")
         else
-            mmp.echo("GMCP is available but engine is not set.")
+            mmp.echo("GMCP is available but game name is not set.")
         end
     else
         mmp.echo("No GMCP game information available.")

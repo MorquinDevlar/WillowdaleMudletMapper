@@ -133,38 +133,19 @@ function mmp.showpathcache()
 	return getpathcache
 end
 
-function mmp.setmovetimer(time, ignoreLatency)
-	if mmp.movetimer then
-		killTimer(mmp.movetimer)
-	end
-	-- Handle walk speed settings
-	if mmp.settings.walkspeed == "slow" and not mmp.hasty then
-		return
-	elseif mmp.settings.walkspeed == "fast" then
-		-- Skip timer for fast mode
-		return
-	end
-
-	-- Normal timer logic for normal walking
-	local laglevel = mmp.settings.laglevel or 1
-	time = time or mmp.lagtable[laglevel].time
-	local latency = ignoreLatency and 0 or getNetworkLatency()
-	if mmp.debug then
-		mmp.echo(f("setting move timer according to time {time} and latency {latency}"))
-	end
-	mmp.movetimer = tempTimer(latency + time, function()
-		if mmp.debug then
-			mmp.echo("move timer fired")
-		end
-		mmp.movetimer = false
+-- Simple delay function for movement
+function mmp.delayedMove(delay)
+	if delay and delay > 0 then
+		tempTimer(delay, function() mmp.move() end)
+	else
 		mmp.move()
-	end)
+	end
 end
 
 -- moves to the next room we need to.
 
 function mmp.move()
-	if mmp.paused or not mmp.autowalking or mmp.movetimer or not mmp.canmove() then
+	if mmp.paused or not mmp.autowalking or not mmp.canmove() then
 		return
 	end
 	-- sometimes it's 0 - default to 1
@@ -188,12 +169,6 @@ function mmp.move()
 		cmd = mmp.speedWalkDir[mmp.speedWalkCounter]
 	end
 	cmd = cmd or ""
-	-- In fast mode, don't set a timer - just send the command
-	-- The next GMCP room event will trigger the next move
-	if mmp.settings.walkspeed ~= "fast" then
-		-- timeout before loadstring, so it can set its own if it would like to.
-		mmp.setmovetimer()
-	end
 	if string.starts(cmd, "script:") then
 		cmd = string.gsub(cmd, "script:", "")
 		loadstring(cmd)()
@@ -220,6 +195,7 @@ function mmp.move()
 		end
 		mmp.hasty = false
 	end
+	-- Movement continues when GMCP room change event fires
 end
 
 function mmp.swim()
@@ -238,7 +214,7 @@ function mmp.swim()
 		)
 	end
 	mmp.hasty = true
-	mmp.setmovetimer(2.5)
+	tempTimer(2.5, function() mmp.move() end)
 end
 
 function mmp.enterGrate()
@@ -262,7 +238,8 @@ function mmp.openDoor()
 		)
 	end
 	mmp.hasty = true
-	mmp.setmovetimer(getNetworkLatency())
+	local latency = getNetworkLatency() / 1000  -- Convert ms to seconds
+	tempTimer(latency, function() mmp.move() end)
 end
 
 function mmp.unlockDoor()
@@ -281,11 +258,13 @@ function mmp.unlockDoor()
 		)
 	end
 	mmp.hasty = true
-	mmp.setmovetimer(getNetworkLatency())
+	local latency = getNetworkLatency() / 1000  -- Convert ms to seconds
+	tempTimer(latency, function() mmp.move() end)
 end
 
 function mmp.customwalkdelay(delay)
-	mmp.setmovetimer(getNetworkLatency() + delay)
+	local latency = getNetworkLatency() / 1000  -- Convert ms to seconds
+	tempTimer(latency + delay, function() mmp.move() end)
 end
 
 function mmp.stop()
@@ -293,7 +272,6 @@ function mmp.stop()
 	mmp.speedWalkDir = {}
 	mmp.speedWalkCounter = 0
 	stopStopWatch(mmp.speedWalkWatch)
-	--if mmp.movetimer then killTimer( mmp.movetimer ) end
 	mmp.autowalking = false
 	-- clear all the temps we've got
 	if mmp.specials then
@@ -512,10 +490,7 @@ function mmp.speedwalking(event, num)
 	if not mmp.autowalking then
 		return
 	end
-	if mmp.movetimer then
-		killTimer(mmp.movetimer)
-		mmp.movetimer = false
-	end
+	-- No longer using movetimer, movement is GMCP-driven
 	if num == mmp.speedWalkPath[#mmp.speedWalkPath] then
 		local walktime = stopStopWatch(mmp.speedWalkWatch)
 		mmp.echo(string.format("We've arrived! Took us %.1fs.\n", walktime))
@@ -536,12 +511,10 @@ function mmp.speedwalking(event, num)
 			mmp.speedWalkCounter = 0
 			mmp.autowalking = false
 		else
-			-- For faster movement, call mmp.move directly instead of waiting for prompt
-			if mmp.settings.walkspeed == "fast" then
-				mmp.move()
-			else
-				tempPromptTrigger(mmp.move, 1)
-			end
+			-- GMCP room change detected, continue walking
+			-- Use delay if configured, otherwise move immediately
+			local delay = mmp.settings.walkdelay or 0.3
+			mmp.delayedMove(delay)
 		end
 	elseif #mmp.speedWalkPath > 0 then
 		-- ended up somewhere we didn't want to be, and this isn't a ferry room?
@@ -609,12 +582,9 @@ function doSpeedWalk(dashtype)
 		mmp.speedWalkCounter = 1
 		if mmp.canmove() then
 			mmp.hasty = true
-			if mmp.settings.walkspeed == "fast" then
-				-- In fast mode, send the first command immediately
-				mmp.move()
-			else
-				mmp.setmovetimer(0.1, true)
-			end
+			-- Start moving immediately (with delay if configured)
+			local delay = mmp.settings.walkdelay or 0.3
+			mmp.delayedMove(delay)
 		else
 			echo("(when we get balance back / aren't hindered)")
 		end
@@ -638,10 +608,7 @@ function mmp.failpath()
 	mmp.speedWalkPath = {}
 	mmp.speedWalkDir = {}
 	mmp.speedWalkCounter = 0
-	if mmp.movetimer then
-		killTimer(mmp.movetimer)
-		mmp.movetimer = nil
-	end
+	-- No longer using movetimer, movement is GMCP-driven
 	raiseEvent("mmapper failed path")
 end
 

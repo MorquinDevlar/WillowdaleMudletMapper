@@ -3,12 +3,11 @@ function mmp.setGame(gameName)
     if gameName and type(gameName) == "string" then
         mmp.game = string.lower(gameName)
         
-        -- Always show what game was detected
-        mmp.echo(string.format("Mapper detected game engine: %s", mmp.game))
-        
-        -- Initialize game-specific data if needed
-        if mmp.game == "gomud" and mmp.registergomudenvdata then
-            mmp.registergomudenvdata(nil, mmp.game)
+        -- Initialize game-specific features based on the game name
+        -- For example, "willowdale" might have different features than other GoMud games
+        if mmp.game and mmp["register_" .. mmp.game .. "_features"] then
+            -- Call game-specific initialization if it exists
+            mmp["register_" .. mmp.game .. "_features"]()
         end
         
         -- Raise event for other scripts that might need to know

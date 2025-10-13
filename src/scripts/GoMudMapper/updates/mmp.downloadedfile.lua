@@ -174,27 +174,22 @@ function mmp.downloadedfile(_, filename)
 		mmp.checkingupdates = false
 
 		local function needupdate(currentmd5, oldmd5)
-			if not mmp.settings.crowdmap then
-				mmp.echon("The games map was ")
-				echoLink(
-					"updated",
-					"",
-					"New MD5: " .. tostring(currentmd5) .. ", previous MD5: " .. (oldmd5 or "(none)"),
-					true
-				)
-				echo(
-					" - you should update yours! Go to Settings -> Mapper tab and click on the 'Download' button there. Once you've updated, "
-				)
-				echoLink(
-					"click here",
-					"mmp.updatedmap('" .. currentmd5 .. "')",
-					"Click here to quiet the update reminder"
-				)
-				echo(" to remove the reminder.")
-			else
-				mmp.newversion, mmp.oldversion = currentmd5, oldmd5
-				mmp.retrievecrowdchangelog()
-			end
+			mmp.echon("The games map was ")
+			echoLink(
+				"updated",
+				"",
+				"New MD5: " .. tostring(currentmd5) .. ", previous MD5: " .. (oldmd5 or "(none)"),
+				true
+			)
+			echo(
+				" - you should update yours! Go to Settings -> Mapper tab and click on the 'Download' button there. Once you've updated, "
+			)
+			echoLink(
+				"click here",
+				"mmp.updatedmap('" .. currentmd5 .. "')",
+				"Click here to quiet the update reminder"
+			)
+			echo(" to remove the reminder.")
 		end
 
 		local f, s = io.open(filename)

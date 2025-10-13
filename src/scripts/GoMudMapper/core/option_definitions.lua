@@ -8,7 +8,7 @@
 --       description = "What it does", -- Shown in mconfig
 --       validate = function(v) ... end,  -- Optional: return true if value is valid
 --       onChange = function(name, value) ... end,  -- Optional: called when value changes
---       games = {"gomud", "achaea"}  -- Optional: only show for specific games
+--       games = {"all"}              -- Optional: {"all"} for all games, or {"game1", "game2"} for specific games
 --   }
 
 mmp.option_definitions = {
@@ -28,28 +28,24 @@ mmp.option_definitions = {
         onChange = mmp.changeBoolFunc
     },
     
-    laglevel = {
-        default = 1,
+    walkdelay = {
+        default = 0.3,
         type = "number",
-        description = "How laggy is your connection, (fast 1<->5 slow)?",
-        validate = mmp.verifyLaglevel,
-        onChange = mmp.changeLaglevel
-    },
-    
-    walkspeed = {
-        default = "normal",
-        type = "string",
-        description = "Walking speed (slow/normal/fast)?",
+        description = "Delay between moves in seconds (0 = fast, 0.3 = normal, 1+ = slow)?",
         validate = function(v) 
-            return v == "slow" or v == "normal" or v == "fast" 
+            return type(v) == "number" and v >= 0 and v <= 5
         end,
         onChange = function(name, value)
-            if value == "slow" then
-                mmp.echo("Walking speed set to slow - will pause between moves")
-            elseif value == "fast" then
-                mmp.echo("Walking speed set to fast - will move without waiting for prompts")
+            if value == 0 then
+                mmp.echo(string.format("Walk delay set to %.1f seconds - moving as fast as possible", value))
+            elseif value < 0.3 then
+                mmp.echo(string.format("Walk delay set to %.1f seconds - very fast movement", value))
+            elseif value <= 0.5 then
+                mmp.echo(string.format("Walk delay set to %.1f seconds - normal speed", value))
+            elseif value <= 1 then
+                mmp.echo(string.format("Walk delay set to %.1f seconds - slow movement", value))
             else
-                mmp.echo("Walking speed set to normal - will wait for prompts between moves")
+                mmp.echo(string.format("Walk delay set to %.1f seconds - very slow movement", value))
             end
         end
     },
@@ -75,27 +71,14 @@ mmp.option_definitions = {
         onChange = mmp.changeBoolFunc
     },
     
-    lockspecials = {
-        default = false,
-        type = "boolean",
-        description = "Lock all special exits?",
-        onChange = mmp.lockSpecials
-    },
-    
-    -- GoMud-specific options
-    crowdmap = {
-        default = false,
-        type = "boolean",
-        description = "Use a crowd-sourced map instead of games default?",
-        games = {"gomud", "GoMud"},  -- Support both cases
-        onChange = mmp.changeMapSource
-    },
+    -- GoMud engine features
+    -- These are available for all GoMud-based games
     
     autopositionrooms = {
         default = true,
         type = "boolean",
         description = "Auto position rooms using GMCP coordinates when mapping?",
-        games = {"gomud", "GoMud"},  -- Support both cases
+        games = {"all"},  -- Available for all games
         onChange = function(name, option)
             mmp.changeBoolFunc(name, option)
             if option then
@@ -110,7 +93,7 @@ mmp.option_definitions = {
         default = false,
         type = "boolean",
         description = "Auto create areas based on GMCP area information when mapping?",
-        games = {"gomud", "GoMud"},  -- Support both cases
+        games = {"all"},  -- Available for all games
         onChange = function(name, option)
             mmp.changeBoolFunc(name, option)
             if option then

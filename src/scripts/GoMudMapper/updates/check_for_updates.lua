@@ -28,9 +28,7 @@ function mmp.checkforupdate()
 				return
 			end
 		end
-		if mmp.settings.crowdmap then
-		-- GoMud crowdmap support can be added here in the future
-		elseif mmp.settings.updatemap then
+		if mmp.settings.updatemap then
 			-- GoMud map update support can be added here in the future
 		end
 		mmp.checkingupdates = true
@@ -58,12 +56,7 @@ function mmp.retrievechangelog()
 	downloadFile(mmp.changelogfile, "http://ire-mudlet-mapping.github.io/ire-mapping-script/downloads/changelog")
 end
 
-function mmp.retrievecrowdchangelog()
-	mmp.crowdchangelogfile = downloadfolder .. "crowdchangelogfile"
-	-- GoMud-specific crowdmap changelog download can be added here
-end
-
--- downloads the public crowdsources map!
+-- Map download functions
 
 function mmp.downloadmapperscript()
 	local file = getModulePath("mudlet-mapper") or getMudletHomeDir() .. "/map downloads/mudlet-mapper.xml"
@@ -81,28 +74,6 @@ function mmp.downloadmapperscript()
 	mmp.echo("Okay, downloading the mapper script...")
 end
 
-function mmp.downloadcrowdmap(newversion)
-	mmp.crowdmapfile = downloadfolder .. "crowdmap"
-	local f, err = io.open(downloadfolder .. "current", "w")
-	if not f then
-		return mmp.echo("Couldn't write to the update file, because: " .. err)
-	end
-	f:write(newversion)
-	f:close()
-	-- GoMud-specific crowdmap download can be added here
-	mmp.echo("Downloading the latest crowdmap...")
-end
-
-function mmp.showcrowdchangelog()
-	mmp.echo("Public map changelog:")
-	if not mmp.crowdchangelog then
-		mmp.echo("(none yet)")
-		return
-	end
-	for k, v in ipairs(mmp.crowdchangelog) do
-		cecho(string.format("  %s) %s\n", k, v:gsub("\t", "     ")))
-	end
-end
 
 function mmp.installMapperScript()
 	local path = getModulePath("mudlet-mapper")

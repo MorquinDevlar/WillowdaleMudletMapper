@@ -128,7 +128,7 @@ function mmp.roomlook(input)
         local s,m = os.remove(getMudletHomeDir().."/map downloads/current")
         if not s then mmp.echo("Couldn't delete '"..getMudletHomeDir().."/map downloads/current' file: "..tostring(m)..".") end
       end
-      mmp.echo("Re-downloading the latest crowdmap...")
+      mmp.echo("Re-downloading the latest map...")
       mmp.checkforupdate()
     ]],
 			"Re-download the map regardless if you have latest",
