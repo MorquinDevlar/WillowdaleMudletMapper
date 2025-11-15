@@ -96,6 +96,11 @@ function mmp.startup()
         mmp.setEnvironmentColors()
     end
 
+    -- Initialize biome colors from saved mappings
+    if mmp.initializeBiomeColors then
+        mmp.initializeBiomeColors()
+    end
+
     raiseEvent("mmp areas changed")
     mmp.firstRun = false
     mmp.echon("Mudlet Mapper script for GoMud (" .. tostring(mmp.version) .. ") loaded! (")

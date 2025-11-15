@@ -36,6 +36,12 @@
         "isFolder": "no"
     },
     {
+        "name": "mmp.biomecolors",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
         "name": "mmp.setgame",
         "isActive": "yes",
         "script": "",

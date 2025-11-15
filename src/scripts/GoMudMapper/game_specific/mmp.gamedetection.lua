@@ -24,20 +24,28 @@ function mmp.gamedetection()
     
     -- Set the game based on the name (always lowercase for consistency)
     local detectedGame = string.lower(gameName)
-    
-    -- Don't re-initialize if already set to the same game
-    if mmp.game == detectedGame then
-        return
-    end
-    
-    -- Set the game
-    mmp.setGame(detectedGame)
-    
-    -- Log what was detected
+
+    -- Log what was detected (always show to confirm connection)
     mmp.echo(string.format("Connected to %s", gameName))
-    
-    -- Raise event for other scripts
-    raiseEvent("mmp game detected", detectedGame)
+
+    -- Check if this is a new game or reconnection
+    local isNewGame = (mmp.game ~= detectedGame)
+
+    if isNewGame then
+        -- Set the game
+        mmp.setGame(detectedGame)
+
+        -- Raise event for other scripts
+        raiseEvent("mmp game detected", detectedGame)
+    else
+        -- Game already set, but ensure environment colors are registered
+        -- This handles reconnections where the game was already detected
+        if gmcp and gmcp.Game and gmcp.Game.Info and gmcp.Game.Info.engine == "GoMud" then
+            if mmp.registergomudenvdata then
+                mmp.registergomudenvdata(nil, mmp.game)
+            end
+        end
+    end
 end
 
 -- Alias for backwards compatibility and manual calls

@@ -13,8 +13,14 @@ local function makeroom(oldid, newid, x, y, z, targetAreaId)
 	local fgr, fgg, fgb = unpack(color_table.red)
 	local bgr, bgg, bgb = unpack(color_table.blue)
 	highlightRoom(newid, fgr, fgg, fgb, bgr, bgg, bgb, 1, 100, 100)
-	if gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic and mmp.envids and mmp.envids[gmcp.Room.Info.Basic.environment] then
-		setRoomEnv(newid, mmp.envids[gmcp.Room.Info.Basic.environment])
+	-- Use biome_color from GMCP if available
+	if gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.biome_color then
+		local envId = mmp.getBiomeEnvId(gmcp.Room.Info.Basic.biome_color)
+		if envId then
+			setRoomEnv(newid, envId)
+		else
+			setRoomEnv(newid, getRoomEnv(oldid))
+		end
 	else
 		setRoomEnv(newid, getRoomEnv(oldid))
 	end
@@ -293,16 +299,19 @@ function mmp.mappingnewroom(_, num)
 									.. " ("
 									.. id
 									.. ")."
-								
-								-- Check if this exit has a door (closed or locked status)
-								if exitData.status and (exitData.status == "closed" or exitData.status == "locked") then
-									local shortExit = mmp.anytoshort(exit)
-									local doorType = exitData.status == "locked" and 3 or 2 -- 3 = locked, 2 = closed
-									if mmp.settings.debug then
-							mmp.echo("Creating " .. exitData.status .. " door: " .. exit .. " exit (short: " .. shortExit .. ", type: " .. doorType .. ") in room " .. num)
-						end
-									setDoor(num, shortExit, doorType)
-									s = s .. (#s > 0 and " " or "") .. "Added " .. exitData.status .. " door on " .. exit .. " exit."
+
+								-- Check if this exit has a door
+								if exitData.details and exitData.details.type == "door" and exitData.details.state then
+									local state = exitData.details.state
+									if state == "closed" or state == "locked" then
+										local shortExit = mmp.anytoshort(exit)
+										local doorType = state == "locked" and 3 or 2 -- 3 = locked, 2 = closed
+										if mmp.settings.debug then
+											mmp.echo("Creating " .. state .. " door: " .. exit .. " exit (short: " .. shortExit .. ", type: " .. doorType .. ") in room " .. num)
+										end
+										setDoor(num, shortExit, doorType)
+										s = s .. (#s > 0 and " " or "") .. "Added " .. state .. " door on " .. exit .. " exit."
+									end
 								end
 							else
 								s = s
@@ -316,36 +325,42 @@ function mmp.mappingnewroom(_, num)
 							end
 						else
 							-- Exit already exists, check if we need to update door status
-							if exitData.status and (exitData.status == "closed" or exitData.status == "locked") then
+							if exitData.details and exitData.details.type == "door" and exitData.details.state then
+								local doorState = exitData.details.state
 								local shortExit = mmp.anytoshort(exit)
 								local doorStatus = getDoors(num)
-								if not doorStatus[shortExit] or doorStatus[shortExit] == 0 then
-									-- No door exists, add one
-									local doorType = exitData.status == "locked" and 3 or 2 -- 3 = locked, 2 = closed
-									if mmp.settings.debug then
-										mmp.echo("Creating " .. exitData.status .. " door on existing exit: " .. exit .. " (short: " .. shortExit .. ", type: " .. doorType .. ") in room " .. num)
+
+								if doorState == "closed" or doorState == "locked" then
+									if not doorStatus[shortExit] or doorStatus[shortExit] == 0 then
+										-- No door exists, add one
+										local doorType = doorState == "locked" and 3 or 2 -- 3 = locked, 2 = closed
+										if mmp.settings.debug then
+											mmp.echo("Creating " .. doorState .. " door on existing exit: " .. exit .. " (short: " .. shortExit .. ", type: " .. doorType .. ") in room " .. num)
+										end
+										setDoor(num, shortExit, doorType)
+										s = s .. (#s > 0 and " " or "") .. "Added " .. doorState .. " door on existing " .. exit .. " exit."
+									elseif doorStatus[shortExit] ~= (doorState == "locked" and 3 or 2) then
+										-- Door exists but wrong type, update it
+										local doorType = doorState == "locked" and 3 or 2
+										if mmp.settings.debug then
+											mmp.echo("Updating door state to " .. doorState .. ": " .. exit .. " (short: " .. shortExit .. ", type: " .. doorType .. ") in room " .. num)
+										end
+										setDoor(num, shortExit, doorType)
+										s = s .. (#s > 0 and " " or "") .. "Updated " .. exit .. " door to " .. doorState .. "."
+									else
+										if mmp.settings.debug then
+											mmp.echo("Door already correct: " .. exit .. " is " .. doorState .. " in room " .. num)
+										end
 									end
-									setDoor(num, shortExit, doorType)
-									s = s .. (#s > 0 and " " or "") .. "Added " .. exitData.status .. " door on existing " .. exit .. " exit."
-								else
-									if mmp.settings.debug then
-										mmp.echo("Door already exists: " .. exit .. " in room " .. num)
+								elseif doorState == "open" then
+									-- Exit is open, remove door if it exists
+									if doorStatus[shortExit] and doorStatus[shortExit] > 0 then
+										if mmp.settings.debug then
+											mmp.echo("Removing door: " .. exit .. " (short: " .. shortExit .. ") is now open in room " .. num)
+										end
+										setDoor(num, shortExit, 0) -- 0 = no door
+										s = s .. (#s > 0 and " " or "") .. "Removed door from " .. exit .. " exit (now open)."
 									end
-								end
-							elseif exitData.status == "open" then
-								-- Exit is open, remove door if it exists
-								local shortExit = mmp.anytoshort(exit)
-								local doorStatus = getDoors(num)
-								if doorStatus[shortExit] and doorStatus[shortExit] > 0 then
-									if mmp.settings.debug then
-										mmp.echo("Removing door: " .. exit .. " (short: " .. shortExit .. ") is now open in room " .. num)
-									end
-									setDoor(num, shortExit, 0) -- 0 = no door
-									s = s .. (#s > 0 and " " or "") .. "Removed door from " .. exit .. " exit (now open)."
-								end
-							else
-								if mmp.settings.debug then
-									mmp.echo("Exit " .. exit .. " has status: " .. tostring(exitData.status) .. " in room " .. num)
 								end
 							end
 						end
@@ -443,10 +458,13 @@ function mmp.mappingnewroom(_, num)
 					end
 				end
 			end
-			-- check for environment update, if we have environments mapped out
-			if gmcp.Room.Info.Basic and mmp.envids and mmp.envids[gmcp.Room.Info.Basic.environment] and mmp.envids[gmcp.Room.Info.Basic.environment] ~= getRoomEnv(num) then
-				setRoomEnv(num, mmp.envids[gmcp.Room.Info.Basic.environment])
-				s = s .. (#s > 0 and " " or "") .. "Updated environment name to " .. gmcp.Room.Info.Basic.environment .. "."
+			-- check for biome color update
+			if gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.biome_color then
+				local envId = mmp.getBiomeEnvId(gmcp.Room.Info.Basic.biome_color)
+				if envId and envId ~= getRoomEnv(num) then
+					setRoomEnv(num, envId)
+					s = s .. (#s > 0 and " " or "") .. "Updated room color to " .. gmcp.Room.Info.Basic.biome_color .. "."
+				end
 			end
 			-- check indoors status
 			local indoors = gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.details and table.contains(gmcp.Room.Info.Basic.details, "indoors")
