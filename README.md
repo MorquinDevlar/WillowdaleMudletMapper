@@ -1,6 +1,6 @@
-# GoMud Mapper
+# Willowdale Mudlet Mapper
 
-A custom GMCP mapper for GoMud, providing automatic room mapping and navigation features for the Mudlet client.
+A custom GMCP mapper for WillowdaleMUD, providing automatic room mapping and navigation features for the Mudlet client.
 
 ## Features
 
@@ -12,8 +12,8 @@ A custom GMCP mapper for GoMud, providing automatic room mapping and navigation 
 
 ## Installation
 
-1. Download the latest GoMudMapper.mpackage from the releases
-2. Open Mudlet and connect to GoMud
+1. Download the latest WillowdaleMudletMapper.mpackage from the releases
+2. Open Mudlet and connect to WillowdalemMUD
 3. Install the package via Package Manager
 
 ## Usage
@@ -33,4 +33,4 @@ muddler
 
 ## Credits
 
-Originally forked from the IRE Mudlet Mapper project and adapted specifically for GoMud.
+Originally forked from the IRE Mudlet Mapper project and adapted specifically for WillowdaleMUD.

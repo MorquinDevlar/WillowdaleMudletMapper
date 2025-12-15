@@ -1,10 +1,10 @@
 {
-       "package": "GoMudMapper",
-       "title": "GoMud Mapper",
-       "description": "Custom GMCP mapper for GoMud.",
+       "package": "WillowdaleMudletMapper",
+       "title": "Willowdale Mudlet Mapper",
+       "description": "Custom GMCP mapper for Willowdale.",
        "version": "2.0.3",
        "author": "Morquin - forked from the IRE Mudlet Mapper",
-       "icon": "gomud-mapper-icon.png",
+       "icon": "server-icon_small.png",
        "dependencies": "",
        "outputFile": true
 }
