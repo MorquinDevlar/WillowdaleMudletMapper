@@ -42,12 +42,6 @@
         "isFolder": "no"
     },
     {
-        "name": "mmp.setgame",
-        "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
         "name": "mconfig_settings_functions",
         "isActive": "yes",
         "script": "",

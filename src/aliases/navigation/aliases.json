@@ -40,12 +40,5 @@
         "regex": "^mstop$",
         "script": "",
         "isFolder": "no"
-    },
-    {
-        "name": "weight_ferry_exits",
-        "isActive": "yes",
-        "regex": "^weight ferry exits$",
-        "script": "",
-        "isFolder": "no"
     }
 ]

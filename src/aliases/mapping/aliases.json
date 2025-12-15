@@ -126,20 +126,6 @@
         "isFolder": "no"
     },
     {
-        "name": "add_area_to_continent",
-        "isActive": "yes",
-        "regex": "^aca ([\\w']+)(?: (.+))?$",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "remove_area_from_continent",
-        "isActive": "yes",
-        "regex": "^acr ([\\w']+)(?: (.+))?$",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
         "name": "create_map_feature",
         "isActive": "yes",
         "regex": "^feature create (.+?)(?: char (.+))?$",
@@ -185,13 +171,6 @@
         "name": "delete_shop_stockroom_exits",
         "isActive": "yes",
         "regex": "^delete known stockrooms$",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "clear_continent_data",
-        "isActive": "yes",
-        "regex": "^clear continent data$",
         "script": "",
         "isFolder": "no"
     },

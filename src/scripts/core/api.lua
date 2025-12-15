@@ -172,22 +172,6 @@ function mmp.roomexists(num)
 	return (s and true or false)
 end
 
-function mmp.getcontinents()
-	-- Continents are not used in Willowdale
-	return {}
-end
-
--- patches welcome to finish this function.
-function mmp.removecontinent(area, continent)
-	-- Continents are not used in Willowdale
-	return nil, "continents are not used in Willowdale"
-end
-
-function mmp.addcontinent(areaid, continent)
-	-- Continents are not used in Willowdale
-	return nil, "continents are not used in Willowdale"
-end
-
 function mmp.indexof_valueonly(data, value)
 	for i = 1, #data do
 		if data[i] == value then
@@ -196,17 +180,6 @@ function mmp.indexof_valueonly(data, value)
 	end
 
 	return false
-end
-
--- checks if given area ID is on the given continent. Returns true only if certainly knows
-function mmp.oncontinent(areaid, continent)
-	-- Continents are not used in Willowdale
-	return false
-end
-
-function mmp.getareacontinents(areaid)
-	-- Continents are not used in Willowdale
-	return {}
 end
 
 -- accepts areaname or ID

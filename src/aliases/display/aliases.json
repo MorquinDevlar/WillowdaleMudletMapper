@@ -49,13 +49,6 @@
         "isFolder": "no"
     },
     {
-        "name": "show_ferry_rooms",
-        "isActive": "yes",
-        "regex": "^fr show$",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
         "name": "toggle_map_sizes",
         "isActive": "yes",
         "regex": "^(small|big|biggest)map(?: (\\d+))?$",

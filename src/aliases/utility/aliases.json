@@ -21,13 +21,6 @@
         "isFolder": "no"
     },
     {
-        "name": "list_continents",
-        "isActive": "yes",
-        "regex": "^(?:acl|area continents)$",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
         "name": "list_map_features",
         "isActive": "yes",
         "regex": "^feature list$",
@@ -52,13 +45,6 @@
         "name": "option",
         "isActive": "yes",
         "regex": "^mconfig(?: (\\w+)(?: (.*))?)?$",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "mmp_game",
-        "isActive": "yes",
-        "regex": "^mmp game$",
         "script": "",
         "isFolder": "no"
     },

@@ -217,11 +217,6 @@ function mmp.swim()
 	tempTimer(2.5, function() mmp.move() end)
 end
 
-function mmp.enterGrate()
-	-- This function is no longer needed for Willowdale
-	-- Keeping empty function to avoid breaking references
-end
-
 function mmp.openDoor()
 	-- not going anywhere? don't do anything
 	if not mmp.speedWalkDir[mmp.speedWalkCounter] then
