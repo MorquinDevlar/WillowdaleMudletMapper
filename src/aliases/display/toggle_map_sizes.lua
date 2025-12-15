@@ -8,7 +8,7 @@ if size == "biggest" then
 		width = "100%",
 		height = "97%",
 	})
-	mmp.echo("Map size set to pretty damn big.")
+	mapper.echo("Map size set to pretty damn big.")
 elseif size == "small" then
 	mapper = Geyser.Mapper:new({
 		x = "70%",
@@ -16,7 +16,7 @@ elseif size == "small" then
 		width = "28%",
 		height = "50%",
 	})
-	mmp.echo("Map size set to comfortable.")
+	mapper.echo("Map size set to comfortable.")
 elseif size == "big" then
 	local window_width, window_height = getMainWindowSize()
 	local used_width = getMainConsoleWidth()
@@ -34,7 +34,7 @@ elseif size == "big" then
 		height = "100%",
 	})
 
-	mmp.echo(
+	mapper.echo(
 		"Set the map size to big - it'll cover all of the space on the right that game text isn't using. You'll want to call this alias again if you resize the window to update."
 	)
 end

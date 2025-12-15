@@ -26,7 +26,7 @@ do
 		out = 12,
 	}
 
-	function mmp.setExit(from, to, direction)
+	function mapper.setExit(from, to, direction)
 		if type(direction) == "string" and not exitmap[direction] then
 			return false
 		end

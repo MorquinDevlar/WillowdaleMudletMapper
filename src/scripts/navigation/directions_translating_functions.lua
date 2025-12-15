@@ -19,11 +19,11 @@ for s, l in pairs(temp) do
 	anytolongmap[l] = l
 	anytolongmap[s] = l
 end
-function mmp.anytolong(exit)
+function mapper.anytolong(exit)
 	return anytolongmap[exit]
 end
 
-function mmp.anytoshort(exit)
+function mapper.anytoshort(exit)
 	local t = {
 		n = "north",
 		e = "east",
@@ -47,7 +47,7 @@ function mmp.anytoshort(exit)
 	return rt[exit]
 end
 
-function mmp.ranytolong(exit)
+function mapper.ranytolong(exit)
 	local t = {
 		n = "south",
 		north = "south",
@@ -79,11 +79,11 @@ function mmp.ranytolong(exit)
 end
 
 -- returns nil or the room number relative to this one
-function mmp.relativeroom(from, dir)
-	if not mmp.roomexists(from) then
+function mapper.relativeroom(from, dir)
+	if not mapper.roomexists(from) then
 		return
 	end
 
 	local exits = getRoomExits(tonumber(from))
-	return exits[mmp.anytolong(dir)]
+	return exits[mapper.anytolong(dir)]
 end

@@ -2,7 +2,7 @@
     {
         "name": "core",
         "isActive": "yes",
-        "script": "mudlet = mudlet or {};mudlet.mapper_script = true;mmp = mmp or {}",
+        "script": "mudlet = mudlet or {};mudlet.mapper_script = true;mapper = mapper or {}",
         "isFolder": "yes"
     },
     {
@@ -42,14 +42,14 @@
         "isFolder": "no"
     },
     {
-        "name": "mmp.clearlastupdate",
+        "name": "clearlastupdate",
         "isActive": "yes",
         "eventHandlerList": ["sysExitEvent"],
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "mmp.mapdata_changed",
+        "name": "mapdata_changed",
         "isActive": "yes",
         "eventHandlerList": ["mapDataChanged"],
         "script": "",

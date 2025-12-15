@@ -10,19 +10,19 @@ local function s(location, format)
 	end
 
 	if savednormal == nil then
-		mmp.echo("Couldn't save the map :(")
+		mapper.echo("Couldn't save the map :(")
 	elseif savednormal == true then
-		mmp.echo(location ~= "" and "Map saved." or "Saved the default map.")
+		mapper.echo(location ~= "" and "Map saved." or "Saved the default map.")
 	end
 	if savedjson == nil then
-		mmp.echo("Couldn't save the JSON map :(")
+		mapper.echo("Couldn't save the JSON map :(")
 	elseif savedjson == true then
-		mmp.echo(location ~= "" and "Map saved in JSON." or "Saved the default map in JSON.")
+		mapper.echo(location ~= "" and "Map saved in JSON." or "Saved the default map in JSON.")
 	end
 end
 
 if matches[2] and (matches[2] == "json" or matches[2] == "all") and not saveJsonMap then
-	mmp.echo("Your Mudlet can't save maps in JSON, please upgrade first.")
+	mapper.echo("Your Mudlet can't save maps in JSON, please upgrade first.")
 	return
 end
 if matches[3] and matches[3] == "custom" then

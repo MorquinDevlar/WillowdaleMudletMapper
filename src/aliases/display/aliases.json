@@ -10,7 +10,7 @@
         "name": "View/delete area labels",
         "isActive": "yes",
         "regex": "^area labels ?(.+)?$",
-        "script": "mmp.areaLabels(matches[2])",
+        "script": "mapper.areaLabels(matches[2])",
         "isFolder": "no"
     },
     {

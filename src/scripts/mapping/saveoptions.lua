@@ -1,7 +1,7 @@
-function mmp.saveoptions()
+function mapper.saveoptions()
 	local saveTable = {
-		locked_areas = mmp.locked,
-		options = mmp.settings:getAllOptions(),
+		locked_areas = mapper.locked,
+		options = mapper.settings:getAllOptions(),
 	}
 	local _sep
 	if string.char(getMudletHomeDir():byte()) == "/" then

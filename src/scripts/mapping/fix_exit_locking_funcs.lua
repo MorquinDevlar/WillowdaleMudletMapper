@@ -27,7 +27,7 @@ do
 		out = 12,
 	}
 
-	function mmp.lockExit(from, direction, status)
+	function mapper.lockExit(from, direction, status)
 		if type(direction) == "string" and not exitmap[direction] then
 			return false
 		end
@@ -35,7 +35,7 @@ do
 		return oldlockExit(from, type(direction) == "string" and exitmap[direction] or direction, status)
 	end
 
-	function mmp.hasExitLock(from, direction)
+	function mapper.hasExitLock(from, direction)
 		if type(direction) == "string" and not exitmap[direction] then
 			return false
 		end

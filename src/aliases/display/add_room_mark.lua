@@ -8,7 +8,7 @@ end
 local location, markname
 if not matches[3] then
 	markname = matches[2]
-	location = mmp.currentroom
+	location = mapper.currentroom
 elseif tonumber(matches[2]) then
 	location = matches[2]
 	markname = matches[3]
@@ -19,16 +19,16 @@ end
 
 -- can't allow mark name to ne a number - yajl then generates a giant table of null's
 if tonumber(markname) then
-	mmp.echo("The mark name can't be a number.")
+	mapper.echo("The mark name can't be a number.")
 	return
 end
 
 maptable[markname] = location
 local tmp2 = yajl.to_string(maptable)
 
-if not mmp.roomexists(1) then
+if not mapper.roomexists(1) then
 	addRoom(1)
 end
 
 setRoomUserData(1, "gotoMapping", tmp2)
-mmp.echo(string.format("Room mark for '%s' set to room %s.", markname, location))
+mapper.echo(string.format("Room mark for '%s' set to room %s.", markname, location))

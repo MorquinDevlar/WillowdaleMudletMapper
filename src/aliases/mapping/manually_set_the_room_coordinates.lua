@@ -1,24 +1,24 @@
 -- want the current room, but we're lost
-if matches[2] == "" and (not mmp.currentroom or not mmp.roomexists(mmp.currentroom)) then
-	mmp.echo("Don't know where we are at the moment.")
+if matches[2] == "" and (not mapper.currentroom or not mapper.roomexists(mapper.currentroom)) then
+	mapper.echo("Don't know where we are at the moment.")
 	return
 end
 
 -- want another room, but it doesn't actually exist
-if matches[2] ~= "" and not mmp.roomexists(matches[2]) then
-	mmp.echo("v" .. matches[2] .. " doesn't exist.")
+if matches[2] ~= "" and not mapper.roomexists(matches[2]) then
+	mapper.echo("v" .. matches[2] .. " doesn't exist.")
 	return
 end
 
 local m = matches[3]
 local rid, rname =
-	(matches[2] ~= "" and matches[2] or mmp.currentroom),
-	(matches[2] ~= "" and getRoomName(matches[2]) or mmp.currentroomname)
+	(matches[2] ~= "" and matches[2] or mapper.currentroom),
+	(matches[2] ~= "" and getRoomName(matches[2]) or mapper.currentroomname)
 local x, y, z
 
 local function set() -- small func to set things
 	setRoomCoordinates(rid, x, y, z)
-	mmp.echo(string.format("%s (%d) is now at %dx, %dy, %dz.\n", rname, rid, x, y, z))
+	mapper.echo(string.format("%s (%d) is now at %dx, %dy, %dz.\n", rname, rid, x, y, z))
 	centerview(rid)
 end
 
@@ -93,5 +93,5 @@ if x then
 	return
 end
 
-mmp.echo([[Where do you want to move the room to?
+mapper.echo([[Where do you want to move the room to?
   You can use direct coordinates or relative directions.]])

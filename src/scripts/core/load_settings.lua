@@ -8,62 +8,62 @@ mmp = mmp
         firstRun = true,
         specials = {},
     }
-mmp.speedWalkWatch = createStopWatch()
+mapper.speedWalkWatch = createStopWatch()
 -- speedWalkPath and speedWalkDir populated by Mudlet from getPath() and gotoRoom()
 speedWalkPath = speedWalkPath or {}
 speedWalkDir = speedWalkDir or {}
 
 -- actually used by the mapper for walking
-mmp.speedWalkCounter = 0
-mmp.speedWalk = mmp.speedWalk or {}
-mmp.speedWalkPath = mmp.speedWalkPath or {}
-mmp.speedWalkDir = mmp.speedWalkDir or {}
+mapper.speedWalkCounter = 0
+mapper.speedWalk = mapper.speedWalk or {}
+mapper.speedWalkPath = mapper.speedWalkPath or {}
+mapper.speedWalkDir = mapper.speedWalkDir or {}
 local newversion = "__VERSION__"
-if mmp.version and mmp.version ~= newversion then
-    if not mmp.game then
+if mapper.version and mapper.version ~= newversion then
+    if not mapper.game then
         -- Check if we can detect the game via GMCP
-        if mmp.detectGameFromGMCP then
-            mmp.detectGameFromGMCP()
-            mmp.echo("Mapper script updated - thanks! You don't need to restart.")
+        if mapper.detectGameFromGMCP then
+            mapper.detectGameFromGMCP()
+            mapper.echo("Mapper script updated - thanks! You don't need to restart.")
         else
-            mmp.echo(
+            mapper.echo(
                 "Mapper script updated - Thanks! I don't know what game are you connected to, though - so please reconnect, if you could."
             )
         end
     else
-        mmp.echo("Mapper script updated - thanks! You don't need to restart.")
+        mapper.echo("Mapper script updated - thanks! You don't need to restart.")
     end
 end
-mmp.version = newversion
+mapper.version = newversion
 
-function mmp.reload()
+function mapper.reload()
     -- Force reload of settings
-    mmp.firstRun = true
-    mmp.startup()
-    mmp.echo("Mapper settings reloaded!")
+    mapper.firstRun = true
+    mapper.startup()
+    mapper.echo("Mapper settings reloaded!")
 end
 
-function mmp.startup()
-    if not mmp.firstRun then
+function mapper.startup()
+    if not mapper.firstRun then
         return
     end
 
     -- Load options from the simple definition table
-    local private_settings = mmp.convertOptionsFromDefinitions()
+    local private_settings = mapper.convertOptionsFromDefinitions()
 
-    mmp.settings = mmp.createOptionsTable(private_settings)
-    mmp.settings.disp = mmp.echo
+    mapper.settings = mapper.createOptionsTable(private_settings)
+    mapper.settings.disp = mapper.echo
 
     -- Detect game type if not already set
-    if not mmp.game then
-        if mmp.detectGameFromGMCP then
-            mmp.detectGameFromGMCP()
+    if not mapper.game then
+        if mapper.detectGameFromGMCP then
+            mapper.detectGameFromGMCP()
         else
-            mmp.game = false
+            mapper.game = false
         end
     end
 
-    mmp.settings.dispOption = function(opt, val)
+    mapper.settings.dispOption = function(opt, val)
         -- Format boolean values as on/off
         local displayValue = val.value
         if type(val.value) == "boolean" then
@@ -87,23 +87,23 @@ function mmp.startup()
         decho(string.format("<112,229,0>%-22s <255,255,255>%-15s <128,128,128>%s\n", opt, tostring(displayValue), options))
     end
 
-    mmp.settings.dispDefaultWriteError = function()
-        mmp.echo("Please use the mconfig alias to set options!")
+    mapper.settings.dispDefaultWriteError = function()
+        mapper.echo("Please use the mconfig alias to set options!")
     end
 
     -- Set environment colors if they're defined
-    if mmp.setEnvironmentColors then
-        mmp.setEnvironmentColors()
+    if mapper.setEnvironmentColors then
+        mapper.setEnvironmentColors()
     end
 
     -- Initialize biome colors from saved mappings
-    if mmp.initializeBiomeColors then
-        mmp.initializeBiomeColors()
+    if mapper.initializeBiomeColors then
+        mapper.initializeBiomeColors()
     end
 
     raiseEvent("mmp areas changed")
-    mmp.firstRun = false
-    mmp.echon("Mudlet Mapper script for Willowdale (" .. tostring(mmp.version) .. ") loaded! (")
+    mapper.firstRun = false
+    mapper.echon("Mudlet Mapper script for Willowdale (" .. tostring(mapper.version) .. ") loaded! (")
     echoLink(
         "See more on Github",
         "(openUrl or openURL)('https://github.com/MorquinDevlar/WillowdaleMudletMapper')",

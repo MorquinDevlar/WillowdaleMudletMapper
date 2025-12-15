@@ -1,1 +1,1 @@
-mmp.echoRoomList(matches[2] or mmp.areatabler[getRoomArea(mmp.currentroom)])
+mapper.echoRoomList(matches[2] or mapper.areatabler[getRoomArea(mapper.currentroom)])

@@ -1,13 +1,13 @@
 -- Lock Area
 
-mmp.locked = mmp.locked or {}
-mmp.lastLockSearch = mmp.lastLockSearch or nil
+mapper.locked = mapper.locked or {}
+mapper.lastLockSearch = mapper.lastLockSearch or nil
 
-function mmp.doLockArea(search)
+function mapper.doLockArea(search)
 	local areaList
 	if search ~= nil then
 		local r = rex.new(string.lower(search))
-		mmp.lastLockSearch = search
+		mapper.lastLockSearch = search
 		for name, id in pairs(getAreaTable()) do
 			if r:match(string.lower(name)) then
 				areaList = areaList or {}
@@ -15,22 +15,22 @@ function mmp.doLockArea(search)
 			end
 		end
 		if areaList == nil then
-			mmp.echo("'" .. search .. "' did not match any known areas!")
+			mapper.echo("'" .. search .. "' did not match any known areas!")
 			return
 		end
 	else
-		mmp.lastLockSearch = nil
+		mapper.lastLockSearch = nil
 		areaList = getAreaTable()
 	end
 
 	for name, id in pairs(areaList) do
-		mmp.echon(name .. string.rep(" ", 40 - string.len(name)))
-		if not mmp.locked[id] then
+		mapper.echon(name .. string.rep(" ", 40 - string.len(name)))
+		if not mapper.locked[id] then
 			setFgColor(0, 200, 0)
 			setUnderline(true)
 			echoLink(
 				"Lock!",
-				[[mmp.lockArea( ']] .. name:gsub("'", [[\']]) .. [[', true )]],
+				[[mapper.lockArea( ']] .. name:gsub("'", [[\']]) .. [[', true )]],
 				"Click to lock area '" .. name .. "'",
 				true
 			)
@@ -39,7 +39,7 @@ function mmp.doLockArea(search)
 			setUnderline(true)
 			echoLink(
 				"Unlock!",
-				[[mmp.lockArea( ']] .. name:gsub("'", [[\']]) .. [[', false )]],
+				[[mapper.lockArea( ']] .. name:gsub("'", [[\']]) .. [[', false )]],
 				"Click to unlock area '" .. name .. "'",
 				true
 			)
@@ -48,11 +48,11 @@ function mmp.doLockArea(search)
 
 	if not search then
 		echo("\n\n")
-		mmp.echo("Use <green>arealock <area><white> to filter areas.")
+		mapper.echo("Use <green>arealock <area><white> to filter areas.")
 	end
 end
 
-function mmp.lockArea(name, lock, dontreshow)
+function mapper.lockArea(name, lock, dontreshow)
 	local areas = getAreaTable()
 	local rooms = getAreaRooms(areas[name]) or {}
 	local lockRoom = lockRoom
@@ -62,8 +62,8 @@ function mmp.lockArea(name, lock, dontreshow)
 		count = count + 1
 	end
 
-	mmp.locked[areas[name]] = lock and true or nil
-	mmp.echo(
+	mapper.locked[areas[name]] = lock and true or nil
+	mapper.echo(
 		string.format(
 			"Area '%s' %slocked! All %s room%s within it.",
 			name,
@@ -74,6 +74,6 @@ function mmp.lockArea(name, lock, dontreshow)
 	)
 
 	if not dontreshow then
-		mmp.doLockArea(mmp.lastLockSearch)
+		mapper.doLockArea(mapper.lastLockSearch)
 	end
 end

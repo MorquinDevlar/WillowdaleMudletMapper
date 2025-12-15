@@ -1,1 +1,1 @@
-mmp.listSpecialExits(matches[2])
+mapper.listSpecialExits(matches[2])

@@ -1,1 +1,1 @@
-mmp.pause(matches[2])
+mapper.pause(matches[2])

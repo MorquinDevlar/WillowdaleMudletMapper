@@ -1,1 +1,1 @@
-mmp.stop()
+mapper.stop()

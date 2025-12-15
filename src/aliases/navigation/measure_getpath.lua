@@ -1,20 +1,20 @@
 mmp = mmp or {}
 
-mmp.getPathPerf = mmp.getPathPerf or createStopWatch()
-startStopWatch(mmp.getPathPerf)
+mapper.getPathPerf = mapper.getPathPerf or createStopWatch()
+startStopWatch(mapper.getPathPerf)
 
 local from, to = tonumber(matches[2]), tonumber(matches[3])
 
 getPath(from, to)
 
-mmp.echon = mmp.echon or echo
-mmp.echon(
+mapper.echon = mapper.echon or echo
+mapper.echon(
 	"a new getPath() from "
 		.. from
 		.. " to "
 		.. to
 		.. " took "
-		.. stopStopWatch(mmp.getPathPerf)
+		.. stopStopWatch(mapper.getPathPerf)
 		.. "s. There are "
 		.. #speedWalkPath
 		.. " rooms to visit in it."
@@ -23,20 +23,20 @@ echo(" ")
 echoLink(
 	"[unhighlight]",
 	[[
-  for room in pairs(mmp.getpathhighlights) do
+  for room in pairs(mapper.getpathhighlights) do
     unHighlightRoom(room)
   end
 ]],
 	"Click me to remove highlighting from getpath"
 )
 
-mmp.getpathhighlights = mmp.getpathhighlights or {}
+mapper.getpathhighlights = mapper.getpathhighlights or {}
 
-for room in pairs(mmp.getpathhighlights) do
+for room in pairs(mapper.getpathhighlights) do
 	unHighlightRoom(room)
 end
 
-mmp.getpathhighlights = {}
+mapper.getpathhighlights = {}
 
 local r, g, b = unpack(color_table.yellow)
 local br, bg, bb = unpack(color_table.yellow)
@@ -45,7 +45,7 @@ table.insert(speedWalkPath, 1, from)
 for i = 1, #speedWalkPath do
 	local room = speedWalkPath[i]
 	highlightRoom(room, r, g, b, br, bg, bb, 1, 255, 255)
-	mmp.getpathhighlights[room] = true
+	mapper.getpathhighlights[room] = true
 end
 
 centerview(from)

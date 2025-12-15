@@ -1,7 +1,7 @@
 if not matches[2] and not matches[3] then
-	mmp.echo("Where do you want to showpath to?")
+	mapper.echo("Where do you want to showpath to?")
 elseif matches[2] and not matches[3] then
-	mmp.echoPath(mmp.currentroom, matches[2])
+	mapper.echoPath(mapper.currentroom, matches[2])
 else
-	mmp.echoPath(matches[2], matches[3])
+	mapper.echoPath(matches[2], matches[3])
 end

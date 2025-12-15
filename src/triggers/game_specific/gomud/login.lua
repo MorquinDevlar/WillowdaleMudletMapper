@@ -1,3 +1,3 @@
 raiseEvent("mmp logged in", "gomud")
-mmp.setGame("gomud")
-mmp.echo("We're connected to Willowdale.")
+mapper.setGame("gomud")
+mapper.echo("We're connected to Willowdale.")

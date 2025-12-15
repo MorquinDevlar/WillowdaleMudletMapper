@@ -1,15 +1,15 @@
-function mmp.roomlook(input)
+function mapper.roomlook(input)
 	-- we can do a report with a number
 
 	local function handle_number(num)
 		-- compile all available data
-		if not mmp.roomexists(num) then
-			mmp.echo(num .. " doesn't seem to exist.")
+		if not mapper.roomexists(num) then
+			mapper.echo(num .. " doesn't seem to exist.")
 			return
 		end
 		local s, areanum = pcall(getRoomArea, num)
 		if not s then
-			mmp.echo(areanum)
+			mapper.echo(areanum)
 			return
 		end
 		local exits = getRoomExits(num)
@@ -21,10 +21,10 @@ function mmp.roomlook(input)
 		local coords = { getRoomCoordinates(num) }
 		local specexits = getSpecialExits(num)
 		local env = getRoomEnv(num)
-		local envname = (mmp.envidsr and mmp.envidsr[env]) or "?"
+		local envname = (mapper.envidsr and mapper.envidsr[env]) or "?"
 		-- generate a report
-		mmp.echo(string.format("Room: %s #: %d area: %s (%d)", name, num, tostring(mmp.areatabler and mmp.areatabler[areanum] or "?"), areanum))
-		mmp.echo(
+		mapper.echo(string.format("Room: %s #: %d area: %s (%d)", name, num, tostring(mapper.areatabler and mapper.areatabler[areanum] or "?"), areanum))
+		mapper.echo(
 			string.format(
 				"Coordinates: x:%d, y:%d, z:%d, locked: %s, weight: %s",
 				coords[1],
@@ -34,7 +34,7 @@ function mmp.roomlook(input)
 				tostring(weight)
 			)
 		)
-		mmp.echo(
+		mapper.echo(
 			string.format(
 				"Environment: %s (%d)%s",
 				tostring(envname),
@@ -42,7 +42,7 @@ function mmp.roomlook(input)
 				(getRoomUserData(num, "indoors") ~= "" and ", indoors" or "")
 			)
 		)
-		mmp.echo(string.format("Exits (%d):", table.size(exits)))
+		mapper.echo(string.format("Exits (%d):", table.size(exits)))
 		for exit, leadsto in pairs(exits) do
 			echo(
 				string.format(
@@ -52,18 +52,18 @@ function mmp.roomlook(input)
 					leadsto,
 					(
 						(getRoomArea(leadsto) or "?") == areanum and ""
-						or " (in " .. (mmp.areatabler and mmp.areatabler[getRoomArea(leadsto)] or "?") .. ")"
+						or " (in " .. (mapper.areatabler and mapper.areatabler[getRoomArea(leadsto)] or "?") .. ")"
 					),
 					(
-						(not exitweights[mmp.anytoshort(exit)] or exitweights[mmp.anytoshort(exit)] == 0) and ""
-						or " (weight: " .. exitweights[mmp.anytoshort(exit)] .. ")"
+						(not exitweights[mapper.anytoshort(exit)] or exitweights[mapper.anytoshort(exit)] == 0) and ""
+						or " (weight: " .. exitweights[mapper.anytoshort(exit)] .. ")"
 					)
 				)
 			)
 		end
 		-- display special exits if we got any
 		if next(specexits) then
-			mmp.echo(string.format("Special exits (%d):", table.size(specexits)))
+			mapper.echo(string.format("Special exits (%d):", table.size(specexits)))
 			for leadsto, command in pairs(specexits) do
 				if type(command) == "string" then
 					echo(string.format("  %s -> %s (%d)\n", command, getRoomName(leadsto), leadsto))
@@ -87,27 +87,27 @@ function mmp.roomlook(input)
 			end
 		end
 		local message = "This room has the feature '%s'."
-		for _, mapFeature in pairs(mmp.getRoomMapFeatures(num)) do
-			mmp.echo(string.format(message, mapFeature))
+		for _, mapFeature in pairs(mapper.getRoomMapFeatures(num)) do
+			mapper.echo(string.format(message, mapFeature))
 		end
 		-- actions we can do. This will be a short menu of sorts for actions
-		mmp.echo("Stuff you can do:")
+		mapper.echo("Stuff you can do:")
 		echo("  ")
 		echo("Clear all labels ")
 		setUnderline(true)
-		echoLink("(in area)", "mmp.clearLabels(" .. areanum .. ")", "", true)
+		echoLink("(in area)", "mapper.clearLabels(" .. areanum .. ")", "", true)
 		setUnderline(false)
 		echo(" ")
 		setUnderline(true)
 		echoLink(
 			"(whole map)",
 			[[
-    if not mmp.clearinglabels then
-      mmp.echo("Are you sure you want to clear all of your labels on this map? If yes, click the link again.")
-      mmp.clearinglabels = true
+    if not mapper.clearinglabels then
+      mapper.echo("Are you sure you want to clear all of your labels on this map? If yes, click the link again.")
+      mapper.clearinglabels = true
     else
-      mmp.clearLabels("map")
-      mmp.clearinglabels = nil
+      mapper.clearLabels("map")
+      mapper.clearinglabels = nil
     end
     ]],
 			"",
@@ -117,7 +117,7 @@ function mmp.roomlook(input)
 		echo("\n")
 		echo("  ")
 		setUnderline(true)
-		echoLink("Check for mapper & map updates", 'mmp.echo("Checking...") mmp.checkforupdate()', "", true)
+		echoLink("Check for mapper & map updates", 'mapper.echo("Checking...") mapper.checkforupdate()', "", true)
 		setUnderline(false)
 		echo(" ")
 		setUnderline(true)
@@ -126,10 +126,10 @@ function mmp.roomlook(input)
 			[[
       if io.exists(getMudletHomeDir().."/map downloads/current") then
         local s,m = os.remove(getMudletHomeDir().."/map downloads/current")
-        if not s then mmp.echo("Couldn't delete '"..getMudletHomeDir().."/map downloads/current' file: "..tostring(m)..".") end
+        if not s then mapper.echo("Couldn't delete '"..getMudletHomeDir().."/map downloads/current' file: "..tostring(m)..".") end
       end
-      mmp.echo("Re-downloading the latest map...")
-      mmp.checkforupdate()
+      mapper.echo("Re-downloading the latest map...")
+      mapper.checkforupdate()
     ]],
 			"Re-download the map regardless if you have latest",
 			true
@@ -141,7 +141,7 @@ function mmp.roomlook(input)
 	-- see if we can do anything with the name
 
 	local function handle_name(name)
-		local result = mmp.searchRoom(name)
+		local result = mapper.searchRoom(name)
 		if type(result) == "string" then
 			cecho("<grey>You have no recollection of any room with that name.")
 			return
@@ -156,21 +156,21 @@ function mmp.roomlook(input)
 			return
 		end
 		-- if not, then ask the user to clarify which one would they want
-		mmp.echo("Which room specifically would you like to look up?")
+		mapper.echo("Which room specifically would you like to look up?")
 		if not select(2, next(result)) or not tonumber(select(2, next(result))) then
 			for roomid, roomname in pairs(result) do
 				roomid = tonumber(roomid)
 				cecho(string.format("  <LightSlateGray>%s<DarkSlateGrey> (", tostring(roomname)))
 				cechoLink(
-					"<" .. mmp.settings.echocolour .. ">" .. roomid,
-					"mmp.roomlook(" .. roomid .. ")",
+					"<" .. mapper.settings.echocolour .. ">" .. roomid,
+					"mapper.roomlook(" .. roomid .. ")",
 					string.format("View room details for %s (%s)", roomid, tostring(roomname)),
 					true
 				)
 				cecho(
 					string.format(
 						"<DarkSlateGrey>) in the <LightSlateGray>%s<DarkSlateGrey>.\n",
-						tostring(mmp.areatabler and mmp.areatabler[getRoomArea(roomid)] or "?")
+						tostring(mapper.areatabler and mapper.areatabler[getRoomArea(roomid)] or "?")
 					)
 				)
 			end
@@ -179,15 +179,15 @@ function mmp.roomlook(input)
 				roomid = tonumber(roomid)
 				cecho(string.format("  <LightSlateGray>%s<DarkSlateGrey> (", tostring(roomname)))
 				cechoLink(
-					"<" .. mmp.settings.echocolour .. ">" .. roomid,
-					"mmp.roomlook(" .. roomid .. ")",
+					"<" .. mapper.settings.echocolour .. ">" .. roomid,
+					"mapper.roomlook(" .. roomid .. ")",
 					string.format("View room details for %s (%s)", roomid, tostring(roomname)),
 					true
 				)
 				cecho(
 					string.format(
 						"<DarkSlateGrey>) in the <LightSlateGray>%s<DarkSlateGrey>.\n",
-						tostring(mmp.areatabler and mmp.areatabler[getRoomArea(roomid)] or "?")
+						tostring(mapper.areatabler and mapper.areatabler[getRoomArea(roomid)] or "?")
 					)
 				)
 			end
@@ -195,11 +195,11 @@ function mmp.roomlook(input)
 	end
 
 	if not input then
-		if not mmp.roomexists(mmp.currentroom) then
-			mmp.echo(mmp.currentroom .. " doesn't seem to be mapped yet.")
-			mmp.echo("Stuff you can do:")
+		if not mapper.roomexists(mapper.currentroom) then
+			mapper.echo(mapper.currentroom .. " doesn't seem to be mapped yet.")
+			mapper.echo("Stuff you can do:")
 			echo("  ")
-			echoLink("Check for all updates", 'mmp.echo("Checking...") mmp.checkforupdate()', "")
+			echoLink("Check for all updates", 'mapper.echo("Checking...") mapper.checkforupdate()', "")
 			echo(" ")
 			echoLink(
 				"(force map)",
@@ -207,18 +207,18 @@ function mmp.roomlook(input)
       local s,m = os.remove(getMudletHomeDir().."/map downloads/current")
         if io.exists(getMudletHomeDir().."/map downloads/current") then
           local s,m = os.remove(getMudletHomeDir().."/map downloads/current")
-          if not s then mmp.echo("Couldn't delete '"..getMudletHomeDir().."/map downloads/current' file: "..tostring(m)..".") end
+          if not s then mapper.echo("Couldn't delete '"..getMudletHomeDir().."/map downloads/current' file: "..tostring(m)..".") end
         end
-        mmp.echo("Re-downloading the latest map...")
-        mmp.checkforupdate()
+        mapper.echo("Re-downloading the latest map...")
+        mapper.checkforupdate()
       ]],
 				"Re-download the map regardless if you have latest"
 			)
 			echo("\n")
-			mmp.echo(string.format("version %s.", tostring(mmp.version)))
+			mapper.echo(string.format("version %s.", tostring(mapper.version)))
 			return
 		else
-			input = mmp.currentroom
+			input = mapper.currentroom
 		end
 	end
 	if tonumber(input) then
@@ -226,5 +226,5 @@ function mmp.roomlook(input)
 	else
 		handle_name(input)
 	end
-	mmp.echo(string.format("version %s.", tostring(mmp.version)))
+	mapper.echo(string.format("version %s.", tostring(mapper.version)))
 end

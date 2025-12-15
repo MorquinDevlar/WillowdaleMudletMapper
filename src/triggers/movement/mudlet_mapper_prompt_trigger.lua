@@ -1,12 +1,12 @@
 -- to be enabled by functions that need it and disabled after it's done. Sort of like a cheap prompttrigger from Svo.
-mmp.firstAlert = false
+mapper.firstAlert = false
 -- handle alertness
-if mmp.alertness and next(mmp.alertness) then
+if mapper.alertness and next(mapper.alertness) then
 	local dirs = {}
-	for direction, _ in pairs(mmp.alertness) do
+	for direction, _ in pairs(mapper.alertness) do
 		dirs[#dirs + 1] = direction
 	end
-	local people = select(2, next(mmp.alertness)) or {}
+	local people = select(2, next(mapper.alertness)) or {}
 
 	moveCursor(0, getLineNumber())
 
@@ -31,15 +31,15 @@ if mmp.alertness and next(mmp.alertness) then
 
 	moveCursorEnd()
 
-	mmp.alertness = nil
+	mapper.alertness = nil
 
 	raiseEvent("mmapper updated pdb")
 end
 
 -- reset names we last seen, so scripts can be efficient
 -- not finished yet
---if next(mmp.pdb_lastupdate) then
---  mmp.pdb_lastupdate = {}
+--if next(mapper.pdb_lastupdate) then
+--  mapper.pdb_lastupdate = {}
 --end
 
 disableTrigger("Mudlet Mapper prompt trigger")

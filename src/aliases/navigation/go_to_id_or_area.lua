@@ -16,27 +16,27 @@ elseif command:ends("glide") then
 	gallop = "glide"
 	where = where:sub(1, -7)
 end
-if mmp.debug then
-	mmp.gotoPerf = mmp.gotoPerf or createStopWatch()
-	startStopWatch(mmp.gotoPerf)
+if mapper.debug then
+	mapper.gotoPerf = mapper.gotoPerf or createStopWatch()
+	startStopWatch(mapper.gotoPerf)
 end
 -- goto room ID
 if tonumber(where) then
-	mmp.gotoRoom(where, gallop)
+	mapper.gotoRoom(where, gallop)
 else
 	-- goto area or feature
 	local split = where:split(" ")
 	if split[1] == "feature" then
 		table.remove(split, 1)
-		mmp.gotoFeature(table.concat(split, " "), gallop)
+		mapper.gotoFeature(table.concat(split, " "), gallop)
 	else
 		if tonumber(split[#split]) then
-			mmp.gotoArea(where:sub(1, -#split[#split] - 2), tonumber(split[#split]), gallop)
+			mapper.gotoArea(where:sub(1, -#split[#split] - 2), tonumber(split[#split]), gallop)
 		else
-			mmp.gotoArea(where, nil, gallop)
+			mapper.gotoArea(where, nil, gallop)
 		end
 	end
 end
-if mmp.debug then
-	mmp.echo("goto alias took " .. stopStopWatch(mmp.gotoPerf) .. "s to run.")
+if mapper.debug then
+	mapper.echo("goto alias took " .. stopStopWatch(mapper.gotoPerf) .. "s to run.")
 end

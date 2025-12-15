@@ -2,7 +2,7 @@
 -- This script lists some of the API functions available from the IRE mudlet-mapper
 -- not all functions that are available are included here, however.
 
-function mmp.echo(what)
+function mapper.echo(what)
 	what = what or ""
 	moveCursorEnd("main")
 	if getCurrentLine() ~= "" then
@@ -13,7 +13,7 @@ function mmp.echo(what)
 	echo("\n")
 end
 
-function mmp.echon(what)
+function mapper.echon(what)
 	moveCursorEnd("main")
 	if getCurrentLine() ~= "" then
 		echo("\n")
@@ -22,7 +22,7 @@ function mmp.echon(what)
 	cecho(tostring(what))
 end
 
-function mmp.deleteLineP()
+function mapper.deleteLineP()
 	deleteLine()
 	tempLineTrigger(
 		1,
@@ -33,35 +33,35 @@ function mmp.deleteLineP()
 	)
 end
 
-function mmp.pause(what)
-	assert(what == nil or what == "on" or what == "off", "mmp.pause wants 'on', 'off' or nothing as an argument")
+function mapper.pause(what)
+	assert(what == nil or what == "on" or what == "off", "mapper.pause wants 'on', 'off' or nothing as an argument")
 
-	if what == "on" or (what == nil and not mmp.paused) then
-		mmp.paused = true
-	elseif what == "off" or (what == nil and mmp.paused) then
-		mmp.paused = false
+	if what == "on" or (what == nil and not mapper.paused) then
+		mapper.paused = true
+	elseif what == "off" or (what == nil and mapper.paused) then
+		mapper.paused = false
 	end
 
-	mmp.echo("Speedwalking " .. (mmp.paused and "paused" or "unpaused") .. ".")
-	if not mmp.paused then
-		mmp.move()
+	mapper.echo("Speedwalking " .. (mapper.paused and "paused" or "unpaused") .. ".")
+	if not mapper.paused then
+		mapper.move()
 	end
 end
 
-function mmp.mapLook(roomid, delay)
+function mapper.mapLook(roomid, delay)
 	centerview(roomid)
-	if mmp.maplooktimer then
-		killTimer(mmp.maplooktimer)
+	if mapper.maplooktimer then
+		killTimer(mapper.maplooktimer)
 	end
-	mmp.maplooktimer = tempTimer(tonumber(delay) or 4, [[centerview(mmp.currentroom); mmp.maplooktimer = nil]])
+	mapper.maplooktimer = tempTimer(tonumber(delay) or 4, [[centerview(mapper.currentroom); mapper.maplooktimer = nil]])
 end
 
-function mmp.getnums(roomname, exact)
+function mapper.getnums(roomname, exact)
 	if tonumber(roomname) then
 		return { roomname }
 	end
 
-	local t = (not exact and mmp.searchRoom or mmp.searchRoomExact)(roomname)
+	local t = (not exact and mapper.searchRoom or mapper.searchRoomExact)(roomname)
 
 	if not t or not next(t) then
 		return nil
@@ -90,7 +90,7 @@ end
 local cache = {}
 setmetatable(cache, { __mode = "kv" }) -- weak keys/values = it'll periodically get cleaned up by gc
 
-function mmp.searchRoom(what)
+function mapper.searchRoom(what)
 	local result = cache[what]
 	if not result then
 		result = searchRoom(what)
@@ -113,12 +113,12 @@ local function endswith(s, suffix)
 	return s:sub(#s - #suffix + 1) == suffix
 end
 
-function mmp.searchRoomExact(what)
+function mapper.searchRoomExact(what)
 	if type(what) ~= "string" then
 		return
 	end
 
-	local roomTable = mmp.searchRoom(what)
+	local roomTable = mapper.searchRoom(what)
 	local realResult = {}
 	what = what:lower()
 	for key, value in pairs(roomTable) do
@@ -137,7 +137,7 @@ function mmp.searchRoomExact(what)
 	end
 end
 
-function mmp.findAreaID(areaname, exact)
+function mapper.findAreaID(areaname, exact)
 	local areaname = areaname:lower()
 	local list = getAreaTable()
 
@@ -160,7 +160,7 @@ function mmp.findAreaID(areaname, exact)
 	end
 end
 
-function mmp.roomexists(num)
+function mapper.roomexists(num)
 	if not num then
 		return false
 	end
@@ -172,7 +172,7 @@ function mmp.roomexists(num)
 	return (s and true or false)
 end
 
-function mmp.indexof_valueonly(data, value)
+function mapper.indexof_valueonly(data, value)
 	for i = 1, #data do
 		if data[i] == value then
 			return i
@@ -183,8 +183,8 @@ function mmp.indexof_valueonly(data, value)
 end
 
 -- accepts areaname or ID
-function mmp.cleanAreaName(area)
-	local areaname = type(area) == "number" and mmp.areatabler[area] or area
+function mapper.cleanAreaName(area)
+	local areaname = type(area) == "number" and mapper.areatabler[area] or area
 	if not areaname then
 		return area
 	end
@@ -205,8 +205,8 @@ function mmp.cleanAreaName(area)
 end
 
 -- if this room is in a unique area, report it. Otherwise gives nil
-function mmp.getexactarea(roomname)
-	local rooms = mmp.searchRoomExact(roomname)
+function mapper.getexactarea(roomname)
+	local rooms = mapper.searchRoomExact(roomname)
 
 	if not rooms or not next(rooms) then
 		return nil
@@ -222,17 +222,17 @@ function mmp.getexactarea(roomname)
 	end
 
 	if areaid then
-		return mmp.areatabler[areaid]
+		return mapper.areatabler[areaid]
 	end
 end
 
 -- returns the area name of a room or ?
-function mmp.getAreaName(roomid)
-	return mmp.areatabler[getRoomArea(roomid)] or "?"
+function mapper.getAreaName(roomid)
+	return mapper.areatabler[getRoomArea(roomid)] or "?"
 end
 
 -- removes extra prefixes and suffixes that are not part of the actual room name
-function mmp.cleanroomname(roomname)
+function mapper.cleanroomname(roomname)
 	local starts, ends = string.starts, string.ends
 
 	if starts(roomname, "Flying above ") then

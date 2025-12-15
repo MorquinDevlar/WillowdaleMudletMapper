@@ -1,4 +1,4 @@
 -- this should be off by default
-function mmp.seedownloaderrors(...)
+function mapper.seedownloaderrors(...)
 	display({ ... })
 end

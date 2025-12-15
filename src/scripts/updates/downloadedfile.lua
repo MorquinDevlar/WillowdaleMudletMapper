@@ -1,4 +1,4 @@
-function mmp.downloadedfile(_, filename)
+function mapper.downloadedfile(_, filename)
 	if not io.exists(filename) then
 		return
 	end
@@ -7,8 +7,8 @@ function mmp.downloadedfile(_, filename)
 	--  if mmp["downloaded_file_block_"..filename] then return end
 	--  mmp["downloaded_file_block_"..filename] = tempTimer(5, [[mmp["downloaded_file_block_]]..filename..[["] = nil]])
 
-	if filename == tostring(mmp.mapperfile) then -- mapper script version
-		mmp.checkingupdates = false
+	if filename == tostring(mapper.mapperfile) then -- mapper script version
+		mapper.checkingupdates = false
 
 		local f, s = io.open(filename)
 		if f then
@@ -16,12 +16,12 @@ function mmp.downloadedfile(_, filename)
 			io.close(f)
 		end
 
-		if s ~= tostring(mmp.version) then
-			mmp.newmapperversion = s
-			mmp.retrievechangelog()
+		if s ~= tostring(mapper.version) then
+			mapper.newmapperversion = s
+			mapper.retrievechangelog()
 		end
-	elseif filename == tostring(mmp.changelogfile) then -- changelog for the mapper script
-		mmp.checkingupdates = false
+	elseif filename == tostring(mapper.changelogfile) then -- changelog for the mapper script
+		mapper.checkingupdates = false
 
 		local f, s, changelog = io.open(filename)
 		if f then
@@ -30,28 +30,28 @@ function mmp.downloadedfile(_, filename)
 		end
 
 		echo("\n")
-		mmp.echon("------------------[ Mapper Script Update ]------------------")
-		mmp.echon(
+		mapper.echon("------------------[ Mapper Script Update ]------------------")
+		mapper.echon(
 			" The mapper script was updated from <orange>"
-				.. tostring(mmp.version)
+				.. tostring(mapper.version)
 				.. "<reset> -> <green>"
-				.. tostring(mmp.newmapperversion)
+				.. tostring(mapper.newmapperversion)
 				.. "<reset>!"
 		)
-		mmp.echon("")
+		mapper.echon("")
 		cechoLink(
 			" Would you like to install the update? <u><ForestGreen>Click here if so</u><reset>.",
-			"mmp.downloadmapperscript()",
+			"mapper.downloadmapperscript()",
 			"Changelog for the latest ("
-				.. tostring(mmp.version)
+				.. tostring(mapper.version)
 				.. " -> "
-				.. tostring(mmp.newmapperversion)
+				.. tostring(mapper.newmapperversion)
 				.. ") update:\n"
 				.. changelog,
 			true
 		)
 		echo("\n\n")
-	elseif filename == mmp.crowdchangelogfile then -- changelog for the crowdmap
+	elseif filename == mapper.crowdchangelogfile then -- changelog for the crowdmap
 		local f, s = io.open(filename)
 		if f then
 			s = f:read("*a")
@@ -76,34 +76,34 @@ function mmp.downloadedfile(_, filename)
 
 		run(s)
 
-		mmp.crowdchangelog = env.changelog
+		mapper.crowdchangelog = env.changelog
 
 		echo("\n")
-		mmp.echon("------------------[ Map Update ]------------------")
-		mmp.echon(
+		mapper.echon("------------------[ Map Update ]------------------")
+		mapper.echon(
 			" The crowdmap map was updated from <orange>"
-				.. (mmp.oldversion or "(none)")
+				.. (mapper.oldversion or "(none)")
 				.. " <reset>-> <green>"
-				.. tostring(mmp.newversion)
+				.. tostring(mapper.newversion)
 				.. "<reset>!"
 		)
-		mmp.echon(" Want to see the full changelog?")
+		mapper.echon(" Want to see the full changelog?")
 		cechoLink(
 			" <ForestGreen>Click here<reset>.",
-			"mmp.showcrowdchangelog()",
+			"mapper.showcrowdchangelog()",
 			"View the full changelog for mappers",
 			true
 		)
-		mmp.echon(
+		mapper.echon(
 			" Latest changes were: <LightSkyBlue>"
-				.. tostring(mmp.crowdchangelog and mmp.crowdchangelog[#mmp.crowdchangelog] or "?")
+				.. tostring(mapper.crowdchangelog and mapper.crowdchangelog[#mapper.crowdchangelog] or "?")
 				.. ".\n"
 		)
 		echo("\n\n")
 
-		mmp.downloadcrowdmap(mmp.newversion)
-	elseif filename == mmp.crowdmapfile then -- crowdmap map
-		mmp.echo("Map downloaded, loading it in...")
+		mapper.downloadcrowdmap(mapper.newversion)
+	elseif filename == mapper.crowdmapfile then -- crowdmap map
+		mapper.echo("Map downloaded, loading it in...")
 
 		local tmp = getRoomUserData(1, "gotoMapping")
 		local oldmaptable = {}
@@ -117,11 +117,11 @@ function mmp.downloadedfile(_, filename)
 		if ok then
 			-- Willowdale-specific map post-processing can be added here
 
-			if mmp.settings.lockspecials then
-				mmp.lockSpecials()
+			if mapper.settings.lockspecials then
+				mapper.lockSpecials()
 			end
 
-			mmp.echo("Map loaded fine - enjoy!")
+			mapper.echo("Map loaded fine - enjoy!")
 
 			tmp = getRoomUserData(1, "gotoMapping")
 			local newmaptable = {}
@@ -134,11 +134,11 @@ function mmp.downloadedfile(_, filename)
 				newmaptable[k] = v
 			end
 			setRoomUserData(1, "gotoMapping", yajl.to_string(newmaptable))
-			mmp.echo("Marks from the old map migrated successfully.")
+			mapper.echo("Marks from the old map migrated successfully.")
 
 			raiseEvent("mmapper updated map")
 		else
-			mmp.echon("Map failed to load - you need to have the mapper open. Please open it, and then ")
+			mapper.echon("Map failed to load - you need to have the mapper open. Please open it, and then ")
 			echoLink("click here", [[
         local tmp = getRoomUserData(1, "gotoMapping")
         local oldmaptable = {}
@@ -150,9 +150,9 @@ function mmp.downloadedfile(_, filename)
         if ok then
         -- Willowdale-specific map post-processing can be added here
         
-        if mmp.settings.lockspecials then mmp.lockSpecials() end
+        if mapper.settings.lockspecials then mapper.lockSpecials() end
 
-        mmp.echo("Map loaded successfully!")
+        mapper.echo("Map loaded successfully!")
 
           tmp = getRoomUserData(1, "gotoMapping")
           local newmaptable = {}
@@ -161,20 +161,20 @@ function mmp.downloadedfile(_, filename)
           end
           for k,v in pairs(oldmaptable) do newmaptable[k] = v end
           setRoomUserData(1, "gotoMapping", yajl.to_string(newmaptable))
-          mmp.echo("Marks from the old map migrated successfully.")
+          mapper.echo("Marks from the old map migrated successfully.")
           raiseEvent("mmapper updated map")
-        else mmp.echo("Nope, didn't work. Open the map and try again?") end
+        else mapper.echo("Nope, didn't work. Open the map and try again?") end
       ]], "Click here to try loading the map again")
 			echo(" to try loading it in again.\n")
 		end
-	elseif filename == tostring(mmp.downloadedscript) then -- new mapper script xml downloaded
-		mmp.checkingupdates = false
-		mmp.installMapperScript()
-	elseif filename == tostring(mmp.mapfile) then -- map version #, either IRE's or crowd
-		mmp.checkingupdates = false
+	elseif filename == tostring(mapper.downloadedscript) then -- new mapper script xml downloaded
+		mapper.checkingupdates = false
+		mapper.installMapperScript()
+	elseif filename == tostring(mapper.mapfile) then -- map version #, either IRE's or crowd
+		mapper.checkingupdates = false
 
 		local function needupdate(currentmd5, oldmd5)
-			mmp.echon("The games map was ")
+			mapper.echon("The games map was ")
 			echoLink(
 				"updated",
 				"",
@@ -186,7 +186,7 @@ function mmp.downloadedfile(_, filename)
 			)
 			echoLink(
 				"click here",
-				"mmp.updatedmap('" .. currentmd5 .. "')",
+				"mapper.updatedmap('" .. currentmd5 .. "')",
 				"Click here to quiet the update reminder"
 			)
 			echo(" to remove the reminder.")

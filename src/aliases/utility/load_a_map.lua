@@ -1,6 +1,6 @@
 local function s(loc)
 	if string.ends(loc, ".json") and not loadJsonMap then
-		mmp.echo("Your Mudlet can't load maps in JSON, please upgrade first.")
+		mapper.echo("Your Mudlet can't load maps in JSON, please upgrade first.")
 		return
 	end
 
@@ -12,16 +12,16 @@ local function s(loc)
 	end
 
 	if not allok then
-		mmp.echo("Couldn't load the map :(")
+		mapper.echo("Couldn't load the map :(")
 	else
 		-- Apply any Willowdale-specific map settings here
-		if mmp.settings.lockspecials then
-			mmp.lockSpecials()
+		if mapper.settings.lockspecials then
+			mapper.lockSpecials()
 		end
 		if loc ~= "" then
-			mmp.echo("Map loaded.")
+			mapper.echo("Map loaded.")
 		else
-			mmp.echo("Loaded the default map.")
+			mapper.echo("Loaded the default map.")
 		end
 		raiseEvent("mmapper updated map")
 	end

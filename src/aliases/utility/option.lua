@@ -3,15 +3,15 @@
 -- matches[3] is the value (if provided)
 
 -- Check if game is detected
-if not mmp.game then
-	mmp.echo("Game not detected. Please reconnect to your MUD so the mapper can identify which game you're playing.")
-	mmp.echo("The mapper uses gmcp.Game.Info.name to identify the specific game.")
+if not mapper.game then
+	mapper.echo("Game not detected. Please reconnect to your MUD so the mapper can identify which game you're playing.")
+	mapper.echo("The mapper uses gmcp.Game.Info.name to identify the specific game.")
 	return
 end
 
 if not matches[2] then
 	-- Show all options with the new display format
-	mmp.settings:showAllOptions(mmp.game)
+	mapper.settings:showAllOptions(mapper.game)
 	return
 end
 
@@ -21,14 +21,14 @@ local val = matches[3]
 -- If only option name is provided (no value), show description
 if option and (not val or val == "") then
 	-- Use the new getOptionDef method to get the option definition
-	local optionDef = mmp.settings:getOptionDef(option)
+	local optionDef = mapper.settings:getOptionDef(option)
 	
 	if optionDef then
 		-- Use mapper color scheme: light green for labels, white for values
 		echo("\n")
 		decho("<112,229,0>" .. option .. ":<255,255,255> " .. (optionDef.use or "No description available") .. "\n")
 		-- Show current value
-		local currentValue = mmp.settings[option]
+		local currentValue = mapper.settings[option]
 		if type(currentValue) == "boolean" then
 			currentValue = currentValue and "on" or "off"
 		end
@@ -43,7 +43,7 @@ if option and (not val or val == "") then
 			decho("<112,229,0>Accepted values: <128,128,128>0-5 (0=instant, 0.3=normal, 1+=slow)\n")
 		end
 	else
-		mmp.echo("Unknown option: " .. option)
+		mapper.echo("Unknown option: " .. option)
 	end
 	return
 end
@@ -57,4 +57,4 @@ if val == "false" or val == "no" or val == "off" then
 end
 local numberVal = tonumber(val)
 val = numberVal and numberVal or val
-mmp.settings:setOption(option, val)
+mapper.settings:setOption(option, val)

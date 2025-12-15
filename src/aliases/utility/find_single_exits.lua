@@ -1,7 +1,7 @@
 local c = 0
 
 local getAreaRooms, getRoomExits, contains, echoLink, getRoomEnv, envidsr =
-	getAreaRooms, getRoomExits, table.contains, echoLink, getRoomEnv, mmp.envidsr
+	getAreaRooms, getRoomExits, table.contains, echoLink, getRoomEnv, mapper.envidsr
 
 for area, id in pairs(getAreaTable()) do
 	for _, roomid in pairs(getAreaRooms(id)) do
@@ -17,7 +17,7 @@ for area, id in pairs(getAreaTable()) do
 						(envidsr and envidsr[getRoomEnv(roomid)] or "?"),
 						(envidsr and envidsr[getRoomEnv(otherroom)] or "?")
 					),
-					[[mmp.gotoRoom(]] .. roomid .. [[)]],
+					[[mapper.gotoRoom(]] .. roomid .. [[)]],
 					"Click to go to the start room " .. roomid,
 					true
 				)
@@ -27,4 +27,4 @@ for area, id in pairs(getAreaTable()) do
 	end
 end
 
-mmp.echo(string.format("Found %s oneways.%s", c, (c > 10 and " Have fun. Click on lines to go to the rooms." or "")))
+mapper.echo(string.format("Found %s oneways.%s", c, (c > 10 and " Have fun. Click on lines to go to the rooms." or "")))

@@ -1,1 +1,1 @@
-mmp.deleteMapFeature(matches[2]:trim())
+mapper.deleteMapFeature(matches[2]:trim())

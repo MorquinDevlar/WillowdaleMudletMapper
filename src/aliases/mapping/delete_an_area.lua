@@ -1,1 +1,1 @@
-mmp.deleteArea(matches[2])
+mapper.deleteArea(matches[2])

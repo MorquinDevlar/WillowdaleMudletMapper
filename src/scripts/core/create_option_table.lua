@@ -23,7 +23,7 @@ local spairs = spairs
 		end
 	end
 
-function mmp.createOption(startingValue, onChangeFunc, allowedVarTypes, use, checkOption, games)
+function mapper.createOption(startingValue, onChangeFunc, allowedVarTypes, use, checkOption, games)
 	if allowedVarTypes then -- make sure our starting Value follows type rules
 		if not table.contains(allowedVarTypes, type(startingValue)) then
 			echo("Starting type is not of allowed type!\n")
@@ -47,7 +47,7 @@ function mmp.createOption(startingValue, onChangeFunc, allowedVarTypes, use, che
 	return option
 end
 
-function mmp.createOptionsTable(defaultTable)
+function mapper.createOptionsTable(defaultTable)
 	local index = {} -- index to store the default table at in our proxy table
 
 	local proxyTable = {} -- This is the table that is returned to the user
@@ -158,8 +158,8 @@ function mmp.createOptionsTable(defaultTable)
 				opt.onChange(option, value)
 			end
 		end
-		if mmp and mmp.clearpathcache then
-			mmp.clearpathcache()
+		if mmp and mapper.clearpathcache then
+			mapper.clearpathcache()
 		end
 	end
 

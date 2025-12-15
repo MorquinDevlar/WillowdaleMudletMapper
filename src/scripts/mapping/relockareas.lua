@@ -1,5 +1,5 @@
-function mmp.relockareas()
-	local getAreaRooms, lockRoom, lockedareas = getAreaRooms, lockRoom, mmp.locked
+function mapper.relockareas()
+	local getAreaRooms, lockRoom, lockedareas = getAreaRooms, lockRoom, mapper.locked
 
 	for areaid, areaname in pairs(getAreaTableSwap()) do
 		if lockedareas[areaid] then

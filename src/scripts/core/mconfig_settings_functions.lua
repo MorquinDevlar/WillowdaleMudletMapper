@@ -1,6 +1,6 @@
-function mmp.doLock(what, lock, filter)
+function mapper.doLock(what, lock, filter)
 	if what then
-		mmp.echo(string.format("%s all %s...", (lock and "Locking" or "Unlocking"), what))
+		mapper.echo(string.format("%s all %s...", (lock and "Locking" or "Unlocking"), what))
 	end
 	local c = 0
 
@@ -26,13 +26,13 @@ function mmp.doLock(what, lock, filter)
 	end
 
 	if what then
-		mmp.echo(string.format("%s %s known %s.", (lock and "Locked" or "Unlocked"), c, what))
+		mapper.echo(string.format("%s %s known %s.", (lock and "Locked" or "Unlocked"), c, what))
 	end
 	return c
 end
 
-function mmp.changeEchoColour()
-	mmp.echo("Now displaying echos in <" .. mmp.settings.echocolour .. ">" .. mmp.settings.echocolour)
+function mapper.changeEchoColour()
+	mapper.echo("Now displaying echos in <" .. mapper.settings.echocolour .. ">" .. mapper.settings.echocolour)
 end
 
 

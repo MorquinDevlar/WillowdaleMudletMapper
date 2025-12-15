@@ -14,13 +14,13 @@ for area, id in pairs(areas) do
 end
 
 if not next(m) then
-	mmp.echo("This map has no char marks on it. Do mc on and rcc <mark> in a room to add them!")
+	mapper.echo("This map has no char marks on it. Do mc on and rcc <mark> in a room to add them!")
 	return
 end
 
 for letter, rooms in pairs(m) do
 	table.sort(rooms)
-	mmp.echo("Rooms with the <" .. mmp.settings.echocolour .. ">" .. letter .. "<reset> character on them:")
+	mapper.echo("Rooms with the <" .. mapper.settings.echocolour .. ">" .. letter .. "<reset> character on them:")
 	for i = 1, #rooms do
 		if not show_area then
 			cecho(string.format("  <sea_green>%-5s<reset> %s\n", rooms[i], getRoomName(rooms[i])))
@@ -30,7 +30,7 @@ for letter, rooms in pairs(m) do
 					"  <sea_green>%-5s<reset> %-35s <dim_grey>(in<reset> %s<dim_grey>)\n",
 					rooms[i],
 					getRoomName(rooms[i]),
-					mmp.areatabler[getRoomArea(rooms[i])]
+					mapper.areatabler[getRoomArea(rooms[i])]
 				)
 			)
 		end

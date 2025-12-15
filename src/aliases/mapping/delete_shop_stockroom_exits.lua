@@ -1,7 +1,7 @@
-mmp.echo("Deleting all known stockroom exits (rooms with $ and a down exit)")
+mapper.echo("Deleting all known stockroom exits (rooms with $ and a down exit)")
 local c = 0
 
-for area, areaname in pairs(mmp.areatabler) do
+for area, areaname in pairs(mapper.areatabler) do
 	local rooms = getAreaRooms(area) or {}
 	for i = 0, #rooms do
 		if rooms[i] then
@@ -10,13 +10,13 @@ for area, areaname in pairs(mmp.areatabler) do
 				local exits = getRoomExits(rooms[i]) -- retrieve after $, more efficient
 
 				if exits.down then
-					mmp.setExit(rooms[i], -1, "down")
-					mmp.echo(
+					mapper.setExit(rooms[i], -1, "down")
+					mapper.echo(
 						string.format(
 							"Deleted the stockroom exit at %s (#%d in %s)",
 							getRoomName(rooms[i]),
 							rooms[i],
-							mmp.areatabler[getRoomArea(rooms[i])]
+							mapper.areatabler[getRoomArea(rooms[i])]
 						)
 					)
 					c = c + 1
@@ -26,5 +26,5 @@ for area, areaname in pairs(mmp.areatabler) do
 	end
 end
 
-mmp.echo(string.format("Deleted %s known stockroom exit%s.", c, (c ~= 1 and "s" or "")))
-centerview(mmp.currentroom)
+mapper.echo(string.format("Deleted %s known stockroom exit%s.", c, (c ~= 1 and "s" or "")))
+centerview(mapper.currentroom)

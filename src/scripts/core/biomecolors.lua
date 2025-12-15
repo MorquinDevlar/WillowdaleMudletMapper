@@ -2,13 +2,13 @@
 -- Converts GMCP biome_color hex codes to environment IDs
 
 -- Initialize storage for biome color mappings
-mmp.biomeColorToEnvId = mmp.biomeColorToEnvId or {}
-mmp.nextBiomeEnvId = mmp.nextBiomeEnvId or 1000  -- Start at 1000 to avoid conflicts with static env IDs
+mapper.biomeColorToEnvId = mapper.biomeColorToEnvId or {}
+mapper.nextBiomeEnvId = mapper.nextBiomeEnvId or 1000  -- Start at 1000 to avoid conflicts with static env IDs
 
 -- Convert hex color string to RGBA values
 -- @param hexColor string - Hex color code (e.g., "#708090" or "708090")
 -- @return r, g, b, a number - RGBA values (0-255)
-function mmp.hexToRGBA(hexColor)
+function mapper.hexToRGBA(hexColor)
     if not hexColor or type(hexColor) ~= "string" then
         return nil
     end
@@ -40,7 +40,7 @@ end
 -- Get or create an environment ID for a biome color
 -- @param biomeColor string - Hex color code from GMCP (e.g., "#708090")
 -- @return number - Environment ID to use with setRoomEnv()
-function mmp.getBiomeEnvId(biomeColor)
+function mapper.getBiomeEnvId(biomeColor)
     if not biomeColor or type(biomeColor) ~= "string" then
         return nil
     end
@@ -49,39 +49,39 @@ function mmp.getBiomeEnvId(biomeColor)
     local normalizedColor = biomeColor:gsub("^#", ""):upper()
 
     -- Check if we've already registered this color
-    if mmp.biomeColorToEnvId[normalizedColor] then
-        return mmp.biomeColorToEnvId[normalizedColor]
+    if mapper.biomeColorToEnvId[normalizedColor] then
+        return mapper.biomeColorToEnvId[normalizedColor]
     end
 
     -- Convert hex to RGBA
-    local r, g, b, a = mmp.hexToRGBA(biomeColor)
+    local r, g, b, a = mapper.hexToRGBA(biomeColor)
     if not r then
         return nil
     end
 
     -- Allocate a new environment ID
-    local envId = mmp.nextBiomeEnvId
-    mmp.nextBiomeEnvId = mmp.nextBiomeEnvId + 1
+    local envId = mapper.nextBiomeEnvId
+    mapper.nextBiomeEnvId = mapper.nextBiomeEnvId + 1
 
     -- Register the color with Mudlet
     setCustomEnvColor(envId, r, g, b, a)
 
     -- Store the mapping
-    mmp.biomeColorToEnvId[normalizedColor] = envId
+    mapper.biomeColorToEnvId[normalizedColor] = envId
 
     return envId
 end
 
 -- Initialize biome colors from stored settings
 -- This is called when the mapper loads to restore previously registered colors
-function mmp.initializeBiomeColors()
-    if not mmp.biomeColorToEnvId then
-        mmp.biomeColorToEnvId = {}
+function mapper.initializeBiomeColors()
+    if not mapper.biomeColorToEnvId then
+        mapper.biomeColorToEnvId = {}
     end
 
     -- Re-register all previously seen colors
-    for colorHex, envId in pairs(mmp.biomeColorToEnvId) do
-        local r, g, b, a = mmp.hexToRGBA(colorHex)
+    for colorHex, envId in pairs(mapper.biomeColorToEnvId) do
+        local r, g, b, a = mapper.hexToRGBA(colorHex)
         if r then
             setCustomEnvColor(envId, r, g, b, a)
         end
@@ -89,10 +89,10 @@ function mmp.initializeBiomeColors()
 
     -- Update the next ID counter to be higher than any existing ID
     local maxId = 999
-    for _, envId in pairs(mmp.biomeColorToEnvId) do
+    for _, envId in pairs(mapper.biomeColorToEnvId) do
         if envId > maxId then
             maxId = envId
         end
     end
-    mmp.nextBiomeEnvId = maxId + 1
+    mapper.nextBiomeEnvId = maxId + 1
 end

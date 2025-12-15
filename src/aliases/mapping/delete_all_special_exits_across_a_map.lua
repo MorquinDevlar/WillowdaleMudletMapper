@@ -1,1 +1,1 @@
-mmp.delSpecialExits(matches[2])
+mapper.delSpecialExits(matches[2])

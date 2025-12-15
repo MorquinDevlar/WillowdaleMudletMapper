@@ -30,13 +30,13 @@
         "isFolder": "no"
     },
     {
-        "name": "mmp.setenvcolors",
+        "name": "envcolors",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "mmp.biomecolors",
+        "name": "biomecolors",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
@@ -48,7 +48,7 @@
         "isFolder": "no"
     },
     {
-        "name": "mmp.packageinstalled",
+        "name": "packageinstalled",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"

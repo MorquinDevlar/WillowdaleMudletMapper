@@ -6,21 +6,21 @@
         "isFolder": "no"
     },
     {
-        "name": "mmp.checkupdatestart",
+        "name": "checkupdatestart",
         "isActive": "yes",
         "eventHandlerList": ["mmp logged in"],
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "mmp.downloadedfile",
+        "name": "downloadedfile",
         "isActive": "yes",
         "eventHandlerList": ["sysDownloadDone"],
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "mmp.seedownloaderrors",
+        "name": "seedownloaderrors",
         "isActive": "no",
         "eventHandlerList": ["sysDownloadError"],
         "script": "",

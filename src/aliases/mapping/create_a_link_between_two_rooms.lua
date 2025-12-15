@@ -1,13 +1,13 @@
 -- need the current room, but we're lost
-if not mmp.currentroom or not mmp.roomexists(mmp.currentroom) then
-	mmp.echo("Don't know where we are at the moment.")
+if not mapper.currentroom or not mapper.roomexists(mapper.currentroom) then
+	mapper.echo("Don't know where we are at the moment.")
 	return
 end
 
 -- make sure the dir is valid
-local dir = mmp.anytolong(matches[3])
+local dir = mapper.anytolong(matches[3])
 if not dir then
-	mmp.echo(matches[3] .. " isn't a valid normal exit.")
+	mapper.echo(matches[3] .. " isn't a valid normal exit.")
 	return
 end
 
@@ -15,7 +15,7 @@ end
 local otherroom
 if matches[2] == "" then
 	local w = matches[3]
-	local ox, oy, oz, x, y, z = getRoomCoordinates(mmp.currentroom)
+	local ox, oy, oz, x, y, z = getRoomCoordinates(mapper.currentroom)
 	local has = table.contains
 	if has({ "west", "left", "w", "l" }, w) then
 		x = (x or ox) - 1
@@ -59,37 +59,37 @@ if matches[2] == "" then
 		z = (z or oz) - 1
 	end
 
-	local carea = getRoomArea(mmp.currentroom)
+	local carea = getRoomArea(mapper.currentroom)
 	if not carea then
-		mmp.echo("Don't know what area are we in.")
+		mapper.echo("Don't know what area are we in.")
 		return
 	end
 
 	otherroom = select(2, next(getRoomsByPosition(carea, x, y, z)))
 
 	if not otherroom then
-		mmp.echo("There isn't a room to the " .. w .. " that I see - try with an exact room id.")
+		mapper.echo("There isn't a room to the " .. w .. " that I see - try with an exact room id.")
 		return
 	end
 else
-	if not mmp.roomexists(matches[2]) then -- check that an explicit other room ID is valid
-		mmp.echo("A room with id " .. matches[2] .. " doesn't exist.")
+	if not mapper.roomexists(matches[2]) then -- check that an explicit other room ID is valid
+		mapper.echo("A room with id " .. matches[2] .. " doesn't exist.")
 		return
 	else
 		otherroom = tonumber(matches[2])
 	end
 end
 
-if mmp.setExit(mmp.currentroom, otherroom, matches[3]) then
+if mapper.setExit(mapper.currentroom, otherroom, matches[3]) then
 	if not matches[4] then
-		mmp.setExit(otherroom, mmp.currentroom, mmp.ranytolong(matches[3]))
+		mapper.setExit(otherroom, mapper.currentroom, mapper.ranytolong(matches[3]))
 	end
 
-	mmp.echo(
+	mapper.echo(
 		string.format(
 			"Linked %s (%d) to %s (%d) via a %s%s exit.",
-			(getRoomName(mmp.currentroom) ~= "" and getRoomName(mmp.currentroom) or "''"),
-			mmp.currentroom,
+			(getRoomName(mapper.currentroom) ~= "" and getRoomName(mapper.currentroom) or "''"),
+			mapper.currentroom,
 			(getRoomName(otherroom) ~= "" and getRoomName(otherroom) or "''"),
 			otherroom,
 			(matches[4] and "one-way " or ""),
@@ -97,6 +97,6 @@ if mmp.setExit(mmp.currentroom, otherroom, matches[3]) then
 		)
 	)
 else
-	mmp.echo("Couldn't create an exit.")
+	mapper.echo("Couldn't create an exit.")
 end
-centerview(mmp.currentroom)
+centerview(mapper.currentroom)

@@ -6,27 +6,27 @@
         "isFolder": "no"
     },
     {
-        "name": "mmp.centerroominfo",
+        "name": "centerroominfo",
         "isActive": "yes",
         "eventHandlerList": ["gmcp.Room.Info"],
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "mmp.roomlook",
+        "name": "roomlook",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "mmp.speedwalking",
+        "name": "speedwalking",
         "isActive": "yes",
         "eventHandlerList": ["gmcp.Room.Info"],
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "mmp.updatedoors",
+        "name": "doors",
         "isActive": "yes",
         "eventHandlerList": ["gmcp.Room.Info.Exits"],
         "script": "",

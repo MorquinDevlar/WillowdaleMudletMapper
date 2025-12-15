@@ -1,1 +1,1 @@
-mmp.echoAreaList()
+mapper.echoAreaList()

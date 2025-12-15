@@ -30,41 +30,41 @@
         "isFolder": "no"
     },
     {
-        "name": "mmp.loadoptions",
+        "name": "loadoptions",
         "isActive": "yes",
         "eventHandlerList": ["sysLoadEvent"],
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "mmp.mappingnewroom",
+        "name": "room_gmcp_handler",
         "isActive": "yes",
         "eventHandlerList": ["gmcp.Room.Info.Exits", "RoomNum"],
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "mmp.regenerateareas",
+        "name": "regenerateareas",
         "isActive": "yes",
         "eventHandlerList": ["mmp areas changed"],
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "mmp.relockareas",
+        "name": "relockareas",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "mmp.saveoptions",
+        "name": "saveoptions",
         "isActive": "yes",
         "eventHandlerList": ["sysExitEvent"],
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "mmp.roomArea",
+        "name": "roomArea",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"

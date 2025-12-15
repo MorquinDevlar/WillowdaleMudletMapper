@@ -1,1 +1,1 @@
-mmp.roomCreateMapFeature(matches[3], matches[2] == "" and mmp.currentroom or tonumber(matches[2]))
+mapper.roomCreateMapFeature(matches[3], matches[2] == "" and mapper.currentroom or tonumber(matches[2]))

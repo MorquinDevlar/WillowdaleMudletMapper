@@ -1,4 +1,4 @@
-function mmp.filterRooms(rooms, area)
+function mapper.filterRooms(rooms, area)
 	local unassignedRooms = {}
 	local areaRooms = {}
 	for roomnum, roomname in pairs(rooms) do
@@ -14,10 +14,10 @@ end
 
 -- for a given room name, we'll echo all the vnums
 
-function mmp.echonums(roomname, area)
-	local t = mmp.searchRoomExact(roomname)
+function mapper.echonums(roomname, area)
+	local t = mapper.searchRoomExact(roomname)
 	if area then
-		t = mmp.filterRooms(t, area)
+		t = mapper.filterRooms(t, area)
 	end
 	if not next(t) then
 		echo("?")
@@ -36,8 +36,8 @@ function mmp.echonums(roomname, area)
 	end
 	-- display first three ids. Can't really nicely table.concat them.
 	cechoLink(
-		"<" .. mmp.settings.echocolour .. ">" .. dt[1].id,
-		"mmp.gotoRoom(" .. dt[1].id .. ")",
+		"<" .. mapper.settings.echocolour .. ">" .. dt[1].id,
+		"mapper.gotoRoom(" .. dt[1].id .. ")",
 		string.format("Go to %s (%s)", dt[1].id, dt[1].name),
 		true
 	)
@@ -46,8 +46,8 @@ function mmp.echonums(roomname, area)
 	end
 	echo(", ")
 	cechoLink(
-		"<" .. mmp.settings.echocolour .. ">" .. dt[2].id,
-		"mmp.gotoRoom(" .. dt[2].id .. ")",
+		"<" .. mapper.settings.echocolour .. ">" .. dt[2].id,
+		"mapper.gotoRoom(" .. dt[2].id .. ")",
 		string.format("Go to %s (%s)", dt[2].id, dt[2].name),
 		true
 	)
@@ -56,8 +56,8 @@ function mmp.echonums(roomname, area)
 	end
 	echo(", ")
 	cechoLink(
-		"<" .. mmp.settings.echocolour .. ">" .. dt[3].id,
-		"mmp.gotoRoom(" .. dt[3].id .. ")",
+		"<" .. mapper.settings.echocolour .. ">" .. dt[3].id,
+		"mapper.gotoRoom(" .. dt[3].id .. ")",
 		string.format("Go to %s (%s)", dt[3].id, dt[3].name),
 		true
 	)
@@ -67,15 +67,15 @@ function mmp.echonums(roomname, area)
 	echo(", ...")
 end
 
-function mmp.roomEcho(query)
-	local result = mmp.searchRoom(query)
+function mapper.roomEcho(query)
+	local result = mapper.searchRoom(query)
 	if not tonumber(select(2, next(result))) then
 		for roomid, roomname in pairs(result) do
 			roomid = tonumber(roomid)
 			cecho("<DarkSlateGrey> (")
 			cechoLink(
-				"<" .. mmp.settings.echocolour .. ">" .. roomid,
-				"mmp.gotoRoom(" .. roomid .. ")",
+				"<" .. mapper.settings.echocolour .. ">" .. roomid,
+				"mapper.gotoRoom(" .. roomid .. ")",
 				string.format("Go to %s (%s)", roomid, tostring(roomname)),
 				true
 			)
@@ -86,8 +86,8 @@ function mmp.roomEcho(query)
 			roomid = tonumber(roomid)
 			cecho("<DarkSlateGrey> (")
 			cechoLink(
-				"<" .. mmp.settings.echocolour .. ">" .. roomid,
-				"mmp.gotoRoom(" .. roomid .. ")",
+				"<" .. mapper.settings.echocolour .. ">" .. roomid,
+				"mapper.gotoRoom(" .. roomid .. ")",
 				string.format("Go to %s (%s)", roomid, tostring(roomname)),
 				true
 			)
@@ -96,13 +96,13 @@ function mmp.roomEcho(query)
 	end
 end
 
-function mmp.locateAndEcho(room, person, area)
-	local t = mmp.searchRoomExact(room)
+function mapper.locateAndEcho(room, person, area)
+	local t = mapper.searchRoomExact(room)
 	if area then
-		t = mmp.filterRooms(t, area)
+		t = mapper.filterRooms(t, area)
 	end
 	echo("  (")
-	mmp.echonums(room, area)
+	mapper.echonums(room, area)
 	echo(")")
 	-- lowercase results
 	for k, v in pairs(t) do
@@ -120,7 +120,7 @@ function mmp.locateAndEcho(room, person, area)
 		local k, v = next(t)
 		cecho(
 			"<red>From your knowledge, that room is in <orange_red>"
-				.. mmp.cleanAreaName(mmp.areatabler[getRoomArea(type(k) == "number" and k or v)] or "?")
+				.. mapper.cleanAreaName(mapper.areatabler[getRoomArea(type(k) == "number" and k or v)] or "?")
 				.. "<red>."
 		)
 	else
@@ -128,17 +128,17 @@ function mmp.locateAndEcho(room, person, area)
 		local areas = {}
 		if type(k) == "number" then
 			for k, _ in pairs(t) do
-				areas[mmp.areatabler[getRoomArea(k)] or "?"] = true
+				areas[mapper.areatabler[getRoomArea(k)] or "?"] = true
 			end
 		else
 			for _, k in pairs(t) do
-				areas[mmp.areatabler[getRoomArea(k)] or "?"] = true
+				areas[mapper.areatabler[getRoomArea(k)] or "?"] = true
 			end
 		end
 		local flattened_areas = {}
 		for k, _ in pairs(areas) do
 			if k ~= "" then
-				flattened_areas[#flattened_areas + 1] = mmp.cleanAreaName(k)
+				flattened_areas[#flattened_areas + 1] = mapper.cleanAreaName(k)
 			end
 		end
 		cecho(
@@ -148,16 +148,16 @@ function mmp.locateAndEcho(room, person, area)
 		)
 	end
 	if person then
-		mmp.pdb[person] = room
-		mmp.pdb_lastupdate[person] = true
+		mapper.pdb[person] = room
+		mapper.pdb_lastupdate[person] = true
 		raiseEvent("mmapper updated pdb")
 	end
 end
 
-function mmp.locateAndEchoSide(room, person)
-	local t = mmp.searchRoomExact(room)
+function mapper.locateAndEchoSide(room, person)
+	local t = mapper.searchRoomExact(room)
 	echo("  (")
-	mmp.echonums(room)
+	mapper.echonums(room)
 	echo(")")
 	-- lowercase results
 	for k, v in pairs(t) do
@@ -174,37 +174,37 @@ function mmp.locateAndEchoSide(room, person)
 	if table.size(t) == 1 then
 		local k, v = next(t)
 		cecho(
-			"<red>  (" .. mmp.cleanAreaName(mmp.areatabler[getRoomArea(type(k) == "number" and k or v)] or "?") .. ")"
+			"<red>  (" .. mapper.cleanAreaName(mapper.areatabler[getRoomArea(type(k) == "number" and k or v)] or "?") .. ")"
 		)
 	else
 		local k, v = next(t)
 		local areas = {}
 		if type(k) == "number" then
 			for k, _ in pairs(t) do
-				areas[mmp.areatabler[getRoomArea(k)] or "?"] = true
+				areas[mapper.areatabler[getRoomArea(k)] or "?"] = true
 			end
 		else
 			for _, k in pairs(t) do
-				areas[mmp.areatabler[getRoomArea(k)] or "?"] = true
+				areas[mapper.areatabler[getRoomArea(k)] or "?"] = true
 			end
 		end
 		local flattened_areas = {}
 		for k, _ in pairs(areas) do
 			if k ~= "" then
-				flattened_areas[#flattened_areas + 1] = mmp.cleanAreaName(k)
+				flattened_areas[#flattened_areas + 1] = mapper.cleanAreaName(k)
 			end
 		end
 		cecho("<red> (" .. table.concat(flattened_areas, ", ") .. ")")
 	end
 	if person then
-		mmp.pdb[person] = room
-		mmp.pdb_lastupdate[person] = true
+		mapper.pdb[person] = room
+		mapper.pdb_lastupdate[person] = true
 		raiseEvent("mmapper updated pdb")
 	end
 end
 
-function mmp.locateAndEchoInternal(room, person)
-	local t = mmp.searchRoomExact(room)
+function mapper.locateAndEchoInternal(room, person)
+	local t = mapper.searchRoomExact(room)
 	-- lowercase results
 	for k, v in pairs(t) do
 		if tonumber(k) then
@@ -220,34 +220,34 @@ function mmp.locateAndEchoInternal(room, person)
 	if table.size(t) == 1 then
 		local k, v = next(t)
 		cecho(
-			"<red> in " .. mmp.cleanAreaName(mmp.areatabler[getRoomArea(type(k) == "number" and k or v)] or "?") .. "."
+			"<red> in " .. mapper.cleanAreaName(mapper.areatabler[getRoomArea(type(k) == "number" and k or v)] or "?") .. "."
 		)
 	else
 		local k, v = next(t)
 		local areas = {}
 		if type(k) == "number" then
 			for k, _ in pairs(t) do
-				areas[mmp.areatabler[getRoomArea(k)] or "?"] = true
+				areas[mapper.areatabler[getRoomArea(k)] or "?"] = true
 			end
 		else
 			for _, k in pairs(t) do
-				areas[mmp.areatabler[getRoomArea(k)] or "?"] = true
+				areas[mapper.areatabler[getRoomArea(k)] or "?"] = true
 			end
 		end
 		local flattened_areas = {}
 		for k, _ in pairs(areas) do
 			if k ~= "" then
-				flattened_areas[#flattened_areas + 1] = mmp.cleanAreaName(k)
+				flattened_areas[#flattened_areas + 1] = mapper.cleanAreaName(k)
 			end
 		end
 		cecho("<red> in " .. table.concat(flattened_areas, ", ") .. ".")
 	end
 	echo("  (")
-	mmp.echonums(room, true)
+	mapper.echonums(room, true)
 	echo(")")
 	if person then
-		mmp.pdb[person] = room
-		mmp.pdb_lastupdate[person] = true
+		mapper.pdb[person] = room
+		mapper.pdb_lastupdate[person] = true
 		raiseEvent("mmapper updated pdb")
 	end
 end

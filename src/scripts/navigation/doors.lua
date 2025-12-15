@@ -1,15 +1,15 @@
 -- Function to handle door updates whenever GMCP room info is received
-function mmp.updatedoors()
+function mapper.updatedoors()
 	-- Only update doors if we have a valid current room
-	if not mmp.currentroom or not mmp.roomexists(mmp.currentroom) then
-		if mmp.settings.debug then
-			mmp.echo("Door update skipped - no valid current room")
+	if not mapper.currentroom or not mapper.roomexists(mapper.currentroom) then
+		if mapper.settings.debug then
+			mapper.echo("Door update skipped - no valid current room")
 		end
 		return
 	end
 	
-	if mmp.settings.debug then
-		mmp.echo("Checking doors for room " .. mmp.currentroom)
+	if mapper.settings.debug then
+		mapper.echo("Checking doors for room " .. mapper.currentroom)
 		-- Show current GMCP exit statuses
 		local currentexits = gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Exits or {}
 		local exitInfo = {}
@@ -19,15 +19,15 @@ function mmp.updatedoors()
 			end
 		end
 		if #exitInfo > 0 then
-			mmp.echo("GMCP door statuses: " .. table.concat(exitInfo, ", "))
+			mapper.echo("GMCP door statuses: " .. table.concat(exitInfo, ", "))
 		end
 	end
 	
 	-- Update door statuses for the current room
-	local updated = mmp.updateDoorStatuses(mmp.currentroom)
+	local updated = mapper.updateDoorStatuses(mapper.currentroom)
 	
 	-- Show a message if doors were updated (only in non-debug mode since debug already shows details)
-	if updated and not mmp.settings.debug then
-		mmp.echo("Door statuses updated for room " .. mmp.currentroom)
+	if updated and not mapper.settings.debug then
+		mapper.echo("Door statuses updated for room " .. mapper.currentroom)
 	end
 end

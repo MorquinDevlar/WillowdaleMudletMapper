@@ -1,1 +1,1 @@
-mmp.renameArea(matches[2])
+mapper.renameArea(matches[2])

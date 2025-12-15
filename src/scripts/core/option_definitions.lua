@@ -11,21 +11,21 @@
 --       games = {"all"}              -- Optional: {"all"} for all games, or {"game1", "game2"} for specific games
 --   }
 
-mmp.option_definitions = {
+mapper.option_definitions = {
     -- General settings
     echocolour = {
         default = "cyan",
         type = "string",
         description = "Set the color for room number echos?",
         validate = function(v) return color_table[v] ~= nil end,
-        onChange = mmp.changeEchoColour
+        onChange = mapper.changeEchoColour
     },
     
     showcmds = {
         default = true,
         type = "boolean",
         description = "Show walking commands?",
-        onChange = mmp.changeBoolFunc
+        onChange = mapper.changeBoolFunc
     },
     
     walkdelay = {
@@ -37,15 +37,15 @@ mmp.option_definitions = {
         end,
         onChange = function(name, value)
             if value == 0 then
-                mmp.echo(string.format("Walk delay set to %.1f seconds - moving as fast as possible", value))
+                mapper.echo(string.format("Walk delay set to %.1f seconds - moving as fast as possible", value))
             elseif value < 0.3 then
-                mmp.echo(string.format("Walk delay set to %.1f seconds - very fast movement", value))
+                mapper.echo(string.format("Walk delay set to %.1f seconds - very fast movement", value))
             elseif value <= 0.5 then
-                mmp.echo(string.format("Walk delay set to %.1f seconds - normal speed", value))
+                mapper.echo(string.format("Walk delay set to %.1f seconds - normal speed", value))
             elseif value <= 1 then
-                mmp.echo(string.format("Walk delay set to %.1f seconds - slow movement", value))
+                mapper.echo(string.format("Walk delay set to %.1f seconds - slow movement", value))
             else
-                mmp.echo(string.format("Walk delay set to %.1f seconds - very slow movement", value))
+                mapper.echo(string.format("Walk delay set to %.1f seconds - very slow movement", value))
             end
         end
     },
@@ -54,21 +54,21 @@ mmp.option_definitions = {
         default = true,
         type = "boolean",
         description = "Check for new maps from your MUD?",
-        onChange = mmp.changeUpdateMap
+        onChange = mapper.changeUpdateMap
     },
     
     autoclear = {
         default = true,
         type = "boolean",
         description = "Automatically remove exits that no longer exist?",
-        onChange = mmp.changeBoolFunc
+        onChange = mapper.changeBoolFunc
     },
     
     debug = {
         default = false,
         type = "boolean",
         description = "Enable debug messages?",
-        onChange = mmp.changeBoolFunc
+        onChange = mapper.changeBoolFunc
     },
     
     -- GoMud engine features
@@ -80,11 +80,11 @@ mmp.option_definitions = {
         description = "Auto position rooms using GMCP coordinates when mapping?",
         games = {"all"},  -- Available for all games
         onChange = function(name, option)
-            mmp.changeBoolFunc(name, option)
+            mapper.changeBoolFunc(name, option)
             if option then
-                mmp.echo("Rooms will now be positioned using absolute coordinates from GMCP")
+                mapper.echo("Rooms will now be positioned using absolute coordinates from GMCP")
             else
-                mmp.echo("Rooms will now be positioned using standard directional offsets (+1)")
+                mapper.echo("Rooms will now be positioned using standard directional offsets (+1)")
             end
         end
     },
@@ -95,21 +95,21 @@ mmp.option_definitions = {
         description = "Auto create areas based on GMCP area information when mapping?",
         games = {"all"},  -- Available for all games
         onChange = function(name, option)
-            mmp.changeBoolFunc(name, option)
+            mapper.changeBoolFunc(name, option)
             if option then
-                mmp.echo("Areas will now be automatically created based on GMCP area information")
+                mapper.echo("Areas will now be automatically created based on GMCP area information")
             else
-                mmp.echo("Areas will need to be created manually")
+                mapper.echo("Areas will need to be created manually")
             end
         end
     }
 }
 
 -- Helper function to convert simple definitions to the old format
-function mmp.convertOptionsFromDefinitions()
+function mapper.convertOptionsFromDefinitions()
     local private_settings = {}
     
-    for name, def in pairs(mmp.option_definitions) do
+    for name, def in pairs(mapper.option_definitions) do
         -- Determine allowed types
         local allowedTypes = {}
         if def.type then
@@ -126,7 +126,7 @@ function mmp.convertOptionsFromDefinitions()
         end
         
         -- Create the option using the existing system
-        private_settings[name] = mmp.createOption(
+        private_settings[name] = mapper.createOption(
             def.default,
             def.onChange,
             allowedTypes,
