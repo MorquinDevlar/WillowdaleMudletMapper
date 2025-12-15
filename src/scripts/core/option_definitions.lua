@@ -8,7 +8,6 @@
 --       description = "What it does", -- Shown in mconfig
 --       validate = function(v) ... end,  -- Optional: return true if value is valid
 --       onChange = function(name, value) ... end,  -- Optional: called when value changes
---       games = {"all"}              -- Optional: {"all"} for all games, or {"game1", "game2"} for specific games
 --   }
 
 mapper.option_definitions = {
@@ -71,14 +70,12 @@ mapper.option_definitions = {
         onChange = mapper.changeBoolFunc
     },
     
-    -- GoMud engine features
-    -- These are available for all GoMud-based games
-    
+    -- GMCP coordinate features
+
     autopositionrooms = {
         default = true,
         type = "boolean",
         description = "Auto position rooms using GMCP coordinates when mapping?",
-        games = {"all"},  -- Available for all games
         onChange = function(name, option)
             mapper.changeBoolFunc(name, option)
             if option then
@@ -88,12 +85,11 @@ mapper.option_definitions = {
             end
         end
     },
-    
+
     autocreateareas = {
         default = false,
         type = "boolean",
         description = "Auto create areas based on GMCP area information when mapping?",
-        games = {"all"},  -- Available for all games
         onChange = function(name, option)
             mapper.changeBoolFunc(name, option)
             if option then
@@ -108,33 +104,23 @@ mapper.option_definitions = {
 -- Helper function to convert simple definitions to the old format
 function mapper.convertOptionsFromDefinitions()
     local private_settings = {}
-    
+
     for name, def in pairs(mapper.option_definitions) do
         -- Determine allowed types
         local allowedTypes = {}
         if def.type then
             table.insert(allowedTypes, def.type)
         end
-        
-        -- Convert games array to the format expected by createOption
-        local games = nil
-        if def.games then
-            games = {}
-            for _, game in ipairs(def.games) do
-                games[game] = true
-            end
-        end
-        
+
         -- Create the option using the existing system
         private_settings[name] = mapper.createOption(
             def.default,
             def.onChange,
             allowedTypes,
             def.description,
-            def.validate,
-            games
+            def.validate
         )
     end
-    
+
     return private_settings
 end

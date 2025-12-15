@@ -23,7 +23,7 @@ local spairs = spairs
 		end
 	end
 
-function mapper.createOption(startingValue, onChangeFunc, allowedVarTypes, use, checkOption, games)
+function mapper.createOption(startingValue, onChangeFunc, allowedVarTypes, use, checkOption)
 	if allowedVarTypes then -- make sure our starting Value follows type rules
 		if not table.contains(allowedVarTypes, type(startingValue)) then
 			echo("Starting type is not of allowed type!\n")
@@ -38,7 +38,6 @@ function mapper.createOption(startingValue, onChangeFunc, allowedVarTypes, use, 
 		onChange = onChangeFunc,
 		allowedVarTypes = allowedVarTypes,
 		use = use or "",
-		games = games,
 		checkOption = checkOption or function()
 			return true
 		end,
@@ -67,16 +66,14 @@ function mapper.createOptionsTable(defaultTable)
 		echo(string.rep(" ", 10 - string.len(tostring(val.value))) .. "- " .. val.use .. "\n")
 	end
 
-	function proxyTable:showAllOptions(game)
+	function proxyTable:showAllOptions()
 		-- Display header using mapper color scheme
 		decho("<112,229,0>Setting:               <255,255,255>State:          <128,128,128>Option:\n")
 		decho("<128,128,128>" .. string.rep("-", 60) .. "\n")
-		
+
 		-- Display all options
 		for k, v in spairs(self[index]) do
-			if not game or not v.games or v.games["all"] or v.games[game] then
-				self.dispOption(k, v)
-			end
+			self.dispOption(k, v)
 		end
 		for k, v in spairs(self["_customOptions"]) do
 			self.dispOption(k, v)
@@ -158,7 +155,7 @@ function mapper.createOptionsTable(defaultTable)
 				opt.onChange(option, value)
 			end
 		end
-		if mmp and mapper.clearpathcache then
+		if mapper and mapper.clearpathcache then
 			mapper.clearpathcache()
 		end
 	end

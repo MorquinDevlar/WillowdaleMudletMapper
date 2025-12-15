@@ -123,47 +123,45 @@ function mapper.mappingnewroom(_, num)
 			end
 		end
 
-		-- GoMUD-specific coordinate handling
+		-- GMCP coordinate handling for Willowdale
 		local currentRoomArea, currentRoomX, currentRoomY, currentRoomZ
-		if mapper.game then
-			if gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.coordinates and gmcp.Room.Info.Basic.coordinates ~= "" then
-				-- Try with spaces pattern
-				currentRoomArea, currentRoomX, currentRoomY, currentRoomZ =
-					gmcp.Room.Info.Basic.coordinates:match("([^,]+), ([^,]+), ([^,]+), ([^,]+)")
+		if gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.coordinates and gmcp.Room.Info.Basic.coordinates ~= "" then
+			-- Try with spaces pattern
+			currentRoomArea, currentRoomX, currentRoomY, currentRoomZ =
+				gmcp.Room.Info.Basic.coordinates:match("([^,]+), ([^,]+), ([^,]+), ([^,]+)")
 
-				-- If that fails, try without spaces
-				if not (currentRoomArea and currentRoomX and currentRoomY and currentRoomZ) then
-					currentRoomArea, currentRoomX, currentRoomY, currentRoomZ =
-						gmcp.Room.Info.Basic.coordinates:match("([^,]+),([^,]+),([^,]+),([^,]+)")
+			-- If that fails, try without spaces
+			if not (currentRoomArea and currentRoomX and currentRoomY and currentRoomZ) then
+				currentRoomArea, currentRoomX, currentRoomY, currentRoomZ =
+					gmcp.Room.Info.Basic.coordinates:match("([^,]+),([^,]+),([^,]+),([^,]+)")
+			end
+
+			if currentRoomArea and currentRoomX and currentRoomY and currentRoomZ then
+				currentRoomX, currentRoomY, currentRoomZ =
+					tonumber(currentRoomX), tonumber(currentRoomY), tonumber(currentRoomZ)
+
+				if mapper.settings.debug then
+					mapper.echo(string.format("Parsed coordinates for room %d: area='%s', x=%d, y=%d, z=%d",
+						num, currentRoomArea, currentRoomX, currentRoomY, currentRoomZ))
 				end
 
-				if currentRoomArea and currentRoomX and currentRoomY and currentRoomZ then
-					currentRoomX, currentRoomY, currentRoomZ =
-						tonumber(currentRoomX), tonumber(currentRoomY), tonumber(currentRoomZ)
-
-					if mapper.settings.debug then
-						mapper.echo(string.format("Parsed coordinates for room %d: area='%s', x=%d, y=%d, z=%d",
-							num, currentRoomArea, currentRoomX, currentRoomY, currentRoomZ))
-					end
-
-					-- Update the current room's coordinates if they're different
-					-- Only do this if autopositionrooms is enabled
-					if mapper.settings.autopositionrooms and mapper.roomexists(num) then
-						local mx, my, mz = getRoomCoordinates(num)
-						if mx ~= currentRoomX or my ~= currentRoomY or mz ~= currentRoomZ then
-							if mapper.settings.debug then
-								mapper.echo(string.format("Moving room %d from (%d,%d,%d) to (%d,%d,%d)",
-									num, mx, my, mz, currentRoomX, currentRoomY, currentRoomZ))
-							end
-							setRoomCoordinates(num, currentRoomX, currentRoomY, currentRoomZ)
-							setRoomUserData(num, "Area", currentRoomArea)
-							s = s .. (#s > 0 and " " or "") .. string.format("Repositioned room to %d,%d,%d.", currentRoomX, currentRoomY, currentRoomZ)
+				-- Update the current room's coordinates if they're different
+				-- Only do this if autopositionrooms is enabled
+				if mapper.settings.autopositionrooms and mapper.roomexists(num) then
+					local mx, my, mz = getRoomCoordinates(num)
+					if mx ~= currentRoomX or my ~= currentRoomY or mz ~= currentRoomZ then
+						if mapper.settings.debug then
+							mapper.echo(string.format("Moving room %d from (%d,%d,%d) to (%d,%d,%d)",
+								num, mx, my, mz, currentRoomX, currentRoomY, currentRoomZ))
 						end
+						setRoomCoordinates(num, currentRoomX, currentRoomY, currentRoomZ)
+						setRoomUserData(num, "Area", currentRoomArea)
+						s = s .. (#s > 0 and " " or "") .. string.format("Repositioned room to %d,%d,%d.", currentRoomX, currentRoomY, currentRoomZ)
 					end
-				else
-					if mapper.settings.debug then
-						mapper.echo("Failed to parse coordinates from: " .. (gmcp.Room.Info.Basic.coordinates or "nil"))
-					end
+				end
+			else
+				if mapper.settings.debug then
+					mapper.echo("Failed to parse coordinates from: " .. (gmcp.Room.Info.Basic.coordinates or "nil"))
 				end
 			end
 		end

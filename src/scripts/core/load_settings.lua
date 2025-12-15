@@ -1,5 +1,8 @@
--- mmp = mudlet mapper namespace
-mmp = mmp
+-- mapper = mudlet mapper namespace
+-- Hardcoded for Willowdale
+mapper.game = "willowdale"
+
+mapper = mapper
     or {
         paused = false,
         autowalking = false,
@@ -20,19 +23,7 @@ mapper.speedWalkPath = mapper.speedWalkPath or {}
 mapper.speedWalkDir = mapper.speedWalkDir or {}
 local newversion = "__VERSION__"
 if mapper.version and mapper.version ~= newversion then
-    if not mapper.game then
-        -- Check if we can detect the game via GMCP
-        if mapper.detectGameFromGMCP then
-            mapper.detectGameFromGMCP()
-            mapper.echo("Mapper script updated - thanks! You don't need to restart.")
-        else
-            mapper.echo(
-                "Mapper script updated - Thanks! I don't know what game are you connected to, though - so please reconnect, if you could."
-            )
-        end
-    else
-        mapper.echo("Mapper script updated - thanks! You don't need to restart.")
-    end
+    mapper.echo("Mapper script updated - thanks! You don't need to restart.")
 end
 mapper.version = newversion
 
@@ -53,15 +44,6 @@ function mapper.startup()
 
     mapper.settings = mapper.createOptionsTable(private_settings)
     mapper.settings.disp = mapper.echo
-
-    -- Detect game type if not already set
-    if not mapper.game then
-        if mapper.detectGameFromGMCP then
-            mapper.detectGameFromGMCP()
-        else
-            mapper.game = false
-        end
-    end
 
     mapper.settings.dispOption = function(opt, val)
         -- Format boolean values as on/off
