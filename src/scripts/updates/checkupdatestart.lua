@@ -2,7 +2,8 @@ function mapper.checkupdatestart(...)
 	if mapper.checkforupdatetimer then
 		killTimer(mapper.checkforupdatetimer)
 	end
-	--mapper.checkforupdatetimer = tempTimer(math.random(3, 10), mapper.checkforupdate)
+	-- Check for mapper script updates after a short random delay
+	mapper.checkforupdatetimer = tempTimer(math.random(3, 10), mapper.checkforupdate)
 end
 
 function mapper.changeUpdateMap()

@@ -8,21 +8,18 @@
     {
         "name": "checkupdatestart",
         "isActive": "yes",
-        "eventHandlerList": ["mmp logged in"],
         "script": "",
         "isFolder": "no"
     },
     {
         "name": "downloadedfile",
         "isActive": "yes",
-        "eventHandlerList": ["sysDownloadDone"],
         "script": "",
         "isFolder": "no"
     },
     {
         "name": "seedownloaderrors",
         "isActive": "no",
-        "eventHandlerList": ["sysDownloadError"],
         "script": "",
         "isFolder": "no"
     }

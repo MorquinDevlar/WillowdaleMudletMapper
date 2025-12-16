@@ -12,7 +12,7 @@ function mapper.gotoRoom(where, dashtype, gotoType)
 		return
 	end
 	-- allow mapper 'addons' to link their own exits in
-	raiseEvent("mmp link externals")
+	raiseEvent("mapper link externals")
 	-- if getPath worked, then the dirs and room #'s tables were populated for us
 	if not mapper.getPath(mapper.currentroom, tonumber(where)) then
 		mapper.echo("Don't know how to get there (" .. tostring(where) .. ") from here :(")
@@ -21,12 +21,12 @@ function mapper.gotoRoom(where, dashtype, gotoType)
 		mapper.speedWalkCounter = 0
 		raiseEvent("mmapper failed path")
 		-- allow mapper 'addons' to unlink their special exits
-		raiseEvent("mmp clear externals")
+		raiseEvent("mapper clear externals")
 		return
 	end
 	doSpeedWalk(dashtype)
 	-- allow mapper 'addons' to unlink their special exits
-	raiseEvent("mmp clear externals")
+	raiseEvent("mapper clear externals")
 end
 
 function mapper.gotoArea(where, number, dashtype, exact)
@@ -130,10 +130,10 @@ function mapper.gotoAreaID(areaid, number, dashtype)
 		mapper.speedWalkDir = {}
 		mapper.speedWalkCounter = 0
 		raiseEvent("mmapper failed path")
-		raiseEvent("mmp clear externals")
+		raiseEvent("mapper clear externals")
 		return
 	end
-	raiseEvent("mmp clear externals")
+	raiseEvent("mapper clear externals")
 	mapper.gotoRoom(shortestBorder, dashtype, "area")
 end
 
@@ -177,9 +177,9 @@ function mapper.gotoFeature(partialFeatureName, dashtype)
 		mapper.speedWalkDir = {}
 		mapper.speedWalkCounter = 0
 		raiseEvent("mmapper failed path")
-		raiseEvent("mmp clear externals")
+		raiseEvent("mapper clear externals")
 		return
 	end
-	raiseEvent("mmp clear externals")
+	raiseEvent("mapper clear externals")
 	mapper.gotoRoom(closestFeature, dashtype, "room")
 end

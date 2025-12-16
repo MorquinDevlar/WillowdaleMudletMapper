@@ -51,7 +51,7 @@
     {
         "name": "reload_mapper",
         "isActive": "yes",
-        "regex": "^mmp reload$",
+        "regex": "^mapper reload$",
         "script": "",
         "isFolder": "no"
     },

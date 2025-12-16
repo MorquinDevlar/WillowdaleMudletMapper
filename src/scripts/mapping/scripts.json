@@ -32,14 +32,12 @@
     {
         "name": "room_gmcp_handler",
         "isActive": "yes",
-        "eventHandlerList": ["gmcp.Room.Info.Exits", "RoomNum"],
         "script": "",
         "isFolder": "no"
     },
     {
         "name": "regenerateareas",
         "isActive": "yes",
-        "eventHandlerList": ["mmp areas changed"],
         "script": "",
         "isFolder": "no"
     },

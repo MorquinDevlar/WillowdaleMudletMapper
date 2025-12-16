@@ -6,7 +6,7 @@ function mapper.onPackageInstalled(_, package)
     if package and (package:find("MudletMapper") or package:find("WillowdaleMudletMapper")) then
         -- Small delay to ensure all files are loaded
         tempTimer(0.5, function()
-            if mmp and mapper.reload then
+            if mapper and mapper.reload then
                 mapper.reload()
                 mapper.echo("WillowdaleMudletMapper reinitialized after package installation.")
             end

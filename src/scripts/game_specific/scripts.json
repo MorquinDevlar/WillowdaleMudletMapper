@@ -2,14 +2,12 @@
     {
         "name": "wrongdir_handler",
         "isActive": "yes",
-        "eventHandlerList": ["gmcp.Room.Wrongdir"],
         "script": "",
         "isFolder": "no"
     },
     {
         "name": "environment_data",
         "isActive": "yes",
-        "eventHandlerList": ["mmp logged in"],
         "script": "",
         "isFolder": "no"
     }

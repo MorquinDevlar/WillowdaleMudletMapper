@@ -20,7 +20,6 @@
     {
         "name": "doors",
         "isActive": "yes",
-        "eventHandlerList": ["gmcp.Room.Info.Exits"],
         "script": "",
         "isFolder": "no"
     },
@@ -39,14 +38,12 @@
     {
         "name": "room_events",
         "isActive": "yes",
-        "eventHandlerList": ["gmcp.Room.Info"],
         "script": "",
         "isFolder": "no"
     },
     {
         "name": "centerroominfo",
         "isActive": "yes",
-        "eventHandlerList": ["gmcp.Room.Info"],
         "script": "",
         "isFolder": "no"
     },

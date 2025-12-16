@@ -34,6 +34,10 @@ function mapper.reload()
     mapper.echo("Mapper settings reloaded!")
 end
 
+function mapper.setFonts()
+    setFont("main", mapper.settings.font)
+end
+
 function mapper.startup()
     if not mapper.firstRun then
         return
@@ -83,13 +87,10 @@ function mapper.startup()
         mapper.initializeBiomeColors()
     end
 
-    raiseEvent("mmp areas changed")
+    -- Apply font settings
+    mapper.setFonts()
+
+    raiseEvent("mapper areas changed")
     mapper.firstRun = false
-    mapper.echon("Mudlet Mapper script for Willowdale (" .. tostring(mapper.version) .. ") loaded! (")
-    echoLink(
-        "See more on Github",
-        "(openUrl or openURL)('https://github.com/MorquinDevlar/WillowdaleMudletMapper')",
-        "Clicky clicky to read up on what's this about"
-    )
-    echo(")\n")
+    mapper.echo("Mudlet Mapper script for Willowdale (" .. tostring(mapper.version) .. ") loaded!")
 end

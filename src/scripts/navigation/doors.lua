@@ -144,7 +144,7 @@ function mapper.updateDoorStatuses(roomNum)
 	return updated
 end
 
--- Function to handle door updates whenever GMCP room info is received
+-- Event handler for door updates whenever GMCP room info is received
 function mapper.updatedoors()
 	-- Only update doors if we have a valid current room
 	if not mapper.currentroom or not mapper.roomexists(mapper.currentroom) then

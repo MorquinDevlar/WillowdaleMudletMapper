@@ -2,7 +2,7 @@
 
 local oldnum
 
-function mapper.speedwalking(event, num)
+function mapper.room_events(event, num)
 	local num = tonumber(num) or (gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic and tonumber(gmcp.Room.Info.Basic.id))
 	if num ~= mapper.currentroom then
 		mapper.previousroom = mapper.currentroom

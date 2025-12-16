@@ -49,7 +49,7 @@ function mapper.getShortestOfMultipleRooms(possibleRooms)
 	-- allocate only 500ms to finding the shortest path, or more if we failed to find anything
 	mapper.computeShortestWatch = mapper.computeShortestWatch or createStopWatch()
 	startStopWatch(mapper.computeShortestWatch)
-	raiseEvent("mmp link externals")
+	raiseEvent("mapper link externals")
 
 	-- mapper.echo(string.format("Have %s rooms nodes, %ss taken so far...", table.size(possibleRooms), getStopWatchTime(mapper.computeShortestWatch)))
 	for _, id in pairs(possibleRooms) do

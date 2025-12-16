@@ -3,55 +3,70 @@ function mapper.downloadedfile(_, filename)
 		return
 	end
 
-	-- workaround for https://bugs.launchpad.net/mudlet/+bug/1092769
-	--  if mmp["downloaded_file_block_"..filename] then return end
-	--  mmp["downloaded_file_block_"..filename] = tempTimer(5, [[mmp["downloaded_file_block_]]..filename..[["] = nil]])
-
-	if filename == tostring(mapper.mapperfile) then -- mapper script version
+	-- Handle releases.json for mapper script updates
+	if filename == tostring(mapper.releasesfile) then
 		mapper.checkingupdates = false
 
-		local f, s = io.open(filename)
-		if f then
-			s = f:read("*l"):trim()
-			io.close(f)
+		local f = io.open(filename)
+		if not f then
+			return
+		end
+		local content = f:read("*a")
+		io.close(f)
+
+		-- Parse JSON
+		local ok, releases = pcall(yajl.to_value, content)
+		if not ok or not releases or #releases == 0 then
+			mapper.echo("Failed to parse releases.json")
+			return
 		end
 
-		if s ~= tostring(mapper.version) then
-			mapper.newmapperversion = s
-			mapper.retrievechangelog()
+		local latest = releases[1]
+		if not latest or not latest.version then
+			mapper.echo("Invalid releases.json format")
+			return
 		end
-	elseif filename == tostring(mapper.changelogfile) then -- changelog for the mapper script
+
+		-- Compare versions
+		if latest.version ~= tostring(mapper.version) then
+			mapper.newmapperversion = latest.version
+
+			echo("\n")
+			mapper.echo("------------------[ Mapper Update Available ]------------------")
+			mapper.echo(
+				"Version <orange>"
+					.. tostring(mapper.version)
+					.. "<reset> -> <green>"
+					.. tostring(latest.version)
+					.. "<reset>"
+			)
+			if latest.released then
+				mapper.echo("Released: " .. latest.released)
+			end
+			mapper.echo("")
+			if latest.changes and #latest.changes > 0 then
+				mapper.echo("Changes:")
+				for _, change in ipairs(latest.changes) do
+					mapper.echo("  - " .. change)
+				end
+				mapper.echo("")
+			end
+			cechoLink(
+				"<ForestGreen>[Click here to install update]<reset>",
+				"mapper.downloadmapperscript()",
+				"Download and install version " .. latest.version,
+				true
+			)
+			echo("\n\n")
+		end
+
+	-- Handle downloaded mapper package
+	elseif filename == tostring(mapper.downloadedscript) then
 		mapper.checkingupdates = false
+		mapper.installMapperScript()
 
-		local f, s, changelog = io.open(filename)
-		if f then
-			changelog = f:read("*a")
-			io.close(f)
-		end
-
-		echo("\n")
-		mapper.echon("------------------[ Mapper Script Update ]------------------")
-		mapper.echon(
-			" The mapper script was updated from <orange>"
-				.. tostring(mapper.version)
-				.. "<reset> -> <green>"
-				.. tostring(mapper.newmapperversion)
-				.. "<reset>!"
-		)
-		mapper.echon("")
-		cechoLink(
-			" Would you like to install the update? <u><ForestGreen>Click here if so</u><reset>.",
-			"mapper.downloadmapperscript()",
-			"Changelog for the latest ("
-				.. tostring(mapper.version)
-				.. " -> "
-				.. tostring(mapper.newmapperversion)
-				.. ") update:\n"
-				.. changelog,
-			true
-		)
-		echo("\n\n")
-	elseif filename == mapper.crowdchangelogfile then -- changelog for the crowdmap
+	-- Handle crowdmap changelog
+	elseif filename == mapper.crowdchangelogfile then
 		local f, s = io.open(filename)
 		if f then
 			s = f:read("*a")
@@ -102,7 +117,9 @@ function mapper.downloadedfile(_, filename)
 		echo("\n\n")
 
 		mapper.downloadcrowdmap(mapper.newversion)
-	elseif filename == mapper.crowdmapfile then -- crowdmap map
+
+	-- Handle crowdmap map file
+	elseif filename == mapper.crowdmapfile then
 		mapper.echo("Map downloaded, loading it in...")
 
 		local tmp = getRoomUserData(1, "gotoMapping")
@@ -136,7 +153,7 @@ function mapper.downloadedfile(_, filename)
 			setRoomUserData(1, "gotoMapping", yajl.to_string(newmaptable))
 			mapper.echo("Marks from the old map migrated successfully.")
 
-			raiseEvent("mmapper updated map")
+			raiseEvent("mapper updated map")
 		else
 			mapper.echon("Map failed to load - you need to have the mapper open. Please open it, and then ")
 			echoLink("click here", [[
@@ -149,7 +166,7 @@ function mapper.downloadedfile(_, filename)
         local ok = loadMap(']] .. filename .. [[')
         if ok then
         -- Willowdale-specific map post-processing can be added here
-        
+
         if mapper.settings.lockspecials then mapper.lockSpecials() end
 
         mapper.echo("Map loaded successfully!")
@@ -162,65 +179,10 @@ function mapper.downloadedfile(_, filename)
           for k,v in pairs(oldmaptable) do newmaptable[k] = v end
           setRoomUserData(1, "gotoMapping", yajl.to_string(newmaptable))
           mapper.echo("Marks from the old map migrated successfully.")
-          raiseEvent("mmapper updated map")
+          raiseEvent("mapper updated map")
         else mapper.echo("Nope, didn't work. Open the map and try again?") end
       ]], "Click here to try loading the map again")
 			echo(" to try loading it in again.\n")
-		end
-	elseif filename == tostring(mapper.downloadedscript) then -- new mapper script xml downloaded
-		mapper.checkingupdates = false
-		mapper.installMapperScript()
-	elseif filename == tostring(mapper.mapfile) then -- map version #, either IRE's or crowd
-		mapper.checkingupdates = false
-
-		local function needupdate(currentmd5, oldmd5)
-			mapper.echon("The games map was ")
-			echoLink(
-				"updated",
-				"",
-				"New MD5: " .. tostring(currentmd5) .. ", previous MD5: " .. (oldmd5 or "(none)"),
-				true
-			)
-			echo(
-				" - you should update yours! Go to Settings -> Mapper tab and click on the 'Download' button there. Once you've updated, "
-			)
-			echoLink(
-				"click here",
-				"mapper.updatedmap('" .. currentmd5 .. "')",
-				"Click here to quiet the update reminder"
-			)
-			echo(" to remove the reminder.")
-		end
-
-		local f, s = io.open(filename)
-		if f then
-			s = f:read("*a")
-			io.close(f)
-		end
-		local currentmd5 = string.match(s, "([a-z0-9]+)  map%.xml")
-
-		-- using crowdsourced map
-		if not currentmd5 then
-			currentmd5 = s:trim()
-		end
-
-		os.remove(filename)
-
-		-- never checked yet?
-		if not io.exists(getMudletHomeDir() .. "/map downloads/current") then
-			needupdate(currentmd5)
-			return
-		end
-
-		-- otherwise read old file and check
-		local f, s = io.open(getMudletHomeDir() .. "/map downloads/current")
-		if f then
-			s = f:read("*a")
-			io.close(f)
-		end
-
-		if s ~= currentmd5 then
-			needupdate(currentmd5, s)
 		end
 	end
 end

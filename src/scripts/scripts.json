@@ -44,14 +44,12 @@
     {
         "name": "clearlastupdate",
         "isActive": "yes",
-        "eventHandlerList": ["sysExitEvent"],
         "script": "",
         "isFolder": "no"
     },
     {
         "name": "mapdata_changed",
         "isActive": "yes",
-        "eventHandlerList": ["mapDataChanged"],
         "script": "",
         "isFolder": "no"
     }

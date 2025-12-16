@@ -11,6 +11,17 @@
 --   }
 
 mapper.option_definitions = {
+    -- Font settings
+    font = {
+        default = "FiraMono Nerd Font Mono",
+        type = "string",
+        description = "Font for the main console",
+        onChange = function(name, value)
+            setFont("main", value)
+            mapper.echo("Font set to: " .. value)
+        end
+    },
+
     -- General settings
     echocolour = {
         default = "cyan",

@@ -1,5 +1,3 @@
-mmp = mmp or {}
-
 mapper.getPathPerf = mapper.getPathPerf or createStopWatch()
 startStopWatch(mapper.getPathPerf)
 

@@ -18,12 +18,6 @@
         "isFolder": "no"
     },
     {
-        "name": "initialize",
-        "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
         "name": "load_settings",
         "isActive": "yes",
         "script": "",
@@ -50,14 +44,12 @@
     {
         "name": "loadoptions",
         "isActive": "yes",
-        "eventHandlerList": ["sysLoadEvent"],
         "script": "",
         "isFolder": "no"
     },
     {
         "name": "saveoptions",
         "isActive": "yes",
-        "eventHandlerList": ["sysExitEvent"],
         "script": "",
         "isFolder": "no"
     },
@@ -69,6 +61,18 @@
     },
     {
         "name": "utilities",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "event_handlers",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "initialize",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
