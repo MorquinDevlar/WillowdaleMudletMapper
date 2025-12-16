@@ -6,6 +6,44 @@
         "isFolder": "no"
     },
     {
+        "name": "pathfinding",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "special_exits",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "doors",
+        "isActive": "yes",
+        "eventHandlerList": ["gmcp.Room.Info.Exits"],
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "walking",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "destinations",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "room_events",
+        "isActive": "yes",
+        "eventHandlerList": ["gmcp.Room.Info"],
+        "script": "",
+        "isFolder": "no"
+    },
+    {
         "name": "centerroominfo",
         "isActive": "yes",
         "eventHandlerList": ["gmcp.Room.Info"],
@@ -15,20 +53,6 @@
     {
         "name": "roomlook",
         "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "speedwalking",
-        "isActive": "yes",
-        "eventHandlerList": ["gmcp.Room.Info"],
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "doors",
-        "isActive": "yes",
-        "eventHandlerList": ["gmcp.Room.Info.Exits"],
         "script": "",
         "isFolder": "no"
     }
