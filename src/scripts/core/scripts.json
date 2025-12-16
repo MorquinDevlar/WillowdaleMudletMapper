@@ -48,6 +48,20 @@
         "isFolder": "no"
     },
     {
+        "name": "loadoptions",
+        "isActive": "yes",
+        "eventHandlerList": ["sysLoadEvent"],
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "saveoptions",
+        "isActive": "yes",
+        "eventHandlerList": ["sysExitEvent"],
+        "script": "",
+        "isFolder": "no"
+    },
+    {
         "name": "packageinstalled",
         "isActive": "yes",
         "script": "",

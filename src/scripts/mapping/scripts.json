@@ -30,13 +30,6 @@
         "isFolder": "no"
     },
     {
-        "name": "loadoptions",
-        "isActive": "yes",
-        "eventHandlerList": ["sysLoadEvent"],
-        "script": "",
-        "isFolder": "no"
-    },
-    {
         "name": "room_gmcp_handler",
         "isActive": "yes",
         "eventHandlerList": ["gmcp.Room.Info.Exits", "RoomNum"],
@@ -53,13 +46,6 @@
     {
         "name": "relockareas",
         "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "saveoptions",
-        "isActive": "yes",
-        "eventHandlerList": ["sysExitEvent"],
         "script": "",
         "isFolder": "no"
     },

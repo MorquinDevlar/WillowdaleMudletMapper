@@ -1,6 +1,6 @@
 function mapper.loadoptions()
-	-- Ensure mmp is properly initialized before loading options
-	if not mmp then
+	-- Ensure mapper is properly initialized before loading options
+	if not mapper then
 		return
 	end
 	
