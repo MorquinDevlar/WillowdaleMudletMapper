@@ -1,4 +1,8 @@
+-- Exit handling functions with direction string support
+-- Wraps Mudlet's exit functions to accept both numeric and string directions
+
 do
+	local oldsetExit = setExit
 	local oldlockExit = lockExit
 	local oldhasExitLock = hasExitLock
 
@@ -26,6 +30,14 @@ do
 		["in"] = 11,
 		out = 12,
 	}
+
+	function mapper.setExit(from, to, direction)
+		if type(direction) == "string" and not exitmap[direction] then
+			return false
+		end
+
+		return oldsetExit(from, to, type(direction) == "string" and exitmap[direction] or direction)
+	end
 
 	function mapper.lockExit(from, direction, status)
 		if type(direction) == "string" and not exitmap[direction] then

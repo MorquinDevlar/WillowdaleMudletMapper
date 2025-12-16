@@ -1,12 +1,12 @@
 [
     {
-        "name": "fix_exit_locking_funcs",
+        "name": "exit_functions",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "fix_setexit",
+        "name": "room_creation",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
