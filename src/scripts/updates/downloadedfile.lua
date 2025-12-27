@@ -28,7 +28,13 @@ function mapper.downloadedfile(_, filename)
 		end
 
 		-- Compare versions
-		if latest.version ~= tostring(mapper.version) then
+		if latest.version == tostring(mapper.version) then
+			if mapper.updateCheckVerbose then
+				mapper.echo("You're running the latest version (" .. mapper.version .. ").")
+			end
+			mapper.updateCheckVerbose = false
+			return
+		else
 			mapper.newmapperversion = latest.version
 
 			echo("\n")
@@ -58,6 +64,7 @@ function mapper.downloadedfile(_, filename)
 				true
 			)
 			echo("\n\n")
+			mapper.updateCheckVerbose = false
 		end
 
 	-- Handle downloaded mapper package

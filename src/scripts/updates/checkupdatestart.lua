@@ -3,7 +3,17 @@ function mapper.checkupdatestart(...)
 		killTimer(mapper.checkforupdatetimer)
 	end
 	-- Check for mapper script updates after a short random delay
-	mapper.checkforupdatetimer = tempTimer(math.random(3, 10), mapper.checkforupdate)
+	-- Set verbose flag for login-triggered checks
+	mapper.updateCheckVerbose = true
+	mapper.checkforupdatetimer = tempTimer(math.random(3, 10), function()
+		mapper.checkforupdate()
+	end)
+end
+
+-- Silent update check (for periodic timer)
+function mapper.checkupdatesilent()
+	mapper.updateCheckVerbose = false
+	mapper.checkforupdate()
 end
 
 function mapper.changeUpdateMap()

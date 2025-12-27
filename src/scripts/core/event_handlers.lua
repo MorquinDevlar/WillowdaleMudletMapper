@@ -14,6 +14,9 @@ mapper.events.list = {
 	sysDownloadError = { "mapper.seedownloaderrors" },
 	mapDataChanged = { "mapper.mapdata_changed" },
 
+	-- GMCP Game events
+	["gmcp.Game.Info"] = { "mapper.checkupdatestart" },
+
 	-- GMCP Room events
 	["gmcp.Room.Info"] = { "mapper.room_events", "mapper.centerroominfo" },
 	["gmcp.Room.Info.Exits"] = { "mapper.updatedoors", "mapper.mappingnewroom" },

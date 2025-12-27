@@ -34,6 +34,9 @@ function mapper.checkforupdate()
 	-- Download releases.json to check for updates
 	mapper.releasesfile = downloadfolder .. "releases.json"
 	mapper.checkingupdates = true
+	if mapper.updateCheckVerbose then
+		mapper.echo("Checking for mapper updates...")
+	end
 	downloadFile(mapper.releasesfile, "https://www.willowdalemud.com/static/resources/mapper/releases.json")
 end
 
