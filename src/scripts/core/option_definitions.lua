@@ -39,7 +39,7 @@ mapper.option_definitions = {
     },
     
     walkdelay = {
-        default = 0,
+        default = 0.3,
         type = "number",
         description = "Delay between moves in seconds (0 = fast, 0.3 = normal, 1+ = slow)?",
         validate = function(v) 
