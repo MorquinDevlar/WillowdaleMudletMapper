@@ -39,7 +39,7 @@ mapper.option_definitions = {
     },
     
     walkdelay = {
-        default = 0.3,
+        default = 0,
         type = "number",
         description = "Delay between moves in seconds (0 = fast, 0.3 = normal, 1+ = slow)?",
         validate = function(v) 
@@ -98,7 +98,7 @@ mapper.option_definitions = {
     },
 
     autocreateareas = {
-        default = false,
+        default = true,
         type = "boolean",
         description = "Auto create areas based on GMCP area information when mapping?",
         onChange = function(name, option)
