@@ -30,19 +30,19 @@ mapper.option_definitions = {
         validate = function(v) return color_table[v] ~= nil end,
         onChange = mapper.changeEchoColour
     },
-    
+
     showcmds = {
         default = true,
         type = "boolean",
         description = "Show walking commands?",
         onChange = mapper.changeBoolFunc
     },
-    
+
     walkdelay = {
-        default = 0.3,
+        default = 0,
         type = "number",
         description = "Delay between moves in seconds (0 = fast, 0.3 = normal, 1+ = slow)?",
-        validate = function(v) 
+        validate = function(v)
             return type(v) == "number" and v >= 0 and v <= 5
         end,
         onChange = function(name, value)
@@ -59,28 +59,28 @@ mapper.option_definitions = {
             end
         end
     },
-    
+
     updatemap = {
         default = true,
         type = "boolean",
         description = "Check for new maps from your MUD?",
         onChange = mapper.changeUpdateMap
     },
-    
+
     autoclear = {
         default = true,
         type = "boolean",
         description = "Automatically remove exits that no longer exist?",
         onChange = mapper.changeBoolFunc
     },
-    
+
     debug = {
         default = false,
         type = "boolean",
         description = "Enable debug messages?",
         onChange = mapper.changeBoolFunc
     },
-    
+
     -- GMCP coordinate features
 
     autopositionrooms = {
