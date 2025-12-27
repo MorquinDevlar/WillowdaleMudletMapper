@@ -1,1 +1,10 @@
-[]
+[
+    {
+        "version": "1.0.1",
+        "released": "2025-01-15",
+        "changes": [
+            "Fixed speedwalking door handling",
+            "Added new biome colors"
+        ]
+    }
+]
