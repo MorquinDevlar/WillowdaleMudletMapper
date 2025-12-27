@@ -123,14 +123,7 @@ function mapper.roomlook(input)
 		setUnderline(true)
 		echoLink(
 			"(force map)",
-			[[
-      if io.exists(getMudletHomeDir().."/map downloads/current") then
-        local s,m = os.remove(getMudletHomeDir().."/map downloads/current")
-        if not s then mapper.echo("Couldn't delete '"..getMudletHomeDir().."/map downloads/current' file: "..tostring(m)..".") end
-      end
-      mapper.echo("Re-downloading the latest map...")
-      mapper.checkforupdate()
-    ]],
+			[[mapper.deleteMapDownload("current") mapper.echo("Re-downloading the latest map...") mapper.checkforupdate()]],
 			"Re-download the map regardless if you have latest",
 			true
 		)
@@ -203,15 +196,7 @@ function mapper.roomlook(input)
 			echo(" ")
 			echoLink(
 				"(force map)",
-				[[
-      local s,m = os.remove(getMudletHomeDir().."/map downloads/current")
-        if io.exists(getMudletHomeDir().."/map downloads/current") then
-          local s,m = os.remove(getMudletHomeDir().."/map downloads/current")
-          if not s then mapper.echo("Couldn't delete '"..getMudletHomeDir().."/map downloads/current' file: "..tostring(m)..".") end
-        end
-        mapper.echo("Re-downloading the latest map...")
-        mapper.checkforupdate()
-      ]],
+				[[mapper.deleteMapDownload("current") mapper.echo("Re-downloading the latest map...") mapper.checkforupdate()]],
 				"Re-download the map regardless if you have latest"
 			)
 			echo("\n")

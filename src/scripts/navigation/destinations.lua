@@ -50,7 +50,7 @@ function mapper.gotoArea(where, number, dashtype, exact)
 		mapper.gotoRoom(destinationRoom, dashtype)
 		return
 	end
-	local areaid, msg, multiples = mapper.findAreaID(where, exact)
+	local areaid, _, multiples = mapper.findAreaID(where, exact)
 	if areaid then
 		mapper.gotoAreaID(areaid)
 	elseif not areaid and #multiples > 0 then
@@ -108,7 +108,7 @@ function mapper.gotoAreaID(areaid, number, dashtype)
 	for id, _ in pairs(mapper.getAreaBorders(areaid)) do
 		possibleRooms[#possibleRooms + 1] = id
 	end
-	shortestBorder, outoftime, checkedsofar = mapper.getShortestOfMultipleRooms(possibleRooms)
+	local shortestBorder, outoftime, checkedsofar = mapper.getShortestOfMultipleRooms(possibleRooms)
 	if shortestBorder == 0 then
 		if outoftime then
 			mapper.echo(
@@ -155,7 +155,7 @@ function mapper.gotoFeature(partialFeatureName, dashtype)
 		return
 	end
 	local possibleRooms = searchRoomUserData("feature-" .. feature, "true")
-	closestFeature, outoftime, checkedsofar = mapper.getShortestOfMultipleRooms(possibleRooms)
+	local closestFeature, outoftime, checkedsofar = mapper.getShortestOfMultipleRooms(possibleRooms)
 	if closestFeature == 0 then
 		if outoftime then
 			mapper.echo(

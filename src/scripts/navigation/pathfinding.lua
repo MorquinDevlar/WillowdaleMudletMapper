@@ -37,10 +37,6 @@ end
 
 registerAnonymousEventHandler("mmapper updated map", "mapper.clearpathcache")
 
-function mapper.showpathcache()
-	return getpathcache
-end
-
 function mapper.getShortestOfMultipleRooms(possibleRooms)
 	local shortestWeight, closestRoom = 10000000, 0
 	local checkedsofar, outoftime = 0, false

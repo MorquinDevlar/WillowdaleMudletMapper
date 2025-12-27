@@ -172,16 +172,6 @@ function mapper.roomexists(num)
 	return (s and true or false)
 end
 
-function mapper.indexof_valueonly(data, value)
-	for i = 1, #data do
-		if data[i] == value then
-			return i
-		end
-	end
-
-	return false
-end
-
 -- accepts areaname or ID
 function mapper.cleanAreaName(area)
 	local areaname = type(area) == "number" and mapper.areatabler[area] or area

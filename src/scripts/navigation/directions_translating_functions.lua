@@ -15,36 +15,23 @@ local temp = {
 	["in"] = "in",
 }
 local anytolongmap = {}
+local anytoshortmap = {}
 for s, l in pairs(temp) do
 	anytolongmap[l] = l
 	anytolongmap[s] = l
+	anytoshortmap[l] = s
+	anytoshortmap[s] = s
 end
+-- Handle "out" which maps to "o" (not in temp table)
+anytoshortmap["out"] = "o"
+anytoshortmap["o"] = "o"
+
 function mapper.anytolong(exit)
 	return anytolongmap[exit]
 end
 
 function mapper.anytoshort(exit)
-	local t = {
-		n = "north",
-		e = "east",
-		s = "south",
-		w = "west",
-		ne = "northeast",
-		se = "southeast",
-		sw = "southwest",
-		nw = "northwest",
-		u = "up",
-		d = "down",
-		["in"] = "in",
-		out = "out",
-	}
-	local rt = {}
-	for s, l in pairs(t) do
-		rt[l] = s
-		rt[s] = s
-	end
-
-	return rt[exit]
+	return anytoshortmap[exit]
 end
 
 function mapper.ranytolong(exit)

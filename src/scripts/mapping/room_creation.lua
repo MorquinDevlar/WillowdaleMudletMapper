@@ -33,7 +33,7 @@ function mapper.getshiftedcoords(original, ox, oy, oz)
 	local x, y, z
 	local has = table.contains
 	-- reverse the exit
-	w = mapper.ranytolong(original)
+	local w = mapper.ranytolong(original)
 	if has({ "west", "left", "w", "l" }, w) then
 		x = (x or ox) - 1
 		y = (y or oy)

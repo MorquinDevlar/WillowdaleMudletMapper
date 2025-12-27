@@ -107,9 +107,7 @@ function mapper.room_events(event, num)
 			mapper.delayedMove(delay)
 		end
 	elseif #mapper.speedWalkPath > 0 then
-		-- ended up somewhere we didn't want to be, and this isn't a ferry room?
-		speedWalkMoved = false
-		-- re-calculate path then
+		-- ended up somewhere we didn't want to be - re-calculate path
 		mapper.echo("Ended up off the path, recalculating a new path...")
 		local destination = mapper.speedWalkPath[#mapper.speedWalkPath]
 		if not mapper.getPath(num, destination) then

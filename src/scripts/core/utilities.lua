@@ -32,4 +32,17 @@ function mapper.highlight_unfinished_rooms()
     end
 end
 
+-- Delete a file from the map downloads folder
+function mapper.deleteMapDownload(filename)
+    local filepath = getMudletHomeDir() .. "/map downloads/" .. filename
+    if io.exists(filepath) then
+        local s, m = os.remove(filepath)
+        if not s then
+            mapper.echo("Couldn't delete '" .. filepath .. "': " .. tostring(m))
+        end
+        return s
+    end
+    return true
+end
+
 -- Willowdale-specific utility functions can be added here
