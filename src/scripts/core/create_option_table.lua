@@ -61,15 +61,25 @@ function mapper.createOptionsTable(defaultTable)
 		if not opt or not val then
 			return
 		end
-		echo("Name: " .. string.title(opt) .. string.rep(" ", 10 - string.len(opt)))
-		echo("Val: " .. tostring(val.value))
-		echo(string.rep(" ", 10 - string.len(tostring(val.value))) .. "- " .. val.use .. "\n")
+		local nameCol = 23
+		local stateCol = 16
+		local name = tostring(opt)
+		local state = tostring(val.value)
+		-- Truncate state if too long for column
+		if #state > stateCol - 1 then
+			state = state:sub(1, stateCol - 4) .. "..."
+		end
+		local namePad = math.max(1, nameCol - #name)
+		local statePad = math.max(1, stateCol - #state)
+		echo(name .. string.rep(" ", namePad))
+		echo(state .. string.rep(" ", statePad))
+		echo(val.use .. "\n")
 	end
 
 	function proxyTable:showAllOptions()
 		-- Display header using mapper color scheme
-		decho("<112,229,0>Setting:               <255,255,255>State:          <128,128,128>Option:\n")
-		decho("<128,128,128>" .. string.rep("-", 60) .. "\n")
+		decho("<112,229,0>Setting:           <255,255,255>State:                        <128,128,128>Option:\n")
+		decho("<128,128,128>" .. string.rep("-", 70) .. "\n")
 
 		-- Display all options
 		for k, v in spairs(self[index]) do

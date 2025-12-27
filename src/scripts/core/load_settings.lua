@@ -64,13 +64,20 @@ function mapper.startup()
             options = "See mcolor for options"
         elseif opt == "walkdelay" then
             options = "0-5 seconds"
+        elseif opt == "font" then
+            options = "(font name)"
         else
-            options = tostring(displayValue)
+            options = val.use or ""
+        end
+
+        -- Truncate long values for display
+        local stateStr = tostring(displayValue)
+        if #stateStr > 29 then
+            stateStr = stateStr:sub(1, 26) .. "..."
         end
 
         -- Display in columns: Setting, State, Option
-        -- Using mapper's color scheme: light green for settings, white for values, dim gray for options
-        decho(string.format("<112,229,0>%-22s <255,255,255>%-15s <128,128,128>%s\n", opt, tostring(displayValue), options))
+        decho(string.format("<112,229,0>%-19s <255,255,255>%-29s <128,128,128>%s\n", opt, stateStr, options))
     end
 
     mapper.settings.dispDefaultWriteError = function()
