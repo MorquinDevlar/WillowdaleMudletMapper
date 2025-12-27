@@ -34,7 +34,7 @@ function mapper.checkforupdate()
 	-- Download releases.json to check for updates
 	mapper.releasesfile = downloadfolder .. "releases.json"
 	mapper.checkingupdates = true
-	downloadFile(mapper.releasesfile, "https://www.willowdalemud.com/resources/mapper/releases.json")
+	downloadFile(mapper.releasesfile, "https://www.willowdalemud.com/static/resources/mapper/releases.json")
 end
 
 -- Download the latest mapper package
@@ -50,7 +50,7 @@ function mapper.downloadmapperscript()
 	mapper.downloadedscript = file
 	downloadFile(
 		mapper.downloadedscript,
-		"https://www.willowdalemud.com/resources/mapper/WillowdaleMudletMapper.mpackage"
+		"https://www.willowdalemud.com/static/resources/mapper/WillowdaleMudletMapper.mpackage"
 	)
 	mapper.echo("Downloading mapper update...")
 end
