@@ -1,25 +1,7 @@
 [
     {
-        "name": "check_for_updates",
+        "name": "autoupdater",
         "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "checkupdatestart",
-        "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "downloadedfile",
-        "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "seedownloaderrors",
-        "isActive": "no",
         "script": "",
         "isFolder": "no"
     }
