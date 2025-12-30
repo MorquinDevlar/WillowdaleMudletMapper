@@ -81,4 +81,28 @@ function mapper.registergomudenvdata(_, game)
     if mapper.setEnvironmentColors then
         mapper.setEnvironmentColors()
     end
+
+    -- Build hex→envId lookup from GMCP biome_colors
+    mapper.buildBiomeColorLookup()
+end
+
+-- Build hex color → static env ID lookup from GMCP biome_colors
+function mapper.buildBiomeColorLookup()
+    if not (gmcp and gmcp.Game and gmcp.Game.Info and gmcp.Game.Info.biome_colors) then
+        return
+    end
+
+    mapper.hexToStaticEnvId = {}
+
+    for biomeName, hexColor in pairs(gmcp.Game.Info.biome_colors) do
+        -- Capitalize first letter to match mapper.envids keys (e.g., "road" → "Road")
+        local capitalizedName = biomeName:gsub("^%l", string.upper)
+        local envId = mapper.envids[capitalizedName]
+
+        if envId then
+            -- Normalize hex (remove #, uppercase)
+            local normalizedHex = hexColor:gsub("^#", ""):upper()
+            mapper.hexToStaticEnvId[normalizedHex] = envId
+        end
+    end
 end

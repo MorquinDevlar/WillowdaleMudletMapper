@@ -15,7 +15,7 @@ mapper.events.list = {
 	mapDataChanged = { "mapper.mapdata_changed" },
 
 	-- GMCP Game events
-	["gmcp.Game.Info"] = { "mapper.checkupdatestart" },
+	["gmcp.Game.Info"] = { "mapper.checkupdatestart", "mapper.registergomudenvdata" },
 
 	-- GMCP Room events
 	["gmcp.Room.Info"] = { "mapper.room_events", "mapper.centerroominfo" },

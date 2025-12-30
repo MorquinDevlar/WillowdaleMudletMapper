@@ -48,7 +48,12 @@ function mapper.getBiomeEnvId(biomeColor)
     -- Normalize the color (remove #, convert to uppercase for consistency)
     local normalizedColor = biomeColor:gsub("^#", ""):upper()
 
-    -- Check if we've already registered this color
+    -- First, check if this matches a known static biome color
+    if mapper.hexToStaticEnvId and mapper.hexToStaticEnvId[normalizedColor] then
+        return mapper.hexToStaticEnvId[normalizedColor]
+    end
+
+    -- Fall back to dynamic color allocation for unknown colors
     if mapper.biomeColorToEnvId[normalizedColor] then
         return mapper.biomeColorToEnvId[normalizedColor]
     end
