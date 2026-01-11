@@ -1,12 +1,5 @@
 [
     {
-        "name": "area_list",
-        "isActive": "yes",
-        "regex": "^area list$",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
         "name": "check_wholist",
         "isActive": "yes",
         "regex": "^who b$",

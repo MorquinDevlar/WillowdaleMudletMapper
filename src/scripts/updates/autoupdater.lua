@@ -1,5 +1,5 @@
--- Auto-updater for mapper script and crowdmap
--- Consolidates: check_for_updates, checkupdatestart, downloadedfile, seedownloaderrors
+-- Auto-updater for mapper script
+-- Checks for new versions and allows one-click updates
 
 local downloadfolder = getMudletHomeDir() .. "/map downloads/"
 
@@ -38,8 +38,8 @@ function mapper.checkupdatestart(...)
 		killTimer(mapper.checkforupdatetimer)
 	end
 	-- Check for mapper script updates after a short random delay
-	-- Set verbose flag for login-triggered checks
-	mapper.updateCheckVerbose = true
+	-- Silent by default - only show messages if an update is available
+	mapper.updateCheckVerbose = false
 	mapper.checkforupdatetimer = tempTimer(math.random(3, 10), function()
 		mapper.checkforupdate()
 	end)
@@ -51,18 +51,10 @@ function mapper.checkupdatesilent()
 	mapper.checkforupdate()
 end
 
-function mapper.changeUpdateMap()
-	if mapper.settings.updatemap then
-		mapper.echo("Will check for new map updates from your MUD.")
-		enableTimer("Check for updates periodically")
-	--mapper.checkUpdateStart()
-	else
-		mapper.echo("Won't check for new map updates from your MUD.")
-		disableTimer("Check for updates periodically")
-		if mapper.checkforupdatetimer then
-			killTimer("mapper.checkforupdatetimer")
-		end
-	end
+-- Verbose update check (manual trigger)
+function mapper.checkupdateverbose()
+	mapper.updateCheckVerbose = true
+	mapper.checkforupdate()
 end
 
 --------------------------------------------------------------------------------
@@ -214,126 +206,6 @@ function mapper.downloadedfile(_, filename)
 	elseif filename == tostring(mapper.downloadedscript) then
 		mapper.checkingupdates = false
 		mapper.installMapperScript()
-
-	-- Handle crowdmap changelog
-	elseif filename == mapper.crowdchangelogfile then
-		local f, s = io.open(filename)
-		if f then
-			s = f:read("*a")
-			io.close(f)
-		end
-
-		-- make environment
-		local env = {} -- add functions you know are safe here
-
-		-- run code under environment [Lua 5.1]
-		local function run(untrusted_code)
-			if untrusted_code:byte(1) == 27 then
-				return nil, "binary bytecode prohibited"
-			end
-			local untrusted_function, message = loadstring(untrusted_code)
-			if not untrusted_function then
-				return nil, message
-			end
-			setfenv(untrusted_function, env)
-			return pcall(untrusted_function)
-		end
-
-		run(s)
-
-		mapper.crowdchangelog = env.changelog
-
-		echo("\n")
-		mapper.echon("------------------[ Map Update ]------------------")
-		mapper.echon(
-			" The crowdmap map was updated from <orange>"
-				.. (mapper.oldversion or "(none)")
-				.. " <reset>-> <green>"
-				.. tostring(mapper.newversion)
-				.. "<reset>!"
-		)
-		mapper.echon(" Want to see the full changelog?")
-		cechoLink(
-			" <ForestGreen>Click here<reset>.",
-			"mapper.showcrowdchangelog()",
-			"View the full changelog for mappers",
-			true
-		)
-		mapper.echon(
-			" Latest changes were: <LightSkyBlue>"
-				.. tostring(mapper.crowdchangelog and mapper.crowdchangelog[#mapper.crowdchangelog] or "?")
-				.. ".\n"
-		)
-		echo("\n\n")
-
-		mapper.downloadcrowdmap(mapper.newversion)
-
-	-- Handle crowdmap map file
-	elseif filename == mapper.crowdmapfile then
-		mapper.echo("Map downloaded, loading it in...")
-
-		local tmp = getRoomUserData(1, "gotoMapping")
-		local oldmaptable = {}
-
-		if tmp ~= "" then
-			oldmaptable = yajl.to_value(tmp)
-		end
-
-		local ok = loadMap(filename)
-
-		if ok then
-			-- Willowdale-specific map post-processing can be added here
-
-			if mapper.settings.lockspecials then
-				mapper.lockSpecials()
-			end
-
-			mapper.echo("Map loaded fine - enjoy!")
-
-			tmp = getRoomUserData(1, "gotoMapping")
-			local newmaptable = {}
-
-			if tmp ~= "" then
-				newmaptable = yajl.to_value(tmp)
-			end
-
-			for k, v in pairs(oldmaptable) do
-				newmaptable[k] = v
-			end
-			setRoomUserData(1, "gotoMapping", yajl.to_string(newmaptable))
-			mapper.echo("Marks from the old map migrated successfully.")
-
-			raiseEvent("mapper updated map")
-		else
-			mapper.echon("Map failed to load - you need to have the mapper open. Please open it, and then ")
-			echoLink("click here", [[
-        local tmp = getRoomUserData(1, "gotoMapping")
-        local oldmaptable = {}
-        if tmp ~= "" then
-          oldmaptable = yajl.to_value(tmp)
-        end
-
-        local ok = loadMap(']] .. filename .. [[')
-        if ok then
-        -- Willowdale-specific map post-processing can be added here
-
-        if mapper.settings.lockspecials then mapper.lockSpecials() end
-
-        mapper.echo("Map loaded successfully!")
-
-          tmp = getRoomUserData(1, "gotoMapping")
-          local newmaptable = {}
-          if tmp ~= "" then
-            newmaptable = yajl.to_value(tmp)
-          end
-          for k,v in pairs(oldmaptable) do newmaptable[k] = v end
-          setRoomUserData(1, "gotoMapping", yajl.to_string(newmaptable))
-          mapper.echo("Marks from the old map migrated successfully.")
-          raiseEvent("mapper updated map")
-        else mapper.echo("Nope, didn't work. Open the map and try again?") end
-      ]], "Click here to try loading the map again")
-			echo(" to try loading it in again.\n")
-		end
 	end
 end
 

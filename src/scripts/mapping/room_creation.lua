@@ -1,5 +1,28 @@
 -- Room creation and coordinate calculation functions
 
+function mapper.findOrCreateArea(areaName)
+	if not areaName or areaName == "" then
+		return nil
+	end
+
+	-- Check if area already exists
+	local areaTable = getAreaTable()
+	for name, id in pairs(areaTable) do
+		if name:lower() == areaName:lower() then
+			return id
+		end
+	end
+
+	-- Create new area
+	local newId = addAreaName(areaName)
+	if newId then
+		mapper.regenerateareas()
+		raiseEvent("mapper areas changed")
+		mapper.echo("Created new area: " .. areaName)
+	end
+	return newId
+end
+
 function mapper.makeroom(oldid, newid, x, y, z, targetAreaId)
 	assert(x and y and z, "makeroom: need all 3 coordinates")
 	addRoom(newid)

@@ -1,5 +1,43 @@
 -- GMCP Room Info handler for mapping new rooms
 
+function mapper.createFirstRoom(roomId, areaName, x, y, z)
+	-- Create area if needed
+	local areaId = mapper.findOrCreateArea(areaName)
+	if not areaId then
+		mapper.echo("Failed to create area for first room")
+		return false
+	end
+
+	-- Create the room
+	addRoom(roomId)
+	setRoomCoordinates(roomId, x, y, z)
+	setRoomArea(roomId, areaId)
+
+	-- Set room name from GMCP
+	local roomName = gmcp.Room.Info.Basic.name or "Unknown"
+	setRoomName(roomId, roomName)
+
+	-- Set environment/biome if available
+	if gmcp.Room.Info.Basic.biome_color then
+		local envId = mapper.getBiomeEnvId(gmcp.Room.Info.Basic.biome_color)
+		if envId then
+			setRoomEnv(roomId, envId)
+		end
+	end
+
+	-- Store area data
+	setRoomUserData(roomId, "Area", areaName)
+
+	-- Update mapper state
+	mapper.currentroom = roomId
+	mapper.currentroomname = roomName
+	mapper.editing = true
+
+	centerview(roomId)
+	mapper.echo("Created first room! Mapping is now enabled.")
+	return true
+end
+
 function mapper.mappingnewroom(_, num)
 	local s, m = xpcall(function()
 		if not mapper.editing then
@@ -77,9 +115,14 @@ function mapper.mappingnewroom(_, num)
 		end
 
 		if not mapper.roomexists(num) then
+			-- Check if this is the first room (empty map with GMCP coordinates)
+			if mapper.isMapEmpty() and currentRoomX and currentRoomY and currentRoomZ and currentRoomArea then
+				if mapper.createFirstRoom(num, currentRoomArea, currentRoomX, currentRoomY, currentRoomZ) then
+					-- First room created, continue to process exits below
+				end
 			-- see if we can create and link this room with an existing one
 			-- wilderness and non-wilderness rooms require different methods of calculating relative coordinates
-			if not inwilderness() then
+			elseif not inwilderness() then
 				for exit, exitData in pairs(currentexits) do
 					local id = exitData.room_id
 					if mapper.roomexists(id) then
@@ -197,39 +240,58 @@ function mapper.mappingnewroom(_, num)
 									)
 								end
 							end
-							if mapper.setExit(num, id, exit) then
-								s = s
-									.. (#s > 0 and " " or "")
-									.. "Added missing exit "
-									.. exit
-									.. " to "
-									.. (getRoomName(id) ~= "" and getRoomName(id) or "''")
-									.. " ("
-									.. id
-									.. ")."
+							-- Check if this is a standard exit or a special exit
+							if mapper.isStandardExit(exit) then
+								if mapper.setExit(num, id, exit) then
+									s = s
+										.. (#s > 0 and " " or "")
+										.. "Added missing exit "
+										.. exit
+										.. " to "
+										.. (getRoomName(id) ~= "" and getRoomName(id) or "''")
+										.. " ("
+										.. id
+										.. ")."
 
-								-- Check if this exit has a door
-								if exitData.details and exitData.details.type == "door" and exitData.details.state then
-									local state = exitData.details.state
-									if state == "closed" or state == "locked" then
-										local shortExit = mapper.anytoshort(exit)
-										local doorType = state == "locked" and 3 or 2 -- 3 = locked, 2 = closed
-										if mapper.settings.debug then
-											mapper.echo("Creating " .. state .. " door: " .. exit .. " exit (short: " .. shortExit .. ", type: " .. doorType .. ") in room " .. num)
+									-- Check if this exit has a door
+									if exitData.details and exitData.details.type == "door" and exitData.details.state then
+										local state = exitData.details.state
+										if state == "closed" or state == "locked" then
+											local shortExit = mapper.anytoshort(exit)
+											local doorType = state == "locked" and 3 or 2 -- 3 = locked, 2 = closed
+											if mapper.settings.debug then
+												mapper.echo("Creating " .. state .. " door: " .. exit .. " exit (short: " .. shortExit .. ", type: " .. doorType .. ") in room " .. num)
+											end
+											setDoor(num, shortExit, doorType)
+											s = s .. (#s > 0 and " " or "") .. "Added " .. state .. " door on " .. exit .. " exit."
 										end
-										setDoor(num, shortExit, doorType)
-										s = s .. (#s > 0 and " " or "") .. "Added " .. state .. " door on " .. exit .. " exit."
 									end
+								else
+									s = s
+										.. (#s > 0 and " " or "")
+										.. string.format(
+											"Failed to link %d with %d via %s exit for some reason :/",
+											num,
+											id,
+											exit
+										)
 								end
 							else
-								s = s
-									.. (#s > 0 and " " or "")
-									.. string.format(
-										"Failed to link %d with %d via %s exit for some reason :/",
-										num,
-										id,
-										exit
-									)
+								-- This is a special exit (like "touch tree", "enter portal", etc.)
+								-- Check if the special exit already exists
+								local existingSpecialExits = getSpecialExitsSwap(num) or {}
+								if not existingSpecialExits[exit] then
+									addSpecialExit(num, id, exit)
+									s = s
+										.. (#s > 0 and " " or "")
+										.. "Added special exit '"
+										.. exit
+										.. "' to "
+										.. (getRoomName(id) ~= "" and getRoomName(id) or "''")
+										.. " ("
+										.. id
+										.. ")."
+								end
 							end
 						else
 							-- Exit already exists, check if we need to update door status
@@ -372,6 +434,30 @@ function mapper.mappingnewroom(_, num)
 				if envId and envId ~= getRoomEnv(num) then
 					setRoomEnv(num, envId)
 					s = s .. (#s > 0 and " " or "") .. "Updated room color to " .. gmcp.Room.Info.Basic.biome_color .. "."
+				end
+			end
+			-- store and display biome data
+			if gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.environment then
+				local environment = gmcp.Room.Info.Basic.environment
+				local envLower = environment:lower()
+				local symbol = gmcp.Room.Info.Basic.biome_symbol or ""
+
+				-- Store biome data on the room
+				if getRoomUserData(num, "biome") ~= environment then
+					setRoomUserData(num, "biome", environment)
+				end
+				if getRoomUserData(num, "biome_symbol") ~= symbol then
+					setRoomUserData(num, "biome_symbol", symbol)
+				end
+
+				-- Set room character for special biomes if enabled
+				if mapper.settings.showbiomesymbols and symbol ~= "" then
+					if envLower == "shop" or envLower == "inn" or envLower == "post office" then
+						if getRoomChar(num) ~= symbol then
+							setRoomChar(num, symbol)
+							s = s .. (#s > 0 and " " or "") .. "Set room symbol to '" .. symbol .. "'."
+						end
+					end
 				end
 			end
 			-- check indoors status

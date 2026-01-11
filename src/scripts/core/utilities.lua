@@ -32,17 +32,98 @@ function mapper.highlight_unfinished_rooms()
     end
 end
 
--- Delete a file from the map downloads folder
-function mapper.deleteMapDownload(filename)
-    local filepath = getMudletHomeDir() .. "/map downloads/" .. filename
-    if io.exists(filepath) then
-        local s, m = os.remove(filepath)
-        if not s then
-            mapper.echo("Couldn't delete '" .. filepath .. "': " .. tostring(m))
-        end
-        return s
+-- Refresh biome symbols on all rooms that have stored biome data
+function mapper.refreshBiomeSymbols()
+    if not mapper.areatable then
+        return
     end
-    return true
+    local count = 0
+    for _, areaId in pairs(mapper.areatable) do
+        local roomList = getAreaRooms(areaId) or {}
+        for _, roomId in pairs(roomList) do
+            local biome = getRoomUserData(roomId, "biome")
+            local symbol = getRoomUserData(roomId, "biome_symbol")
+            if biome ~= "" and symbol ~= "" then
+                local biomeLower = biome:lower()
+                if biomeLower == "shop" or biomeLower == "inn" or biomeLower == "post office" then
+                    if getRoomChar(roomId) ~= symbol then
+                        setRoomChar(roomId, symbol)
+                        count = count + 1
+                    end
+                end
+            end
+        end
+    end
+    if count > 0 then
+        mapper.echo("Restored biome symbols on " .. count .. " room(s).")
+    end
+end
+
+-- Clear biome symbols from all rooms that have stored biome data
+function mapper.clearBiomeSymbols()
+    if not mapper.areatable then
+        return
+    end
+    local count = 0
+    for _, areaId in pairs(mapper.areatable) do
+        local roomList = getAreaRooms(areaId) or {}
+        for _, roomId in pairs(roomList) do
+            local biome = getRoomUserData(roomId, "biome")
+            local symbol = getRoomUserData(roomId, "biome_symbol")
+            if biome ~= "" and symbol ~= "" then
+                local biomeLower = biome:lower()
+                if biomeLower == "shop" or biomeLower == "inn" or biomeLower == "post office" then
+                    if getRoomChar(roomId) == symbol then
+                        setRoomChar(roomId, "")
+                        count = count + 1
+                    end
+                end
+            end
+        end
+    end
+    if count > 0 then
+        mapper.echo("Cleared biome symbols from " .. count .. " room(s).")
+    end
+end
+
+-- Speedwalk path highlighting
+mapper.highlightedPathRooms = {}
+
+function mapper.highlightPath(roomIds)
+    if not mapper.settings.showspeedwalkpath then
+        return
+    end
+
+    -- Clear any existing highlights first
+    mapper.clearPathHighlight()
+
+    if not roomIds or #roomIds == 0 then
+        return
+    end
+
+    -- Highlight each room in the path
+    -- Using a cyan/blue gradient for the path
+    for i, roomId in ipairs(roomIds) do
+        if roomExists(roomId) then
+            -- Gradient from start (green) to end (cyan)
+            local progress = i / #roomIds
+            local r = math.floor(0 + (0 - 0) * progress)
+            local g = math.floor(200 - (200 - 150) * progress)
+            local b = math.floor(100 + (255 - 100) * progress)
+
+            highlightRoom(roomId, r, g, b, r, g, b, 1, 180, 80)
+            mapper.highlightedPathRooms[#mapper.highlightedPathRooms + 1] = roomId
+        end
+    end
+end
+
+function mapper.clearPathHighlight()
+    for _, roomId in ipairs(mapper.highlightedPathRooms) do
+        if roomExists(roomId) then
+            unHighlightRoom(roomId)
+        end
+    end
+    mapper.highlightedPathRooms = {}
 end
 
 -- Willowdale-specific utility functions can be added here

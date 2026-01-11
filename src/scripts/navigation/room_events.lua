@@ -65,6 +65,30 @@ function mapper.room_events(event, num)
 			mapper.inside = true
 			raiseEvent("mmapper went inside")
 		end
+
+		-- Store and display biome data on existing rooms
+		if mapper.roomexists(num) and gmcp.Room.Info.Basic.environment then
+			local environment = gmcp.Room.Info.Basic.environment
+			local envLower = environment:lower()
+			local symbol = gmcp.Room.Info.Basic.biome_symbol or ""
+
+			-- Store biome data on the room
+			if getRoomUserData(num, "biome") ~= environment then
+				setRoomUserData(num, "biome", environment)
+			end
+			if getRoomUserData(num, "biome_symbol") ~= symbol then
+				setRoomUserData(num, "biome_symbol", symbol)
+			end
+
+			-- Set room character for special biomes if enabled
+			if mapper.settings.showbiomesymbols and symbol ~= "" then
+				if envLower == "shop" or envLower == "inn" or envLower == "post office" then
+					if getRoomChar(num) ~= symbol then
+						setRoomChar(num, symbol)
+					end
+				end
+			end
+		end
 		-- Continent change detection removed - not used in Willowdale
 		-- the event could cancel speedwalking - in this case quit
 		if mapper.ignore_speedwalking then
@@ -89,7 +113,12 @@ function mapper.room_events(event, num)
 		mapper.speedWalkDir = {}
 		mapper.speedWalkCounter = 0
 		mapper.autowalking = false
+		mapper.clearPathHighlight()
 	elseif mapper.speedWalkPath[mapper.speedWalkCounter] == num then
+		-- Clear highlight from the room we just entered
+		if mapper.settings.showspeedwalkpath and roomExists(num) then
+			unHighlightRoom(num)
+		end
 		mapper.speedWalkCounter = mapper.speedWalkCounter + 1
 		-- Check if we're at the destination after incrementing
 		if mapper.speedWalkCounter > #mapper.speedWalkPath or num == mapper.speedWalkPath[#mapper.speedWalkPath] then
@@ -100,6 +129,7 @@ function mapper.room_events(event, num)
 			mapper.speedWalkDir = {}
 			mapper.speedWalkCounter = 0
 			mapper.autowalking = false
+			mapper.clearPathHighlight()
 		else
 			-- GMCP room change detected, continue walking
 			-- Use delay if configured, otherwise move immediately

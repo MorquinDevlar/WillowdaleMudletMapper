@@ -8,7 +8,7 @@ function mapper.echo(what)
 	if getCurrentLine() ~= "" then
 		echo("\n")
 	end
-	decho("<112,229,0>(<73,149,0>mapper<112,229,0>): <255,255,255>")
+	decho("<73,149,0>Mapper: <255,255,255>")
 	cecho(tostring(what))
 	echo("\n")
 end
@@ -18,7 +18,7 @@ function mapper.echon(what)
 	if getCurrentLine() ~= "" then
 		echo("\n")
 	end
-	decho("<112,229,0>(<73,149,0>mapper<112,229,0>): <255,255,255>")
+	decho("<73,149,0>Mapper: <255,255,255>")
 	cecho(tostring(what))
 end
 
@@ -170,6 +170,19 @@ function mapper.roomexists(num)
 
 	local s, m = pcall(getRoomArea, tonumber(num))
 	return (s and true or false)
+end
+
+function mapper.isMapEmpty()
+	local areaTable = getAreaTable()
+	for _, areaId in pairs(areaTable) do
+		if areaId ~= 0 then
+			local rooms = getAreaRooms(areaId) or {}
+			if next(rooms) then
+				return false
+			end
+		end
+	end
+	return true
 end
 
 -- accepts areaname or ID

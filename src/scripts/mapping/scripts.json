@@ -52,5 +52,11 @@
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
+    },
+    {
+        "name": "area_commands",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
     }
 ]

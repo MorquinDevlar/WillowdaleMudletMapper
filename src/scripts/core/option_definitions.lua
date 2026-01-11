@@ -11,17 +11,6 @@
 --   }
 
 mapper.option_definitions = {
-    -- Font settings
-    font = {
-        default = "FiraMono Nerd Font Mono",
-        type = "string",
-        description = "Font for the main console",
-        onChange = function(name, value)
-            setFont("main", value)
-            mapper.echo("Font set to: " .. value)
-        end
-    },
-
     -- General settings
     echocolour = {
         default = "cyan",
@@ -58,13 +47,6 @@ mapper.option_definitions = {
                 mapper.echo(string.format("Walk delay set to %.1f seconds - very slow movement", value))
             end
         end
-    },
-
-    updatemap = {
-        default = true,
-        type = "boolean",
-        description = "Check for new maps from your MUD?",
-        onChange = mapper.changeUpdateMap
     },
 
     autoclear = {
@@ -107,6 +89,37 @@ mapper.option_definitions = {
                 mapper.echo("Areas will now be automatically created based on GMCP area information")
             else
                 mapper.echo("Areas will need to be created manually")
+            end
+        end
+    },
+
+    showbiomesymbols = {
+        default = true,
+        type = "boolean",
+        description = "Show biome symbols (shop, inn, post office) on the map?",
+        onChange = function(name, option)
+            mapper.changeBoolFunc(name, option)
+            if option then
+                mapper.echo("Biome symbols will now be shown on the map")
+                mapper.refreshBiomeSymbols()
+            else
+                mapper.echo("Biome symbols will be hidden from the map")
+                mapper.clearBiomeSymbols()
+            end
+        end
+    },
+
+    showspeedwalkpath = {
+        default = true,
+        type = "boolean",
+        description = "Highlight the path on the map during speedwalk?",
+        onChange = function(name, option)
+            mapper.changeBoolFunc(name, option)
+            if option then
+                mapper.echo("Speedwalk path will be highlighted on the map")
+            else
+                mapper.echo("Speedwalk path highlighting disabled")
+                mapper.clearPathHighlight()
             end
         end
     }

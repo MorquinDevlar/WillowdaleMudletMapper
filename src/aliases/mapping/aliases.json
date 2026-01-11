@@ -1,16 +1,23 @@
 [
     {
-        "name": "toggle_mapping_mode",
+        "name": "mapper_help",
         "isActive": "yes",
-        "regex": "^(?:mc|map create) ?(on|off)?$",
-        "script": "",
+        "regex": "^mapper$",
+        "script": "mapper.commands.help()",
         "isFolder": "no"
     },
     {
-        "name": "Display area for lock/unlock",
+        "name": "mapper_config",
         "isActive": "yes",
-        "regex": "^arealock(?: (.*))?$",
-        "script": "mapper.doLockArea(matches[2])",
+        "regex": "^mapper config(?: (.+))?$",
+        "script": "mapper.commands.config(matches[2])",
+        "isFolder": "no"
+    },
+    {
+        "name": "mapper_area",
+        "isActive": "yes",
+        "regex": "^mapper area(?: (.+))?$",
+        "script": "mapper.commands.area.dispatch(matches[2])",
         "isFolder": "no"
     },
     {
@@ -94,34 +101,6 @@
         "name": "set_a_room_character",
         "isActive": "yes",
         "regex": "^rcc ([^ ]+)(?: (\\w+))?$",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "create_an_area",
-        "isActive": "yes",
-        "regex": "^area add (.+)$",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "delete_an_area",
-        "isActive": "yes",
-        "regex": "^area delete (.+)$",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "cancel_area_deletion",
-        "isActive": "yes",
-        "regex": "^cancel area deletion$",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "rename_an_area",
-        "isActive": "yes",
-        "regex": "^area rename (.+)$",
         "script": "",
         "isFolder": "no"
     },

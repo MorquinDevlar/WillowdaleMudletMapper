@@ -1,6 +1,6 @@
 -- Destination navigation functions
 
-function mapper.gotoRoom(where, dashtype, gotoType)
+function mapper.gotoRoom(where, gotoType)
 	mapper.speedWalk.type = gotoType or "room"
 	if not where or not tonumber(where) then
 		mapper.echo("Where do you want to go to?")
@@ -24,12 +24,12 @@ function mapper.gotoRoom(where, dashtype, gotoType)
 		raiseEvent("mapper clear externals")
 		return
 	end
-	doSpeedWalk(dashtype)
+	doSpeedWalk()
 	-- allow mapper 'addons' to unlink their special exits
 	raiseEvent("mapper clear externals")
 end
 
-function mapper.gotoArea(where, number, dashtype, exact)
+function mapper.gotoArea(where, number, exact)
 	mapper.speedWalk.type = "area"
 	if not where or type(where) ~= "string" then
 		mapper.echo("Where do you want to go to?")
@@ -47,7 +47,7 @@ function mapper.gotoArea(where, number, dashtype, exact)
 	end
 	local destinationRoom = maptable[where]
 	if destinationRoom then
-		mapper.gotoRoom(destinationRoom, dashtype)
+		mapper.gotoRoom(destinationRoom)
 		return
 	end
 	local areaid, _, multiples = mapper.findAreaID(where, exact)
@@ -55,7 +55,7 @@ function mapper.gotoArea(where, number, dashtype, exact)
 		mapper.gotoAreaID(areaid)
 	elseif not areaid and #multiples > 0 then
 		if number and number <= #multiples then
-			mapper.gotoArea(multiples[number], nil, dashtype, true)
+			mapper.gotoArea(multiples[number], nil, true)
 			return
 		end
 		mapper.echo("Which area would you like to go to?")
@@ -64,22 +64,14 @@ function mapper.gotoArea(where, number, dashtype, exact)
 			echo("  ")
 			echoLink(
 				key .. ") ",
-				'mapper.gotoArea("'
-					.. areaname
-					.. '", nil, '
-					.. (dashtype and '"' .. dashtype .. '"' or "nil")
-					.. ", true)",
+				'mapper.gotoArea("' .. areaname .. '", nil, true)',
 				"Click to go to " .. areaname,
 				true
 			)
 			setUnderline(true)
 			echoLink(
 				areaname,
-				'mapper.gotoArea("'
-					.. areaname
-					.. '", nil, '
-					.. (dashtype and '"' .. dashtype .. '"' or "nil")
-					.. ", true)",
+				'mapper.gotoArea("' .. areaname .. '", nil, true)',
 				"Click to go to " .. areaname,
 				true
 			)
@@ -94,7 +86,7 @@ function mapper.gotoArea(where, number, dashtype, exact)
 	end
 end
 
-function mapper.gotoAreaID(areaid, number, dashtype)
+function mapper.gotoAreaID(areaid)
 	if not areaid or not tonumber(areaid) then
 		mapper.echo("To where do you want to go?")
 		return
@@ -134,10 +126,10 @@ function mapper.gotoAreaID(areaid, number, dashtype)
 		return
 	end
 	raiseEvent("mapper clear externals")
-	mapper.gotoRoom(shortestBorder, dashtype, "area")
+	mapper.gotoRoom(shortestBorder, "area")
 end
 
-function mapper.gotoFeature(partialFeatureName, dashtype)
+function mapper.gotoFeature(partialFeatureName)
 	local mapFeatures = mapper.getMapFeatures()
 	local feature
 	if mapFeatures[partialFeatureName:lower()] then
@@ -181,5 +173,5 @@ function mapper.gotoFeature(partialFeatureName, dashtype)
 		return
 	end
 	raiseEvent("mapper clear externals")
-	mapper.gotoRoom(closestFeature, dashtype, "room")
+	mapper.gotoRoom(closestFeature, "room")
 end

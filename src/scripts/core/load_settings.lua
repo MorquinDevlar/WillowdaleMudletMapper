@@ -11,6 +11,10 @@ mapper = mapper
         firstRun = true,
         specials = {},
     }
+-- Mapping mode is always enabled (auto-creates rooms from GMCP data)
+if mapper.editing == nil then
+    mapper.editing = true
+end
 mapper.speedWalkWatch = createStopWatch()
 -- speedWalkPath and speedWalkDir populated by Mudlet from getPath() and gotoRoom()
 speedWalkPath = speedWalkPath or {}
@@ -32,10 +36,6 @@ function mapper.reload()
     mapper.firstRun = true
     mapper.startup()
     mapper.echo("Mapper settings reloaded!")
-end
-
-function mapper.setFonts()
-    setFont("main", mapper.settings.font)
 end
 
 function mapper.startup()
@@ -64,8 +64,6 @@ function mapper.startup()
             options = "See mcolor for options"
         elseif opt == "walkdelay" then
             options = "0-5 seconds"
-        elseif opt == "font" then
-            options = "(font name)"
         else
             options = val.use or ""
         end
@@ -93,9 +91,6 @@ function mapper.startup()
     if mapper.initializeBiomeColors then
         mapper.initializeBiomeColors()
     end
-
-    -- Apply font settings
-    mapper.setFonts()
 
     raiseEvent("mapper areas changed")
     mapper.firstRun = false

@@ -1,39 +1,34 @@
-local where = matches[2]:lower()
-local gallop
-if command:ends("gallop") then
-	gallop = "gallop"
-	where = where:sub(1, -8)
-elseif command:ends("sprint") then
-	gallop = "sprint"
-	where = where:sub(1, -8)
-elseif command:ends("dash") then
-	gallop = "dash"
-	where = where:sub(1, -6)
-elseif command:ends("runaway") then
-	gallop = "runaway"
-	where = where:sub(1, -9)
-elseif command:ends("glide") then
-	gallop = "glide"
-	where = where:sub(1, -7)
+-- Show syntax help if no argument provided
+if not matches[2] or matches[2] == "" then
+	mapper.echo("Usage: goto <destination>")
+	mapper.echo("")
+	mapper.echo("  goto <room ID>       - Go to a specific room by ID")
+	mapper.echo("  goto <area name>     - Go to a random room in an area")
+	mapper.echo("  goto <area name> N   - Go to room N in an area")
+	mapper.echo("  goto feature <name>  - Go to a named feature")
+	return
 end
+
+local where = matches[2]:lower()
+
 if mapper.debug then
 	mapper.gotoPerf = mapper.gotoPerf or createStopWatch()
 	startStopWatch(mapper.gotoPerf)
 end
 -- goto room ID
 if tonumber(where) then
-	mapper.gotoRoom(where, gallop)
+	mapper.gotoRoom(where)
 else
 	-- goto area or feature
 	local split = where:split(" ")
 	if split[1] == "feature" then
 		table.remove(split, 1)
-		mapper.gotoFeature(table.concat(split, " "), gallop)
+		mapper.gotoFeature(table.concat(split, " "))
 	else
 		if tonumber(split[#split]) then
-			mapper.gotoArea(where:sub(1, -#split[#split] - 2), tonumber(split[#split]), gallop)
+			mapper.gotoArea(where:sub(1, -#split[#split] - 2), tonumber(split[#split]))
 		else
-			mapper.gotoArea(where, nil, gallop)
+			mapper.gotoArea(where)
 		end
 	end
 end

@@ -117,16 +117,7 @@ function mapper.roomlook(input)
 		echo("\n")
 		echo("  ")
 		setUnderline(true)
-		echoLink("Check for mapper & map updates", 'mapper.echo("Checking...") mapper.checkforupdate()', "", true)
-		setUnderline(false)
-		echo(" ")
-		setUnderline(true)
-		echoLink(
-			"(force map)",
-			[[mapper.deleteMapDownload("current") mapper.echo("Re-downloading the latest map...") mapper.checkforupdate()]],
-			"Re-download the map regardless if you have latest",
-			true
-		)
+		echoLink("Check for mapper updates", 'mapper.echo("Checking...") mapper.checkupdateverbose()', "", true)
 		setUnderline(false)
 		echo("\n")
 	end
@@ -192,13 +183,7 @@ function mapper.roomlook(input)
 			mapper.echo(mapper.currentroom .. " doesn't seem to be mapped yet.")
 			mapper.echo("Stuff you can do:")
 			echo("  ")
-			echoLink("Check for all updates", 'mapper.echo("Checking...") mapper.checkforupdate()', "")
-			echo(" ")
-			echoLink(
-				"(force map)",
-				[[mapper.deleteMapDownload("current") mapper.echo("Re-downloading the latest map...") mapper.checkforupdate()]],
-				"Re-download the map regardless if you have latest"
-			)
+			echoLink("Check for mapper updates", 'mapper.echo("Checking...") mapper.checkupdateverbose()', "")
 			echo("\n")
 			mapper.echo(string.format("version %s.", tostring(mapper.version)))
 			return

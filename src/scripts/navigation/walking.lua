@@ -102,6 +102,8 @@ function mapper.stop()
 		end
 	end
 	mapper.specials = {}
+	-- Clear path highlighting
+	mapper.clearPathHighlight()
 	mapper.echo("Stopped walking.")
 	raiseEvent("mmapper stopped")
 end
@@ -129,15 +131,12 @@ function mapper.canmove(fromtimer)
 end
 
 -- doSpeedWalk is used by the mudlet mapping script and should not be changed
-function doSpeedWalk(dashtype)
+function doSpeedWalk()
 	mapper.speedWalkDir = mapper.deepcopy(speedWalkDir)
 	mapper.speedWalkPath = mapper.deepcopy(speedWalkPath)
 	speedWalkDir, speedWalkPath = {}, {}
 	resetStopWatch(mapper.speedWalkWatch)
 	startStopWatch(mapper.speedWalkWatch)
-	if dashtype then
-		mapper.fixPath(mapper.currentroom, mapper.speedWalkPath[#mapper.speedWalkPath], dashtype)
-	end
 	mapper.fixSpecialExits(mapper.speedWalkDir)
 	if #mapper.speedWalkPath == 0 then
 		mapper.autowalking = false
@@ -157,11 +156,16 @@ function doSpeedWalk(dashtype)
 		mapper.speedWalkDir = {}
 		mapper.speedWalkCounter = 0
 		mapper.autowalking = false
+		mapper.clearPathHighlight()
 		return
 	end
 
 	mapper.autowalking = true
 	raiseEvent("s")
+
+	-- Highlight the path on the map
+	mapper.highlightPath(mapper.speedWalkPath)
+
 	if not mapper.paused then
 		mapper.echon("Starting speedwalk from " .. (atcp.RoomNum or (gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.id)) .. " to ")
 		cechoLink(
@@ -200,6 +204,8 @@ function mapper.failpath()
 	mapper.speedWalkPath = {}
 	mapper.speedWalkDir = {}
 	mapper.speedWalkCounter = 0
+	-- Clear path highlighting
+	mapper.clearPathHighlight()
 	-- No longer using movetimer, movement is GMCP-driven
 	raiseEvent("mmapper failed path")
 end

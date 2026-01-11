@@ -31,6 +31,14 @@ do
 		out = 12,
 	}
 
+	-- Check if a direction is a standard cardinal direction
+	function mapper.isStandardExit(direction)
+		if type(direction) ~= "string" then
+			return type(direction) == "number" and direction >= 1 and direction <= 12
+		end
+		return exitmap[direction:lower()] ~= nil
+	end
+
 	function mapper.setExit(from, to, direction)
 		if type(direction) == "string" and not exitmap[direction] then
 			return false

@@ -7,13 +7,6 @@
         "isFolder": "no"
     },
     {
-        "name": "View/delete area labels",
-        "isActive": "yes",
-        "regex": "^area labels ?(.+)?$",
-        "script": "mapper.areaLabels(matches[2])",
-        "isFolder": "no"
-    },
-    {
         "name": "add_room_mark",
         "isActive": "yes",
         "regex": "^room mark (\\w+)(?: (\\w+))?$",
