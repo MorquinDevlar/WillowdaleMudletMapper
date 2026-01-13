@@ -1,5 +1,15 @@
 [
     {
+        "version": "1.3.0",
+        "released": "2026-01-13",
+        "changes": [
+            "Added automatic generic_mapper handling (removes on install, restores on uninstall)",
+            "Added showmappingmessages setting (mapping is silent by default)",
+            "Fixed biome colors not appearing on first room creation",
+            "Fixed room creation when entering new areas via special exits"
+        ]
+    },
+    {
         "version": "1.2.0",
         "released": "2026-01-11",
         "changes": [

@@ -122,6 +122,13 @@ mapper.option_definitions = {
                 mapper.clearPathHighlight()
             end
         end
+    },
+
+    showmappingmessages = {
+        default = false,
+        type = "boolean",
+        description = "Show messages when mapping (room creation, exits, doors, colors)?",
+        onChange = mapper.changeBoolFunc
     }
 }
 

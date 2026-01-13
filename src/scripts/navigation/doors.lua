@@ -172,8 +172,8 @@ function mapper.updatedoors()
 	-- Update door statuses for the current room
 	local updated = mapper.updateDoorStatuses(mapper.currentroom)
 
-	-- Show a message if doors were updated (only in non-debug mode since debug already shows details)
-	if updated and not mapper.settings.debug then
+	-- Show a message if doors were updated (only if showmappingmessages is enabled)
+	if updated and mapper.settings and mapper.settings.showmappingmessages then
 		mapper.echo("Door statuses updated for room " .. mapper.currentroom)
 	end
 end

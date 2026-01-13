@@ -1,6 +1,11 @@
 -- GMCP Room Info handler for mapping new rooms
 
 function mapper.createFirstRoom(roomId, areaName, x, y, z)
+	-- Ensure environment colors are set (may have been cleared if map was deleted)
+	if mapper.setEnvironmentColors then
+		mapper.setEnvironmentColors()
+	end
+
 	-- Create area if needed
 	local areaId = mapper.findOrCreateArea(areaName)
 	if not areaId then
@@ -34,7 +39,9 @@ function mapper.createFirstRoom(roomId, areaName, x, y, z)
 	mapper.editing = true
 
 	centerview(roomId)
-	mapper.echo("Created first room! Mapping is now enabled.")
+	if mapper.settings and mapper.settings.showmappingmessages then
+		mapper.echo("Created first room! Mapping is now enabled.")
+	end
 	return true
 end
 
@@ -120,12 +127,43 @@ function mapper.mappingnewroom(_, num)
 				if mapper.createFirstRoom(num, currentRoomArea, currentRoomX, currentRoomY, currentRoomZ) then
 					-- First room created, continue to process exits below
 				end
+			-- If we have GMCP coordinates, use them directly to create the room
+			-- This handles moving to new areas via special exits (e.g., "touch tree")
+			elseif currentRoomX and currentRoomY and currentRoomZ and currentRoomArea then
+				-- Ensure environment colors are set (may have been cleared if map was deleted)
+				if mapper.setEnvironmentColors then
+					mapper.setEnvironmentColors()
+				end
+
+				-- Create or find the area
+				local areaId = mapper.findOrCreateArea(currentRoomArea)
+				if areaId then
+					addRoom(num)
+					setRoomCoordinates(num, currentRoomX, currentRoomY, currentRoomZ)
+					setRoomArea(num, areaId)
+					setRoomUserData(num, "Area", currentRoomArea)
+
+					-- Set biome color if available
+					if gmcp.Room.Info.Basic.biome_color then
+						local envId = mapper.getBiomeEnvId(gmcp.Room.Info.Basic.biome_color)
+						if envId then
+							setRoomEnv(num, envId)
+						end
+					end
+
+					s = string.format("Created room %d at %d,%d,%d in %s.", num, currentRoomX, currentRoomY, currentRoomZ, currentRoomArea)
+
+					if mapper.settings.debug then
+						mapper.echo(s)
+					end
+				end
 			-- see if we can create and link this room with an existing one
 			-- wilderness and non-wilderness rooms require different methods of calculating relative coordinates
 			elseif not inwilderness() then
 				for exit, exitData in pairs(currentexits) do
 					local id = exitData.room_id
-					if mapper.roomexists(id) then
+					-- Only use standard exits for coordinate calculation
+					if mapper.roomexists(id) and mapper.isStandardExit(exit) then
 						-- getshiftedcoords internally reverses the direction, so if we have exit 'east' to room 'id',
 						-- it will place the new room to the west of room 'id' (which is correct)
 						s = mapper.makeroom(id, num, mapper.getshiftedcoords(exit, getRoomCoordinates(id)))
@@ -142,6 +180,7 @@ function mapper.mappingnewroom(_, num)
 								s = s .. (#s > 0 and " " or "") .. "Added " .. state .. " door on " .. exit .. " exit."
 							end
 						end
+						break -- Room created, exit the loop
 					end
 				end
 			else
@@ -207,7 +246,9 @@ function mapper.mappingnewroom(_, num)
 										if not targetAreaId then
 											targetAreaId = addAreaName(targetAreaName)
 											if targetAreaId then
-												mapper.echo(string.format("Created new area: %s (ID: %d)", targetAreaName, targetAreaId))
+												if mapper.settings and mapper.settings.showmappingmessages then
+													mapper.echo(string.format("Created new area: %s (ID: %d)", targetAreaName, targetAreaId))
+												end
 												mapper.regenerateareas()
 											end
 										end
@@ -226,7 +267,9 @@ function mapper.mappingnewroom(_, num)
 										if not targetAreaId then
 											targetAreaId = addAreaName(targetAreaName)
 											if targetAreaId then
-												mapper.echo(string.format("Created new area: %s (ID: %d)", targetAreaName, targetAreaId))
+												if mapper.settings and mapper.settings.showmappingmessages then
+													mapper.echo(string.format("Created new area: %s (ID: %d)", targetAreaName, targetAreaId))
+												end
 												mapper.regenerateareas()
 											end
 										end
@@ -482,7 +525,9 @@ function mapper.mappingnewroom(_, num)
 			end
 		end
 		if #s > 0 then
-			mapper.echo(s)
+			if mapper.settings and mapper.settings.showmappingmessages then
+				mapper.echo(s)
+			end
 			centerview(mapper.currentroom)
 		end
 	end, function(error)

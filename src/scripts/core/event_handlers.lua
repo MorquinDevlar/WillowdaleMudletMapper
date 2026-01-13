@@ -10,6 +10,7 @@ mapper.events.list = {
 	-- System events
 	sysLoadEvent = { "mapper.startup", "mapper.loadoptions" },
 	sysExitEvent = { "mapper.saveoptions", "mapper.clearlastupdate" },
+	sysUninstallPackage = { "mapper.handleUninstall" },
 	sysDownloadDone = { "mapper.downloadedfile" },
 	sysDownloadError = { "mapper.seedownloaderrors" },
 	mapDataChanged = { "mapper.mapdata_changed" },

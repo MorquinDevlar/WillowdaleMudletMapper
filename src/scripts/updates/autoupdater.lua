@@ -213,9 +213,12 @@ end
 -- Error Handlers
 --------------------------------------------------------------------------------
 
-function mapper.seedownloaderrors(_, filename)
-	-- Only show errors for releases.json check when in verbose mode
-	if filename and filename:find("releases.json") then
+function mapper.seedownloaderrors(_, filename, errorMessage)
+	-- Only handle mapper-related downloads, ignore everything else
+	if not filename then return end
+
+	-- Handle releases.json check errors - silent unless verbose
+	if filename == mapper.releasesfile or (filename:find("releases%.json") and mapper.checkingupdates) then
 		mapper.checkingupdates = false
 		if mapper.updateCheckVerbose then
 			mapper.echo("Could not check for updates (server unavailable).")
@@ -223,6 +226,18 @@ function mapper.seedownloaderrors(_, filename)
 		end
 		return
 	end
-	-- Show errors for other downloads
-	mapper.echo("Download failed: " .. tostring(filename))
+
+	-- Handle mapper package download errors
+	if filename == mapper.downloadedscript then
+		mapper.echo("Failed to download mapper update: " .. tostring(errorMessage or "Unknown error"))
+		return
+	end
+
+	-- Handle generic_mapper restore errors
+	if filename == _generic_mapper_restore_path then
+		cecho("\n<yellow>[Mapper]<reset> Failed to restore generic_mapper: " .. tostring(errorMessage or "Unknown error") .. "\n")
+		return
+	end
+
+	-- Ignore all other download errors (not our business)
 end

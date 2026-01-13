@@ -2,15 +2,20 @@
 -- Hardcoded for Willowdale
 mapper.game = "willowdale"
 
-mapper = mapper
-    or {
-        paused = false,
-        autowalking = false,
-        currentroom = 0,
-        currentroomname = "(unknown)",
-        firstRun = true,
-        specials = {},
-    }
+mapper = mapper or {}
+
+-- Initialize default values if not set
+mapper.paused = mapper.paused or false
+mapper.autowalking = mapper.autowalking or false
+mapper.currentroom = mapper.currentroom or 0
+mapper.currentroomname = mapper.currentroomname or "(unknown)"
+mapper.specials = mapper.specials or {}
+
+-- firstRun must be explicitly checked for nil since false is a valid value
+if mapper.firstRun == nil then
+    mapper.firstRun = true
+end
+
 -- Mapping mode is always enabled (auto-creates rooms from GMCP data)
 if mapper.editing == nil then
     mapper.editing = true

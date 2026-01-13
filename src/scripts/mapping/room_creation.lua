@@ -18,7 +18,9 @@ function mapper.findOrCreateArea(areaName)
 	if newId then
 		mapper.regenerateareas()
 		raiseEvent("mapper areas changed")
-		mapper.echo("Created new area: " .. areaName)
+		if mapper.settings and mapper.settings.showmappingmessages then
+			mapper.echo("Created new area: " .. areaName)
+		end
 	end
 	return newId
 end
