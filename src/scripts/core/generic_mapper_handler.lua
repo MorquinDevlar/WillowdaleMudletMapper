@@ -20,6 +20,12 @@ function mapper.handleUninstall(_, packageName)
 		return
 	end
 
+	-- Skip restoring generic_mapper if this is an update (not a real uninstall)
+	if mapper.isUpdating then
+		mapper.isUpdating = nil
+		return
+	end
+
 	mapper.echo("WillowdaleMudletMapper uninstalled. Reinstalling generic_mapper...")
 
 	-- Use global variables so they survive package uninstall

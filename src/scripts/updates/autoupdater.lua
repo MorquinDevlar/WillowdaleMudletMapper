@@ -121,6 +121,8 @@ end
 function mapper.installMapperScript()
 	local path = getModulePath("WillowdaleMudletMapper")
 	if not path then
+		-- Set flag so handleUninstall knows this is an update, not a real uninstall
+		mapper.isUpdating = true
 		uninstallPackage("WillowdaleMudletMapper")
 		tempTimer(1, [[installPackage(mapper.downloadedscript)]])
 	else
