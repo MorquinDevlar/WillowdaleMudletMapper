@@ -61,8 +61,8 @@ function mapper.createOptionsTable(defaultTable)
 		if not opt or not val then
 			return
 		end
-		local nameCol = 23
-		local stateCol = 16
+		local nameCol = 22
+		local stateCol = 8
 		local name = tostring(opt)
 		local state = tostring(val.value)
 		-- Truncate state if too long for column
@@ -78,8 +78,8 @@ function mapper.createOptionsTable(defaultTable)
 
 	function proxyTable:showAllOptions()
 		-- Display header using mapper color scheme
-		decho("<112,229,0>Setting:           <255,255,255>State:                        <128,128,128>Option:\n")
-		decho("<128,128,128>" .. string.rep("-", 70) .. "\n")
+		decho("<112,229,0>Setting:                 <255,255,255>State:     <128,128,128>Option:\n")
+		decho("<128,128,128>" .. string.rep("-", 78) .. "\n")
 
 		-- Display all options
 		for k, v in spairs(self[index]) do

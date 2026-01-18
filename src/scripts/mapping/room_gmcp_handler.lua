@@ -493,14 +493,15 @@ function mapper.mappingnewroom(_, num)
 					setRoomUserData(num, "biome_symbol", symbol)
 				end
 
-				-- Set room character for special biomes if enabled
-				if mapper.settings.showbiomesymbols and symbol ~= "" then
-					if envLower == "shop" or envLower == "inn" or envLower == "post office" then
-						if getRoomChar(num) ~= symbol then
-							setRoomChar(num, symbol)
-							s = s .. (#s > 0 and " " or "") .. "Set room symbol to '" .. symbol .. "'."
-						end
+				-- Set room character for biomes based on showbiomesymbols setting
+				if symbol ~= "" and mapper.shouldShowSymbol(envLower) then
+					if getRoomChar(num) ~= symbol then
+						setRoomChar(num, symbol)
+						s = s .. (#s > 0 and " " or "") .. "Set room symbol to '" .. symbol .. "'."
 					end
+				elseif symbol ~= "" and getRoomChar(num) == symbol then
+					-- Clear symbol if settings changed and it shouldn't be shown
+					setRoomChar(num, "")
 				end
 			end
 			-- check indoors status

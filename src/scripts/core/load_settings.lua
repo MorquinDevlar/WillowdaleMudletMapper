@@ -1,8 +1,9 @@
 -- mapper = mudlet mapper namespace
--- Hardcoded for Willowdale
-mapper.game = "willowdale"
-
 mapper = mapper or {}
+
+-- Game and engine are set dynamically from gmcp.Game.Info
+-- mapper.game = gmcp.Game.Info.name (e.g., "Willowdale")
+-- mapper.engine = gmcp.Game.Info.engine (e.g., "GoMud")
 
 -- Initialize default values if not set
 mapper.paused = mapper.paused or false
@@ -65,8 +66,6 @@ function mapper.startup()
         local options = ""
         if val.allowedVarTypes and table.contains(val.allowedVarTypes, "boolean") then
             options = "on|off"
-        elseif opt == "echocolour" then
-            options = "See mcolor for options"
         elseif opt == "walkdelay" then
             options = "0-5 seconds"
         else
@@ -80,7 +79,7 @@ function mapper.startup()
         end
 
         -- Display in columns: Setting, State, Option
-        decho(string.format("<112,229,0>%-19s <255,255,255>%-29s <128,128,128>%s\n", opt, stateStr, options))
+        decho(string.format("<112,229,0>%-24s <255,255,255>%-10s <128,128,128>%s\n", opt, stateStr, options))
     end
 
     mapper.settings.dispDefaultWriteError = function()

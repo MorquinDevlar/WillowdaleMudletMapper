@@ -169,7 +169,7 @@ function doSpeedWalk()
 	if not mapper.paused then
 		mapper.echon("Starting speedwalk from " .. (atcp.RoomNum or (gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.id)) .. " to ")
 		cechoLink(
-			"<" .. mapper.settings.echocolour .. ">" .. mapper.speedWalkPath[#mapper.speedWalkPath],
+			"<yellow>" .. mapper.speedWalkPath[#mapper.speedWalkPath],
 			'mapper.gotoRoom "' .. mapper.speedWalkPath[#mapper.speedWalkPath] .. '"',
 			"Go to " .. mapper.speedWalkPath[#mapper.speedWalkPath],
 			true

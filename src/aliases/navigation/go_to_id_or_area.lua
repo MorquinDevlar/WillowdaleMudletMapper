@@ -1,11 +1,11 @@
 -- Show syntax help if no argument provided
 if not matches[2] or matches[2] == "" then
-	mapper.echo("Usage: goto <destination>")
+	mapper.echo("Usage: mapper goto <destination>")
 	mapper.echo("")
-	mapper.echo("  goto <room ID>       - Go to a specific room by ID")
-	mapper.echo("  goto <area name>     - Go to a random room in an area")
-	mapper.echo("  goto <area name> N   - Go to room N in an area")
-	mapper.echo("  goto feature <name>  - Go to a named feature")
+	mapper.echo("  mapper goto <room ID>       - Go to a specific room by ID")
+	mapper.echo("  mapper goto <area name>     - Go to a random room in an area")
+	mapper.echo("  mapper goto <area name> N   - Go to room N in an area")
+	mapper.echo("  mapper goto feature <name>  - Go to a named feature")
 	return
 end
 

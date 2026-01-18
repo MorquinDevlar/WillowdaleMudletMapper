@@ -30,7 +30,7 @@
     {
         "name": "room_look",
         "isActive": "yes",
-        "regex": "^(?:rl|room look)(?: (.+))?$",
+        "regex": "^mapper look(?: (.+))?$",
         "script": "",
         "isFolder": "no"
     },

@@ -14,10 +14,6 @@ local function s(loc)
 	if not allok then
 		mapper.echo("Couldn't load the map :(")
 	else
-		-- Apply any Willowdale-specific map settings here
-		if mapper.settings.lockspecials then
-			mapper.lockSpecials()
-		end
 		if loc ~= "" then
 			mapper.echo("Map loaded.")
 		else

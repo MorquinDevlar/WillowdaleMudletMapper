@@ -37,6 +37,22 @@ end
 
 registerAnonymousEventHandler("mmapper updated map", "mapper.clearpathcache")
 
+-- Display the path directions between two rooms
+function mapper.echoPath(from, to)
+	assert(tonumber(from) and tonumber(to), "mapper.echoPath: both from and to have to be room IDs")
+	if mapper.getPath(from, to) then
+		local fromName = getRoomName(from) or tostring(from)
+		local toName = getRoomName(to) or tostring(to)
+		mapper.echo("<white>Directions from <yellow>" .. string.upper(fromName) .. " <white>to <yellow>" .. string.upper(toName) .. "<white>:")
+		mapper.echo(table.concat(speedWalkDir, ", "))
+		return speedWalkDir
+	else
+		local fromName = getRoomName(from) or tostring(from)
+		local toName = getRoomName(to) or tostring(to)
+		mapper.echo("<white>I can't find a way from <yellow>" .. string.upper(fromName) .. " <white>to <yellow>" .. string.upper(toName) .. "<white>")
+	end
+end
+
 function mapper.getShortestOfMultipleRooms(possibleRooms)
 	local shortestWeight, closestRoom = 10000000, 0
 	local checkedsofar, outoftime = 0, false

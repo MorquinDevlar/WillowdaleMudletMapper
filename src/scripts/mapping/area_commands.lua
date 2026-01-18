@@ -6,9 +6,20 @@ function mapper.commands.help()
     mapper.echo("Mapper Commands:")
 
     local commands = {
-        { cmd = "mapper",             args = "",           desc = "Show this help" },
-        { cmd = "mapper area",        args = "[subcommand]", desc = "Area management (list, add, delete, lock, etc.)" },
-        { cmd = "mapper config",      args = "[option] [value]", desc = "View or change mapper settings" },
+        { cmd = "mapper",             args = "",              desc = "Show this help" },
+        { cmd = "mapper start",       args = "",              desc = "Enable mapping (create new rooms)" },
+        { cmd = "mapper stop",        args = "",              desc = "Disable mapping" },
+        { cmd = "mapper goto",        args = "<destination>", desc = "Go to room ID, area, or feature" },
+        { cmd = "mapper find",        args = "<name>",        desc = "Find rooms by name" },
+        { cmd = "mapper look",        args = "[room]",        desc = "Show room information" },
+        { cmd = "mapper area",        args = "[subcommand]",  desc = "Area management (list, add, delete, lock)" },
+        { cmd = "mapper lock",        args = "[room] <dir>",  desc = "Lock exit (prevent speedwalk)" },
+        { cmd = "mapper unlock",      args = "[room] <dir>",  desc = "Unlock exit (allow speedwalk)" },
+        { cmd = "mapper config",      args = "[option] [val]", desc = "View or change mapper settings" },
+        { cmd = "mapper check",       args = "",              desc = "Check for mapper updates" },
+        { cmd = "mapper update",      args = "",              desc = "Install available update" },
+        { cmd = "mapper reload",      args = "",              desc = "Reload mapper settings" },
+        { cmd = "mstop",              args = "",              desc = "Stop speedwalking" },
     }
 
     -- Calculate column widths
@@ -707,5 +718,174 @@ function mapper.commands.area.help()
         echo(string.rep(" ", argsWidth - #c.args) .. "   ")
         echo(c.desc)
     end
+    echo("\n")
+end
+
+-- Exit lock/unlock commands
+mapper.commands.exit = {}
+
+-- Lock an exit to prevent speedwalking through it
+function mapper.commands.exit.lock(args)
+    if not args or args == "" then
+        return mapper.commands.exit.help()
+    end
+
+    local parts = {}
+    for word in args:gmatch("%S+") do
+        parts[#parts + 1] = word
+    end
+
+    local roomId, direction
+
+    if #parts == 1 then
+        -- Just direction - use current room
+        if not mapper.currentroom or not roomExists(mapper.currentroom) then
+            mapper.echo("Not in a mapped room. Specify room ID: mapper lock <room> <direction>")
+            return
+        end
+        roomId = mapper.currentroom
+        direction = parts[1]:lower()
+    elseif #parts >= 2 then
+        -- Room ID and direction
+        roomId = tonumber(parts[1])
+        if not roomId then
+            mapper.echo("Invalid room ID: " .. parts[1])
+            return
+        end
+        direction = parts[2]:lower()
+    end
+
+    if not roomExists(roomId) then
+        mapper.echo("Room " .. roomId .. " doesn't exist.")
+        return
+    end
+
+    -- Check if direction is valid
+    if not mapper.isStandardExit(direction) then
+        mapper.echo("Invalid direction: " .. direction)
+        mapper.echo("Valid directions: n/north, s/south, e/east, w/west, ne/northeast, nw/northwest, se/southeast, sw/southwest, u/up, d/down, in, out")
+        return
+    end
+
+    -- Check if exit exists
+    local exits = getRoomExits(roomId)
+    local shortDir = mapper.anytoshort(direction)
+    if not exits[shortDir] then
+        mapper.echo("Room " .. roomId .. " has no exit to the " .. direction .. ".")
+        return
+    end
+
+    -- Check if already locked
+    if mapper.hasExitLock(roomId, direction) then
+        mapper.echo("Exit " .. direction .. " in room " .. roomId .. " is already locked.")
+        return
+    end
+
+    mapper.lockExit(roomId, direction, true)
+    local roomName = getRoomName(roomId) or "Unknown"
+    mapper.echo("Locked " .. direction .. " exit in room " .. roomId .. " (" .. roomName .. ").")
+    mapper.echo("Speedwalk will no longer use this exit.")
+end
+
+-- Unlock an exit to allow speedwalking through it
+function mapper.commands.exit.unlock(args)
+    if not args or args == "" then
+        return mapper.commands.exit.help()
+    end
+
+    local parts = {}
+    for word in args:gmatch("%S+") do
+        parts[#parts + 1] = word
+    end
+
+    local roomId, direction
+
+    if #parts == 1 then
+        -- Just direction - use current room
+        if not mapper.currentroom or not roomExists(mapper.currentroom) then
+            mapper.echo("Not in a mapped room. Specify room ID: mapper unlock <room> <direction>")
+            return
+        end
+        roomId = mapper.currentroom
+        direction = parts[1]:lower()
+    elseif #parts >= 2 then
+        -- Room ID and direction
+        roomId = tonumber(parts[1])
+        if not roomId then
+            mapper.echo("Invalid room ID: " .. parts[1])
+            return
+        end
+        direction = parts[2]:lower()
+    end
+
+    if not roomExists(roomId) then
+        mapper.echo("Room " .. roomId .. " doesn't exist.")
+        return
+    end
+
+    -- Check if direction is valid
+    if not mapper.isStandardExit(direction) then
+        mapper.echo("Invalid direction: " .. direction)
+        mapper.echo("Valid directions: n/north, s/south, e/east, w/west, ne/northeast, nw/northwest, se/southeast, sw/southwest, u/up, d/down, in, out")
+        return
+    end
+
+    -- Check if exit exists
+    local exits = getRoomExits(roomId)
+    local shortDir = mapper.anytoshort(direction)
+    if not exits[shortDir] then
+        mapper.echo("Room " .. roomId .. " has no exit to the " .. direction .. ".")
+        return
+    end
+
+    -- Check if not locked
+    if not mapper.hasExitLock(roomId, direction) then
+        mapper.echo("Exit " .. direction .. " in room " .. roomId .. " is not locked.")
+        return
+    end
+
+    mapper.lockExit(roomId, direction, false)
+    local roomName = getRoomName(roomId) or "Unknown"
+    mapper.echo("Unlocked " .. direction .. " exit in room " .. roomId .. " (" .. roomName .. ").")
+    mapper.echo("Speedwalk can now use this exit.")
+end
+
+-- Show exit lock help
+function mapper.commands.exit.help()
+    mapper.echo("Exit Lock Commands:")
+
+    local commands = {
+        { cmd = "mapper lock",        args = "<direction>",        desc = "Lock exit in current room" },
+        { cmd = "mapper lock",        args = "<room> <direction>", desc = "Lock exit in specific room" },
+        { cmd = "mapper unlock",      args = "<direction>",        desc = "Unlock exit in current room" },
+        { cmd = "mapper unlock",      args = "<room> <direction>", desc = "Unlock exit in specific room" },
+    }
+
+    -- Calculate column widths
+    local cmdWidth = 7 -- minimum "Command"
+    local argsWidth = 4 -- minimum "Args"
+
+    for _, c in ipairs(commands) do
+        cmdWidth = math.max(cmdWidth, #c.cmd)
+        argsWidth = math.max(argsWidth, #c.args)
+    end
+
+    local header = string.format("\n  %-" .. cmdWidth .. "s   %-" .. argsWidth .. "s   %s",
+        "Command", "Args", "Description")
+    cecho("<dim_grey>" .. header .. "<reset>")
+
+    for _, c in ipairs(commands) do
+        echo("\n  ")
+        cecho("<white>" .. c.cmd .. "<reset>")
+        echo(string.rep(" ", cmdWidth - #c.cmd) .. "   ")
+        cecho("<yellow>" .. c.args .. "<reset>")
+        echo(string.rep(" ", argsWidth - #c.args) .. "   ")
+        echo(c.desc)
+    end
+
+    cecho("\n\n  <dim_grey>Locked exits are excluded from pathfinding. Use this to avoid")
+    cecho("\n  dangerous exits or force specific routes.<reset>")
+    cecho("\n  <dim_grey>Directions: n/north, s/south, e/east, w/west, ne/northeast,<reset>")
+    cecho("\n  <dim_grey>nw/northwest, se/southeast, sw/southwest, u/up, d/down, in, out<reset>")
     echo("\n")
 end

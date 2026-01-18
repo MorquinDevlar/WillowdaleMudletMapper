@@ -9,7 +9,7 @@
     {
         "name": "go_to_id_or_area",
         "isActive": "yes",
-        "regex": "^goto(?: (.+))?$",
+        "regex": "^mapper goto(?: (.+))?$",
         "script": "",
         "isFolder": "no"
     },

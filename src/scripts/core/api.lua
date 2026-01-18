@@ -234,6 +234,78 @@ function mapper.getAreaName(roomid)
 	return mapper.areatabler[getRoomArea(roomid)] or "?"
 end
 
+-- returns rooms in an area that have entrances from outside the area (border rooms)
+function mapper.getAreaBorders(areaid)
+	if mapper.debug then
+		mapper.getAreaBordersTimer = mapper.getAreaBordersTimer or createStopWatch()
+		startStopWatch(mapper.getAreaBordersTimer)
+	end
+	-- make sure we have all exits into the area
+	raiseEvent("mapper link externals")
+	local roomlist, endresult = getAreaRooms(areaid), {}
+	-- sometimes getAreaRooms can give us no result
+	if not roomlist then
+		mapper.echo(
+			"Sorry, seems we can't go there - getAreaRooms("
+				.. areaid
+				.. ") didn't give us any results (Mudlet problem - redownloading the map might help fix it)"
+		)
+		return {}
+	end
+	if table.is_empty(roomlist) then
+		mapper.echo("Sorry, seems we can't go there - " .. getRoomAreaName(areaid) .. " has no rooms in it.")
+		return {}
+	end
+	-- make a key-value list of room IDs
+	local reverselist = {}
+	for i = 0, #roomlist do
+		reverselist[roomlist[i]] = true
+	end
+	local getRoomName, pairs = getRoomName, pairs
+	if getAllRoomEntrances then
+		for i = 0, #roomlist do
+			local id = roomlist[i]
+			local entrancesFrom = getAllRoomEntrances(id)
+			for remoteRoomIndex = 1, #entrancesFrom do
+				if not reverselist[entrancesFrom[remoteRoomIndex]] then
+					endresult[id] = getRoomName(id)
+				end
+			end
+		end
+	else
+		local getRoomExits, getSpecialExitsSwap = getRoomExits, getSpecialExitsSwap
+		for i = 0, #roomlist do
+			local id = roomlist[i]
+			local exits = getRoomExits(id)
+			for _, to in pairs(exits) do
+				if not reverselist[to] then
+					endresult[id] = getRoomName(id)
+				end
+			end
+			local specialexits = getSpecialExitsSwap(id)
+			for _, to in pairs(specialexits) do
+				if not reverselist[to] then
+					endresult[id] = getRoomName(id)
+				end
+			end
+		end
+	end
+	if mapper.debug then
+		mapper.echo(
+			"mapper.getAreaBorders() on areaid "
+				.. areaid
+				.. " took "
+				.. stopStopWatch(mapper.getAreaBordersTimer)
+				.. "s to run. Returned "
+				.. table.size(endresult)
+				.. " results."
+		)
+	end
+	-- clean up external exits
+	raiseEvent("mapper clear externals")
+	return endresult
+end
+
 -- removes extra prefixes and suffixes that are not part of the actual room name
 function mapper.cleanroomname(roomname)
 	local starts, ends = string.starts, string.ends

@@ -36,7 +36,7 @@ function mapper.echonums(roomname, area)
 	end
 	-- display first three ids. Can't really nicely table.concat them.
 	cechoLink(
-		"<" .. mapper.settings.echocolour .. ">" .. dt[1].id,
+		"<yellow>" .. dt[1].id,
 		"mapper.gotoRoom(" .. dt[1].id .. ")",
 		string.format("Go to %s (%s)", dt[1].id, dt[1].name),
 		true
@@ -46,7 +46,7 @@ function mapper.echonums(roomname, area)
 	end
 	echo(", ")
 	cechoLink(
-		"<" .. mapper.settings.echocolour .. ">" .. dt[2].id,
+		"<yellow>" .. dt[2].id,
 		"mapper.gotoRoom(" .. dt[2].id .. ")",
 		string.format("Go to %s (%s)", dt[2].id, dt[2].name),
 		true
@@ -56,7 +56,7 @@ function mapper.echonums(roomname, area)
 	end
 	echo(", ")
 	cechoLink(
-		"<" .. mapper.settings.echocolour .. ">" .. dt[3].id,
+		"<yellow>" .. dt[3].id,
 		"mapper.gotoRoom(" .. dt[3].id .. ")",
 		string.format("Go to %s (%s)", dt[3].id, dt[3].name),
 		true
@@ -74,7 +74,7 @@ function mapper.roomEcho(query)
 			roomid = tonumber(roomid)
 			cecho("<DarkSlateGrey> (")
 			cechoLink(
-				"<" .. mapper.settings.echocolour .. ">" .. roomid,
+				"<yellow>" .. roomid,
 				"mapper.gotoRoom(" .. roomid .. ")",
 				string.format("Go to %s (%s)", roomid, tostring(roomname)),
 				true
@@ -86,7 +86,7 @@ function mapper.roomEcho(query)
 			roomid = tonumber(roomid)
 			cecho("<DarkSlateGrey> (")
 			cechoLink(
-				"<" .. mapper.settings.echocolour .. ">" .. roomid,
+				"<yellow>" .. roomid,
 				"mapper.gotoRoom(" .. roomid .. ")",
 				string.format("Go to %s (%s)", roomid, tostring(roomname)),
 				true

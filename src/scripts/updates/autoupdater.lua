@@ -201,6 +201,8 @@ function mapper.downloadedfile(_, filename)
 			"Download and install version " .. latest.version,
 			true
 		)
+		echo(" or type ")
+		cecho("<yellow>mapper update<reset>")
 		echo("\n\n")
 		mapper.updateCheckVerbose = false
 

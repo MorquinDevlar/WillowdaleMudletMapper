@@ -49,9 +49,23 @@
         "isFolder": "no"
     },
     {
+        "name": "update_mapper",
+        "isActive": "yes",
+        "regex": "^mapper update$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
+        "name": "check_for_updates",
+        "isActive": "yes",
+        "regex": "^mapper check$",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
         "name": "room_find",
         "isActive": "yes",
-        "regex": "^(?:rf|room find) (.+)$",
+        "regex": "^mapper find (.+)$",
         "script": "",
         "isFolder": "no"
     },

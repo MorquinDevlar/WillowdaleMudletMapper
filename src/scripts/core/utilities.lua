@@ -32,22 +32,55 @@ function mapper.highlight_unfinished_rooms()
     end
 end
 
+-- Check if a biome is a Point of Interest (shop, inn, post office)
+function mapper.isPOI(biome)
+    if not biome then return false end
+    local biomeLower = biome:lower()
+    return biomeLower == "shop" or biomeLower == "inn" or biomeLower == "post office"
+end
+
+-- Check if a symbol should be shown based on current settings
+function mapper.shouldShowSymbol(biome)
+    local setting = mapper.settings.showbiomesymbols
+    if not setting or setting == "off" then
+        return false
+    end
+    local isPOI = mapper.isPOI(biome)
+    if setting == "all" then
+        return true
+    elseif setting == "poi" then
+        return isPOI
+    elseif setting == "biome" then
+        return not isPOI
+    end
+    return false
+end
+
 -- Refresh biome symbols on all rooms that have stored biome data
 function mapper.refreshBiomeSymbols()
     if not mapper.areatable then
         return
     end
     local count = 0
+    local setting = mapper.settings.showbiomesymbols
+    if not setting or setting == "off" then
+        return
+    end
     for _, areaId in pairs(mapper.areatable) do
         local roomList = getAreaRooms(areaId) or {}
         for _, roomId in pairs(roomList) do
             local biome = getRoomUserData(roomId, "biome")
             local symbol = getRoomUserData(roomId, "biome_symbol")
             if biome ~= "" and symbol ~= "" then
-                local biomeLower = biome:lower()
-                if biomeLower == "shop" or biomeLower == "inn" or biomeLower == "post office" then
+                if mapper.shouldShowSymbol(biome) then
                     if getRoomChar(roomId) ~= symbol then
                         setRoomChar(roomId, symbol)
+                        count = count + 1
+                    end
+                else
+                    -- Clear symbol if it shouldn't be shown with current setting
+                    if getRoomChar(roomId) == symbol then
+                        setRoomChar(roomId, "")
                         count = count + 1
                     end
                 end
@@ -55,7 +88,7 @@ function mapper.refreshBiomeSymbols()
         end
     end
     if count > 0 then
-        mapper.echo("Restored biome symbols on " .. count .. " room(s).")
+        mapper.echo("Updated symbols on " .. count .. " room(s).")
     end
 end
 
@@ -71,18 +104,15 @@ function mapper.clearBiomeSymbols()
             local biome = getRoomUserData(roomId, "biome")
             local symbol = getRoomUserData(roomId, "biome_symbol")
             if biome ~= "" and symbol ~= "" then
-                local biomeLower = biome:lower()
-                if biomeLower == "shop" or biomeLower == "inn" or biomeLower == "post office" then
-                    if getRoomChar(roomId) == symbol then
-                        setRoomChar(roomId, "")
-                        count = count + 1
-                    end
+                if getRoomChar(roomId) == symbol then
+                    setRoomChar(roomId, "")
+                    count = count + 1
                 end
             end
         end
     end
     if count > 0 then
-        mapper.echo("Cleared biome symbols from " .. count .. " room(s).")
+        mapper.echo("Cleared symbols from " .. count .. " room(s).")
     end
 end
 

@@ -1,5 +1,37 @@
 -- Destination navigation functions
 
+-- Center the map view on an area
+function mapper.viewArea(where, exact)
+	if not where or type(where) ~= "string" then
+		mapper.echo("Which area would you like to view?")
+		return
+	end
+	local areaid, msg, multiples = mapper.findAreaID(where, exact)
+	if areaid then
+		local rooms = getAreaRooms(areaid) or {}
+		if not rooms[1] then
+			mapper.echo("The area has no rooms in it.")
+		else
+			centerview(rooms[1])
+		end
+	elseif multiples and #multiples > 0 then
+		mapper.echo("Which area would you like to view exactly?")
+		fg("DimGrey")
+		for _, areaname in ipairs(multiples) do
+			echo("  ")
+			setUnderline(true)
+			echoLink(areaname, 'mapper.viewArea("' .. areaname .. '", true)', "Click to view " .. areaname, true)
+			setUnderline(false)
+			echo("\n")
+		end
+		resetFormat()
+		return
+	else
+		mapper.echo(string.format("Don't know of any area named '%s'.", where))
+		return
+	end
+end
+
 function mapper.gotoRoom(where, gotoType)
 	mapper.speedWalk.type = gotoType or "room"
 	if not where or not tonumber(where) then
@@ -92,8 +124,14 @@ function mapper.gotoAreaID(areaid)
 		return
 	end
 	areaid = tonumber(areaid)
-	if not mapper.areatabler[areaid] then
+	local areaName = getRoomAreaName(areaid)
+	if not areaName or areaName == "" then
 		mapper.echo("Invalid area ID selected")
+		return
+	end
+	-- Check if the area is locked
+	if areaLocked(areaid) then
+		mapper.echo("The area '" .. areaName .. "' is locked. Unlock it first with: mapper area unlock " .. areaName)
 		return
 	end
 	local possibleRooms, shortestBorder = {}, 0
@@ -108,7 +146,7 @@ function mapper.gotoAreaID(areaid)
 					'I checked %d of the %d possible exits "%s" has, but none of the ways there worked and it was taking too long :( try doing this again?',
 					checkedsofar,
 					table.size(possibleRooms),
-					getRoomAreaName(areaid)
+					areaName
 				)
 			)
 		else

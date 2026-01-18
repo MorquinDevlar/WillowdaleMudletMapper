@@ -12,14 +12,6 @@
 
 mapper.option_definitions = {
     -- General settings
-    echocolour = {
-        default = "cyan",
-        type = "string",
-        description = "Set the color for room number echos?",
-        validate = function(v) return color_table[v] ~= nil end,
-        onChange = mapper.changeEchoColour
-    },
-
     showcmds = {
         default = true,
         type = "boolean",
@@ -94,17 +86,28 @@ mapper.option_definitions = {
     },
 
     showbiomesymbols = {
-        default = true,
-        type = "boolean",
-        description = "Show biome symbols (shop, inn, post office) on the map?",
-        onChange = function(name, option)
-            mapper.changeBoolFunc(name, option)
-            if option then
-                mapper.echo("Biome symbols will now be shown on the map")
-                mapper.refreshBiomeSymbols()
-            else
-                mapper.echo("Biome symbols will be hidden from the map")
+        default = "poi",
+        type = "string",
+        description = "all|poi|biome|off",
+        validate = function(v)
+            local valid = { all = true, poi = true, biome = true, off = true }
+            return valid[v:lower()] == true
+        end,
+        onChange = function(name, value)
+            value = value:lower()
+            mapper.settings[name] = value
+            if value == "off" then
+                mapper.echo("Room symbols will be hidden from the map")
                 mapper.clearBiomeSymbols()
+            elseif value == "poi" then
+                mapper.echo("Only POI symbols (shop, inn, post office) will be shown")
+                mapper.refreshBiomeSymbols()
+            elseif value == "biome" then
+                mapper.echo("Only biome symbols will be shown (not POI)")
+                mapper.refreshBiomeSymbols()
+            elseif value == "all" then
+                mapper.echo("All room symbols will be shown")
+                mapper.refreshBiomeSymbols()
             end
         end
     },

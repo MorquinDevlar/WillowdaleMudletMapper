@@ -82,6 +82,16 @@ if mapper.setEnvironmentColors then
 end
 
 function mapper.registergomudenvdata(_, game)
+    -- Set game and engine from GMCP data
+    if gmcp and gmcp.Game and gmcp.Game.Info then
+        if gmcp.Game.Info.name then
+            mapper.game = gmcp.Game.Info.name
+        end
+        if gmcp.Game.Info.engine then
+            mapper.engine = gmcp.Game.Info.engine
+        end
+    end
+
     -- Check if this is running on the GoMud engine
     if not (gmcp and gmcp.Game and gmcp.Game.Info and gmcp.Game.Info.engine == "GoMud") then
         return

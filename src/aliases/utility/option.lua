@@ -37,8 +37,6 @@ if option and (not val or val == "") then
 		-- Show accepted values
 		if optionDef.allowedVarTypes and table.contains(optionDef.allowedVarTypes, "boolean") then
 			decho("<112,229,0>Accepted values: <128,128,128>on, off\n")
-		elseif option == "echocolour" then
-			decho("<112,229,0>Accepted values: <128,128,128>Any valid color name (see 'mcolor' for options)\n")
 		elseif option == "walkdelay" then
 			decho("<112,229,0>Accepted values: <128,128,128>0-5 (0=instant, 0.3=normal, 1+=slow)\n")
 		end

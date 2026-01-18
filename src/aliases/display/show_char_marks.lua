@@ -20,7 +20,7 @@ end
 
 for letter, rooms in pairs(m) do
 	table.sort(rooms)
-	mapper.echo("Rooms with the <" .. mapper.settings.echocolour .. ">" .. letter .. "<reset> character on them:")
+	mapper.echo("Rooms with the <yellow>" .. letter .. "<reset> character on them:")
 	for i = 1, #rooms do
 		if not show_area then
 			cecho(string.format("  <sea_green>%-5s<reset> %s\n", rooms[i], getRoomName(rooms[i])))
