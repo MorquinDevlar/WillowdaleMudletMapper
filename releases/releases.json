@@ -1,5 +1,12 @@
 [
     {
+        "version": "1.4.1",
+        "released": "2026-02-05",
+        "changes": [
+            "Fixed update server URL"
+        ]
+    },
+    {
         "version": "1.4.0",
         "released": "2026-02-05",
         "changes": [
