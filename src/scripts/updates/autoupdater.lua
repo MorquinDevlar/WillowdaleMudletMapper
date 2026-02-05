@@ -84,8 +84,8 @@ function mapper.checkforupdate()
 		else
 			mapper.echo(
 				"Sorry, but you need LuaFileSystem (lfs) installed, or have the '"
-					.. downloadfolder
-					.. "' folder exist."
+				.. downloadfolder
+				.. "' folder exist."
 			)
 			return
 		end
@@ -97,22 +97,24 @@ function mapper.checkforupdate()
 	if mapper.updateCheckVerbose then
 		mapper.echo("Checking for mapper updates...")
 	end
-	downloadFile(mapper.releasesfile, "https://www.willowdalemud.com/static/resources/mapper/releases.json")
+	downloadFile(mapper.releasesfile, "https://updates.willowdalemud.com/static/resources/mapper/releases.json")
 end
 
 -- Download the latest mapper package
 function mapper.downloadmapperscript()
-	local file = getModulePath("WillowdaleMudletMapper") or getMudletHomeDir() .. "/map downloads/WillowdaleMudletMapper.mpackage"
+	local file = getModulePath("WillowdaleMudletMapper") or
+		getMudletHomeDir() .. "/map downloads/WillowdaleMudletMapper.mpackage"
 	if io.exists(file) then
 		local s, m = os.remove(file)
 		if not s then
-			mapper.echo(string.format("Couldn't delete the old package (located at %s), because of: %s. This might be a problem.", file, m))
+			mapper.echo(string.format(
+				"Couldn't delete the old package (located at %s), because of: %s. This might be a problem.", file, m))
 		end
 	end
 	mapper.downloadedscript = file
 	downloadFile(
 		mapper.downloadedscript,
-		"https://www.willowdalemud.com/static/resources/mapper/WillowdaleMudletMapper.mpackage"
+		"https://updates.willowdalemud.com/static/resources/mapper/WillowdaleMudletMapper.mpackage"
 	)
 	mapper.echo("Downloading mapper update...")
 end
@@ -179,10 +181,10 @@ function mapper.downloadedfile(_, filename)
 		mapper.echo("------------------[ Mapper Update Available ]------------------")
 		mapper.echo(
 			"Version <orange>"
-				.. tostring(mapper.version)
-				.. "<reset> -> <green>"
-				.. tostring(latest.version)
-				.. "<reset>"
+			.. tostring(mapper.version)
+			.. "<reset> -> <green>"
+			.. tostring(latest.version)
+			.. "<reset>"
 		)
 		if latest.released then
 			mapper.echo("Released: " .. latest.released)
@@ -206,7 +208,7 @@ function mapper.downloadedfile(_, filename)
 		echo("\n\n")
 		mapper.updateCheckVerbose = false
 
-	-- Handle downloaded mapper package
+		-- Handle downloaded mapper package
 	elseif filename == tostring(mapper.downloadedscript) then
 		mapper.checkingupdates = false
 		mapper.installMapperScript()
@@ -239,7 +241,8 @@ function mapper.seedownloaderrors(_, filename, errorMessage)
 
 	-- Handle generic_mapper restore errors
 	if filename == _generic_mapper_restore_path then
-		cecho("\n<yellow>[Mapper]<reset> Failed to restore generic_mapper: " .. tostring(errorMessage or "Unknown error") .. "\n")
+		cecho("\n<yellow>[Mapper]<reset> Failed to restore generic_mapper: " ..
+			tostring(errorMessage or "Unknown error") .. "\n")
 		return
 	end
 
