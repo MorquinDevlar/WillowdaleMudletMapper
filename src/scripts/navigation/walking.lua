@@ -105,7 +105,7 @@ function mapper.stop()
 	-- Clear path highlighting
 	mapper.clearPathHighlight()
 	mapper.echo("Stopped walking.")
-	raiseEvent("mmapper stopped")
+	raiseEvent("mapper stopped")
 end
 
 -- Willowdale and other games can implement their own balance checking
@@ -131,7 +131,10 @@ function mapper.canmove(fromtimer)
 end
 
 -- doSpeedWalk is used by the mudlet mapping script and should not be changed
-function doSpeedWalk()
+-- This function defines doSpeedWalk and can be called to redefine it after
+-- removing conflicting packages like generic_mapper
+function mapper.defineDoSpeedWalk()
+doSpeedWalk = function()
 	mapper.speedWalkDir = mapper.deepcopy(speedWalkDir)
 	mapper.speedWalkPath = mapper.deepcopy(speedWalkPath)
 	speedWalkDir, speedWalkPath = {}, {}
@@ -141,7 +144,7 @@ function doSpeedWalk()
 	if #mapper.speedWalkPath == 0 then
 		mapper.autowalking = false
 		mapper.echo("Couldn't find a path to the destination :(")
-		raiseEvent("mmapper failed path")
+		raiseEvent("mapper failed path")
 		return
 	end
 	-- this is a fix: convert nums to actual numbers
@@ -151,7 +154,7 @@ function doSpeedWalk()
 	-- Check if we're already at the destination
 	if mapper.currentroom == mapper.speedWalkPath[#mapper.speedWalkPath] then
 		mapper.echo("We're already at the destination!")
-		raiseEvent("mmapper arrived")
+		raiseEvent("mapper arrived")
 		mapper.speedWalkPath = {}
 		mapper.speedWalkDir = {}
 		mapper.speedWalkCounter = 0
@@ -163,8 +166,10 @@ function doSpeedWalk()
 	mapper.autowalking = true
 	raiseEvent("s")
 
-	-- Highlight the path on the map
-	mapper.highlightPath(mapper.speedWalkPath)
+	-- Highlight the path on the map if enabled
+	if mapper.settings.showspeedwalkpath then
+		mapper.highlightPath(mapper.speedWalkPath, mapper.currentroom)
+	end
 
 	if not mapper.paused then
 		mapper.echon("Starting speedwalk from " .. (atcp.RoomNum or (gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.id)) .. " to ")
@@ -179,7 +184,8 @@ function doSpeedWalk()
 		if mapper.canmove() then
 			mapper.hasty = true
 			-- Start moving immediately (with delay if configured)
-			local delay = mapper.settings.walkdelay or 0.3
+			local delay = mapper.settings.walkdelay
+			if delay == nil then delay = 0.3 end
 			mapper.delayedMove(delay)
 		else
 			echo("(when we get balance back / aren't hindered)")
@@ -188,6 +194,10 @@ function doSpeedWalk()
 		mapper.echo("Will go to " .. mapper.speedWalkPath[#mapper.speedWalkPath] .. " as soon as the mapper is unpaused.")
 	end
 end
+end
+
+-- Define doSpeedWalk on load
+mapper.defineDoSpeedWalk()
 
 function mapper.failpath()
 	if mapper.speedWalkWatch then
@@ -207,5 +217,5 @@ function mapper.failpath()
 	-- Clear path highlighting
 	mapper.clearPathHighlight()
 	-- No longer using movetimer, movement is GMCP-driven
-	raiseEvent("mmapper failed path")
+	raiseEvent("mapper failed path")
 end

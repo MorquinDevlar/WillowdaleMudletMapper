@@ -54,7 +54,7 @@ function mapper.room_events(event, num)
 			)
 		then
 			mapper.inside = false
-			raiseEvent("mmapper went outside")
+			raiseEvent("mapper went outside")
 		elseif
 			not mapper.inside
 			and (
@@ -63,7 +63,7 @@ function mapper.room_events(event, num)
 			)
 		then
 			mapper.inside = true
-			raiseEvent("mmapper went inside")
+			raiseEvent("mapper went inside")
 		end
 
 		-- Store and display biome data on existing rooms
@@ -101,6 +101,25 @@ function mapper.room_events(event, num)
 	else
 		oldnum = num
 	end
+
+	-- Update showpath highlight if we have a destination set
+	if mapper.showPathDestination and not mapper.autowalking then
+		if num == mapper.showPathDestination then
+			-- We've arrived at the showpath destination
+			mapper.clearShowPath()
+			mapper.echo("You've arrived at your destination.")
+		elseif num and roomExists(num) then
+			-- Update map to ensure connections are available for pathfinding
+			updateMap()
+			-- Recalculate and highlight path from current position
+			if mapper.getPath(num, mapper.showPathDestination) then
+				mapper.highlightPath(speedWalkPath, num)
+			end
+			-- If getPath fails, keep the existing highlight rather than clearing
+		end
+		-- If room doesn't exist yet, keep the existing highlight
+	end
+
 	if not mapper.autowalking then
 		return
 	end
@@ -108,32 +127,31 @@ function mapper.room_events(event, num)
 	if num == mapper.speedWalkPath[#mapper.speedWalkPath] then
 		local walktime = stopStopWatch(mapper.speedWalkWatch)
 		mapper.echo(string.format("We've arrived! Took us %.1fs.\n", walktime))
-		raiseEvent("mmapper arrived")
+		raiseEvent("mapper arrived")
 		mapper.speedWalkPath = {}
 		mapper.speedWalkDir = {}
 		mapper.speedWalkCounter = 0
 		mapper.autowalking = false
 		mapper.clearPathHighlight()
 	elseif mapper.speedWalkPath[mapper.speedWalkCounter] == num then
-		-- Clear highlight from the room we just entered
-		if mapper.settings.showspeedwalkpath and roomExists(num) then
-			unHighlightRoom(num)
-		end
 		mapper.speedWalkCounter = mapper.speedWalkCounter + 1
 		-- Check if we're at the destination after incrementing
 		if mapper.speedWalkCounter > #mapper.speedWalkPath or num == mapper.speedWalkPath[#mapper.speedWalkPath] then
 			local walktime = stopStopWatch(mapper.speedWalkWatch)
 			mapper.echo(string.format("We've arrived! Took us %.1fs.\n", walktime))
-			raiseEvent("mmapper arrived")
+			raiseEvent("mapper arrived")
 			mapper.speedWalkPath = {}
 			mapper.speedWalkDir = {}
 			mapper.speedWalkCounter = 0
 			mapper.autowalking = false
 			mapper.clearPathHighlight()
 		else
+			-- Update path highlight to show remaining path
+			mapper.updatePathHighlight()
 			-- GMCP room change detected, continue walking
 			-- Use delay if configured, otherwise move immediately
-			local delay = mapper.settings.walkdelay or 0.3
+			local delay = mapper.settings.walkdelay
+			if delay == nil then delay = 0.3 end
 			mapper.delayedMove(delay)
 		end
 	elseif #mapper.speedWalkPath > 0 then

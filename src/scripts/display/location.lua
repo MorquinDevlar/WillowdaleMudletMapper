@@ -150,7 +150,7 @@ function mapper.locateAndEcho(room, person, area)
 	if person then
 		mapper.pdb[person] = room
 		mapper.pdb_lastupdate[person] = true
-		raiseEvent("mmapper updated pdb")
+		raiseEvent("mapper updated pdb")
 	end
 end
 
@@ -199,7 +199,7 @@ function mapper.locateAndEchoSide(room, person)
 	if person then
 		mapper.pdb[person] = room
 		mapper.pdb_lastupdate[person] = true
-		raiseEvent("mmapper updated pdb")
+		raiseEvent("mapper updated pdb")
 	end
 end
 
@@ -248,6 +248,6 @@ function mapper.locateAndEchoInternal(room, person)
 	if person then
 		mapper.pdb[person] = room
 		mapper.pdb_lastupdate[person] = true
-		raiseEvent("mmapper updated pdb")
+		raiseEvent("mapper updated pdb")
 	end
 end

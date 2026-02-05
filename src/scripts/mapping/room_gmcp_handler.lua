@@ -530,6 +530,8 @@ function mapper.mappingnewroom(_, num)
 				mapper.echo(s)
 			end
 			centerview(mapper.currentroom)
+			-- Clear path cache since map was modified
+			raiseEvent("mapper updated map")
 		end
 	end, function(error)
 		mapper.echo("Oops! Had a small problem (" .. error .. ").")

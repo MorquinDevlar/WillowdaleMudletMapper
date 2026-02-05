@@ -40,7 +40,7 @@ function mapper.gotoRoom(where, gotoType)
 	end
 	if tonumber(where) == mapper.currentroom then
 		mapper.echo("We're already at " .. where .. "!")
-		raiseEvent("mmapper arrived")
+		raiseEvent("mapper arrived")
 		return
 	end
 	-- allow mapper 'addons' to link their own exits in
@@ -51,7 +51,7 @@ function mapper.gotoRoom(where, gotoType)
 		mapper.speedWalkPath = {}
 		mapper.speedWalkDir = {}
 		mapper.speedWalkCounter = 0
-		raiseEvent("mmapper failed path")
+		raiseEvent("mapper failed path")
 		-- allow mapper 'addons' to unlink their special exits
 		raiseEvent("mapper clear externals")
 		return
@@ -159,7 +159,7 @@ function mapper.gotoAreaID(areaid)
 		mapper.speedWalkPath = {}
 		mapper.speedWalkDir = {}
 		mapper.speedWalkCounter = 0
-		raiseEvent("mmapper failed path")
+		raiseEvent("mapper failed path")
 		raiseEvent("mapper clear externals")
 		return
 	end
@@ -206,7 +206,7 @@ function mapper.gotoFeature(partialFeatureName)
 		mapper.speedWalkPath = {}
 		mapper.speedWalkDir = {}
 		mapper.speedWalkCounter = 0
-		raiseEvent("mmapper failed path")
+		raiseEvent("mapper failed path")
 		raiseEvent("mapper clear externals")
 		return
 	end

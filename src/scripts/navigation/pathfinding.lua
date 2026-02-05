@@ -35,9 +35,9 @@ function mapper.clearpathcache()
 	getpathcache = {}
 end
 
-registerAnonymousEventHandler("mmapper updated map", "mapper.clearpathcache")
+registerAnonymousEventHandler("mapper updated map", "mapper.clearpathcache")
 
--- Display the path directions between two rooms
+-- Display the path directions between two rooms and optionally highlight on map
 function mapper.echoPath(from, to)
 	assert(tonumber(from) and tonumber(to), "mapper.echoPath: both from and to have to be room IDs")
 	if mapper.getPath(from, to) then
@@ -45,6 +45,12 @@ function mapper.echoPath(from, to)
 		local toName = getRoomName(to) or tostring(to)
 		mapper.echo("<white>Directions from <yellow>" .. string.upper(fromName) .. " <white>to <yellow>" .. string.upper(toName) .. "<white>:")
 		mapper.echo(table.concat(speedWalkDir, ", "))
+		-- Store destination for dynamic path updates
+		mapper.showPathDestination = tonumber(to)
+		-- Highlight the path on the map
+		if speedWalkPath then
+			mapper.highlightPath(speedWalkPath, tonumber(from))
+		end
 		return speedWalkDir
 	else
 		local fromName = getRoomName(from) or tostring(from)

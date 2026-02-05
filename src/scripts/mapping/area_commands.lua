@@ -19,6 +19,7 @@ function mapper.commands.help()
         { cmd = "mapper check",       args = "",              desc = "Check for mapper updates" },
         { cmd = "mapper update",      args = "",              desc = "Install available update" },
         { cmd = "mapper reload",      args = "",              desc = "Reload mapper settings" },
+        { cmd = "showpath",           args = "<room>|clear",  desc = "Show/highlight path or clear highlight" },
         { cmd = "mstop",              args = "",              desc = "Stop speedwalking" },
     }
 

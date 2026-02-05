@@ -33,7 +33,7 @@ if mapper.alertness and next(mapper.alertness) then
 
 	mapper.alertness = nil
 
-	raiseEvent("mmapper updated pdb")
+	raiseEvent("mapper updated pdb")
 end
 
 -- reset names we last seen, so scripts can be efficient

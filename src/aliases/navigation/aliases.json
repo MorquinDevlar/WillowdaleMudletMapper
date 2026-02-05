@@ -2,7 +2,7 @@
     {
         "name": "get_dirs",
         "isActive": "yes",
-        "regex": "^showpath(?: (\\d+))?(?: (\\d+))?$",
+        "regex": "^showpath(?: (.+))?$",
         "script": "",
         "isFolder": "no"
     },
