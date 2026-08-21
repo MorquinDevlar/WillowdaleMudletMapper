@@ -38,17 +38,19 @@ function mapper.makeroom(oldid, newid, x, y, z, targetAreaId)
 	local fgr, fgg, fgb = unpack(color_table.red)
 	local bgr, bgg, bgb = unpack(color_table.blue)
 	highlightRoom(newid, fgr, fgg, fgb, bgr, bgg, bgb, 1, 100, 100)
-	-- Use biome_color from GMCP if available
-	if gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.biome_color then
-		local envId = mapper.getBiomeEnvId(gmcp.Room.Info.Basic.biome_color)
-		if envId then
-			setRoomEnv(newid, envId)
-		else
-			setRoomEnv(newid, getRoomEnv(oldid))
-		end
-	else
-		setRoomEnv(newid, getRoomEnv(oldid))
+	-- The biome color in GMCP describes the room the player is standing in, so
+	-- only that room may use it. Stub rooms created ahead of the player, from
+	-- exits leading somewhere unvisited, stay in the muted unexplored color until
+	-- they are entered and GMCP reports their own biome.
+	local basic = gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic
+	local iscurrentroom = basic and tonumber(basic.id) == tonumber(newid)
+	local envId
+	if iscurrentroom and basic.biome_color then
+		envId = mapper.getBiomeEnvId(basic.biome_color)
+	elseif iscurrentroom then
+		envId = mapper.defaultroomenv()
 	end
+	setRoomEnv(newid, envId or mapper.unexploredroomenv())
 	return string.format("Created new room %d at %dx,%dy,%dz.", newid, x, y, z)
 end
 

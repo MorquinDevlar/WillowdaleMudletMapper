@@ -22,13 +22,12 @@ function mapper.createFirstRoom(roomId, areaName, x, y, z)
 	local roomName = gmcp.Room.Info.Basic.name or "Unknown"
 	setRoomName(roomId, roomName)
 
-	-- Set environment/biome if available
+	-- Set environment/biome if available, otherwise the neutral default
+	local envId
 	if gmcp.Room.Info.Basic.biome_color then
-		local envId = mapper.getBiomeEnvId(gmcp.Room.Info.Basic.biome_color)
-		if envId then
-			setRoomEnv(roomId, envId)
-		end
+		envId = mapper.getBiomeEnvId(gmcp.Room.Info.Basic.biome_color)
 	end
+	setRoomEnv(roomId, envId or mapper.defaultroomenv())
 
 	-- Store area data
 	setRoomUserData(roomId, "Area", areaName)
@@ -143,13 +142,12 @@ function mapper.mappingnewroom(_, num)
 					setRoomArea(num, areaId)
 					setRoomUserData(num, "Area", currentRoomArea)
 
-					-- Set biome color if available
+					-- Set biome color if available, otherwise the neutral default
+					local envId
 					if gmcp.Room.Info.Basic.biome_color then
-						local envId = mapper.getBiomeEnvId(gmcp.Room.Info.Basic.biome_color)
-						if envId then
-							setRoomEnv(num, envId)
-						end
+						envId = mapper.getBiomeEnvId(gmcp.Room.Info.Basic.biome_color)
 					end
+					setRoomEnv(num, envId or mapper.defaultroomenv())
 
 					s = string.format("Created room %d at %d,%d,%d in %s.", num, currentRoomX, currentRoomY, currentRoomZ, currentRoomArea)
 

@@ -17,9 +17,7 @@ local function set(newid)
 	if mapper.roomexists(mapper.currentroom) then
 		setRoomArea(rid, getRoomArea(mapper.currentroom))
 	end
-	if mapper.roomexists(mapper.currentroom) then
-		setRoomEnv(rid, getRoomEnv(mapper.currentroom))
-	end
+	setRoomEnv(rid, mapper.unexploredroomenv())
 	mapper.setExit(mapper.currentroom, rid, m)
 	mapper.echo(string.format("Created new room (%d) at %dx, %dy, %dz.\n", rid, x, y, z))
 	centerview(mapper.roomexists(mapper.currentroom) and mapper.currentroom or rid)

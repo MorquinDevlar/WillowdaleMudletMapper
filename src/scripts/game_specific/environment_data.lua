@@ -33,6 +33,7 @@ mapper.envids = {
     Water = 50,
     Glade = 51,
     Clearing = 52,
+    Unexplored = 53,
 }
 
 mapper.colorcodes = {
@@ -67,6 +68,7 @@ mapper.colorcodes = {
     [50] = { 30, 144, 255, 255 },  -- Water: Dodger blue
     [51] = { 144, 238, 144, 255 }, -- Glade: Light green
     [52] = { 143, 188, 143, 255 }, -- Clearing: Dark sea green
+    [53] = { 120, 35, 35, 255 },   -- Unexplored: Dark brick red
 }
 
 -- Build reverse lookup table

@@ -22,3 +22,16 @@ function mapper.setEnvironmentColors()
     
     return count > 0
 end
+
+-- The environment a room the player has actually entered gets when the game
+-- sent no biome color for it.
+function mapper.defaultroomenv()
+    return (mapper.envids and mapper.envids.Default) or 28
+end
+
+-- The environment stub rooms get: rooms we only know about because an exit
+-- leads there, drawn in a muted dark red so they read as unexplored rather
+-- than as the biome of the room they were seen from.
+function mapper.unexploredroomenv()
+    return (mapper.envids and mapper.envids.Unexplored) or 53
+end
