@@ -1,0 +1,10 @@
+# Build output. Nothing generated is committed: the game server deploys from a
+# PUBLISHED RELEASE and downloads its assets, so the built package and the
+# generated releases.json are uploaded by tools/release.sh, never tracked. A
+# generated file in git is a generated file someone can ship by mistake.
+build/
+releases/
+.output
+
+# macOS
+.DS_Store
