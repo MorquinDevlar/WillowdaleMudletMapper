@@ -39,27 +39,40 @@ do
 		return exitmap[direction:lower()] ~= nil
 	end
 
+	-- The direction as Mudlet wants it, or nil when it is not one of the twelve
+	-- Mudlet knows. Matched the same way mapper.isStandardExit matches, so a
+	-- direction that passes that check is never quietly refused here.
+	local function exitnumber(direction)
+		if type(direction) == "string" then
+			return exitmap[direction:lower()]
+		end
+		return direction
+	end
+
 	function mapper.setExit(from, to, direction)
-		if type(direction) == "string" and not exitmap[direction] then
+		local dir = exitnumber(direction)
+		if not dir then
 			return false
 		end
 
-		return oldsetExit(from, to, type(direction) == "string" and exitmap[direction] or direction)
+		return oldsetExit(from, to, dir)
 	end
 
 	function mapper.lockExit(from, direction, status)
-		if type(direction) == "string" and not exitmap[direction] then
+		local dir = exitnumber(direction)
+		if not dir then
 			return false
 		end
 
-		return oldlockExit(from, type(direction) == "string" and exitmap[direction] or direction, status)
+		return oldlockExit(from, dir, status)
 	end
 
 	function mapper.hasExitLock(from, direction)
-		if type(direction) == "string" and not exitmap[direction] then
+		local dir = exitnumber(direction)
+		if not dir then
 			return false
 		end
 
-		return oldhasExitLock(from, type(direction) == "string" and exitmap[direction] or direction)
+		return oldhasExitLock(from, dir)
 	end
 end

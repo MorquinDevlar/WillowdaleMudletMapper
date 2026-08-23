@@ -1,12 +1,5 @@
 [
     {
-        "name": "check_wholist",
-        "isActive": "yes",
-        "regex": "^who b$",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
         "name": "find_single_exits",
         "isActive": "yes",
         "regex": "^find single exits$",

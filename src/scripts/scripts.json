@@ -6,12 +6,6 @@
         "isFolder": "yes"
     },
     {
-        "name": "display",
-        "isActive": "yes",
-        "script": "",
-        "isFolder": "yes"
-    },
-    {
         "name": "game_specific",
         "isActive": "yes",
         "script": "",
@@ -37,12 +31,6 @@
     },
     {
         "name": "game_specific",
-        "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "clearlastupdate",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"

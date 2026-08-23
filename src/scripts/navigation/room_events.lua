@@ -22,49 +22,7 @@ function mapper.room_events(event, num)
 			)
 		)
 	end
-	-- Try to track if we're flying or not
-	-- This is to avoid being "off path" if we FLY due to flight mechanics.
-	local madeflight = false
 	if gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic then
-		local flying = false
-		if string.find(gmcp.Room.Info.Basic.name, "^flying above") then
-			flying = true
-		end
-		if mapper.flying and not flying then
-			-- We were flying, and now we are not. Gravity!
-			mapper.flying = false
-		elseif not mapper.flying and flying then
-			-- We were not flying and now we are.
-			madeflight = true
-			mapper.flying = true
-		elseif not flying then
-			mapper.flying = false
-		end
-	else
-		mapper.flying = false
-	end
-	-- track if we're inside or outside, if possible
-	if gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic then
-		local areaID = getRoomArea(mapper.currentroom)
-		if
-			mapper.inside
-			and not (
-				table.contains(gmcp.Room.Info.Basic.details or {}, "indoors")
-				or table.contains(gmcp.Room.Info.Basic.details or {}, "considered indoors")
-			)
-		then
-			mapper.inside = false
-			raiseEvent("mapper went outside")
-		elseif
-			not mapper.inside
-			and (
-				table.contains(gmcp.Room.Info.Basic.details or {}, "indoors")
-				or table.contains(gmcp.Room.Info.Basic.details or {}, "considered indoors")
-			)
-		then
-			mapper.inside = true
-			raiseEvent("mapper went inside")
-		end
 
 		-- Store and display biome data on existing rooms
 		if mapper.roomexists(num) and gmcp.Room.Info.Basic.environment then

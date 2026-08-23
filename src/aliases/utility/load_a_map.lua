@@ -19,7 +19,7 @@ local function s(loc)
 		else
 			mapper.echo("Loaded the default map.")
 		end
-		raiseEvent("mapper updated map")
+		mapper.mapdata_changed()
 	end
 end
 

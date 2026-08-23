@@ -65,25 +65,6 @@ function mapper.move()
 	-- Movement continues when GMCP room change event fires
 end
 
-function mapper.swim()
-	-- not going anywhere? don't do anything
-	if not mapper.speedWalkDir[mapper.speedWalkCounter] then
-		return
-	end
-	send("swim " .. mapper.speedWalkDir[mapper.speedWalkCounter], false)
-	if mapper.settings.showcmds then
-		cecho(
-			string.format(
-				"<red>(<maroon>%d - <dark_slate_grey>swim %s<red>)",
-				#mapper.speedWalkDir - mapper.speedWalkCounter + 1,
-				mapper.speedWalkDir[mapper.speedWalkCounter]
-			)
-		)
-	end
-	mapper.hasty = true
-	tempTimer(2.5, function() mapper.move() end)
-end
-
 function mapper.customwalkdelay(delay)
 	local latency = getNetworkLatency() / 1000  -- Convert ms to seconds
 	tempTimer(latency + delay, function() mapper.move() end)
@@ -172,7 +153,7 @@ doSpeedWalk = function()
 	end
 
 	if not mapper.paused then
-		mapper.echon("Starting speedwalk from " .. (atcp.RoomNum or (gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.id)) .. " to ")
+		mapper.echon("Starting speedwalk from " .. tostring(mapper.currentroom) .. " to ")
 		cechoLink(
 			"<yellow>" .. mapper.speedWalkPath[#mapper.speedWalkPath],
 			'mapper.gotoRoom "' .. mapper.speedWalkPath[#mapper.speedWalkPath] .. '"',

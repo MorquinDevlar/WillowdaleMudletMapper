@@ -56,13 +56,6 @@
         "isFolder": "no"
     },
     {
-        "name": "Add/remove a ferry room",
-        "isActive": "yes",
-        "regex": "^fr (\\d+) (add|remove)$",
-        "script": "local room = tonumber(matches[2])\n\nif matches[3] == \"add\" then\n  if mapper.ferry_rooms[room] then\n    mapper.echo(\"Ferry room #\"..room..\" is already recorded as such.\") return\n  else\n    mapper.ferry_rooms[room] = true; mapper.echo(\"Added #\"..room..\" to be a ferry room.\")\n  end\nelse\n  if not mapper.ferry_rooms[room] then\n    mapper.echo(\"Room #\"..room..\" isn't a ferry one already.\") return\n  else\n    mapper.ferry_rooms[room] = nil; mapper.echo(\"Removed #\"..room..\" from being a ferry room.\")\n  end\nend\n\nlocal keys = {}; for k,_ in pairs(mapper.ferry_rooms) do keys[#keys+1] = k end\n\nsetRoomUserData(1, \"ferry rooms\", yajl.to_string(keys))",
-        "isFolder": "no"
-    },
-    {
         "name": "manually_set_the_room_coordinates",
         "isActive": "yes",
         "regex": "^(?:rc|room coords) (?:v(\\d+) )?(.+)$",

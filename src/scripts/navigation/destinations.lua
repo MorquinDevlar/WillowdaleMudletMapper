@@ -43,8 +43,6 @@ function mapper.gotoRoom(where, gotoType)
 		raiseEvent("mapper arrived")
 		return
 	end
-	-- allow mapper 'addons' to link their own exits in
-	raiseEvent("mapper link externals")
 	-- if getPath worked, then the dirs and room #'s tables were populated for us
 	if not mapper.getPath(mapper.currentroom, tonumber(where)) then
 		mapper.echo("Don't know how to get there (" .. tostring(where) .. ") from here :(")
@@ -52,13 +50,9 @@ function mapper.gotoRoom(where, gotoType)
 		mapper.speedWalkDir = {}
 		mapper.speedWalkCounter = 0
 		raiseEvent("mapper failed path")
-		-- allow mapper 'addons' to unlink their special exits
-		raiseEvent("mapper clear externals")
 		return
 	end
 	doSpeedWalk()
-	-- allow mapper 'addons' to unlink their special exits
-	raiseEvent("mapper clear externals")
 end
 
 function mapper.gotoArea(where, number, exact)
@@ -160,10 +154,8 @@ function mapper.gotoAreaID(areaid)
 		mapper.speedWalkDir = {}
 		mapper.speedWalkCounter = 0
 		raiseEvent("mapper failed path")
-		raiseEvent("mapper clear externals")
 		return
 	end
-	raiseEvent("mapper clear externals")
 	mapper.gotoRoom(shortestBorder, "area")
 end
 
@@ -207,9 +199,7 @@ function mapper.gotoFeature(partialFeatureName)
 		mapper.speedWalkDir = {}
 		mapper.speedWalkCounter = 0
 		raiseEvent("mapper failed path")
-		raiseEvent("mapper clear externals")
 		return
 	end
-	raiseEvent("mapper clear externals")
 	mapper.gotoRoom(closestFeature, "room")
 end

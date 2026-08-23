@@ -240,8 +240,6 @@ function mapper.getAreaBorders(areaid)
 		mapper.getAreaBordersTimer = mapper.getAreaBordersTimer or createStopWatch()
 		startStopWatch(mapper.getAreaBordersTimer)
 	end
-	-- make sure we have all exits into the area
-	raiseEvent("mapper link externals")
 	local roomlist, endresult = getAreaRooms(areaid), {}
 	-- sometimes getAreaRooms can give us no result
 	if not roomlist then
@@ -301,36 +299,6 @@ function mapper.getAreaBorders(areaid)
 				.. " results."
 		)
 	end
-	-- clean up external exits
-	raiseEvent("mapper clear externals")
 	return endresult
 end
 
--- removes extra prefixes and suffixes that are not part of the actual room name
-function mapper.cleanroomname(roomname)
-	local starts, ends = string.starts, string.ends
-
-	if starts(roomname, "Flying above ") then
-		roomname = string.sub(roomname, -(#roomname - 13))
-	end
-	if starts(roomname, "In the trees above ") then
-		roomname = string.sub(roomname, -(#roomname - 19))
-	end
-	if starts(roomname, "The ruins of ") then
-		roomname = string.sub(roomname, -(#roomname - 13))
-	end
-	if ends(roomname, ".") then
-		roomname = string.sub(roomname, 1, (#roomname - 1))
-	end
-	if ends(roomname, " (road)") then
-		roomname = string.sub(roomname, 1, (#roomname - 7))
-	end
-	if ends(roomname, " (indoors)") then
-		roomname = string.sub(roomname, 1, (#roomname - 10))
-	end
-	if ends(roomname, " (indoor road)") then
-		roomname = string.sub(roomname, 1, (#roomname - 14))
-	end
-
-	return roomname
-end

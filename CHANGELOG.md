@@ -17,6 +17,13 @@ is generated, and the next release overwrites it.
 
 - Added `mconfig` to the command list `mapper` prints, so the settings command can be found without knowing its name beforehand
 - Added `mconfig help`, which shows the same help as `mapper config help`
+- Fixed the mapper routing around doors you hold the key to or know the combination of; a locked door only keeps a path out now when you actually cannot open it
+- Fixed doors being drawn a visit late, so a door shows on the map the first time its room is mapped
+- Fixed a special exit keeping the first destination it was ever seen to lead to, so an exit that now goes somewhere else is re-pointed instead
+- Fixed a path being reused after a door had changed, which could send a speedwalk at a door that had since locked
+- Fixed area locks being lost, and the area list going stale, after loading a different map
+- Fixed room names losing a trailing period, and losing an opening "The ruins of", to a naming rule that belonged to another game
+- Removed the `who b` and `fr` commands, which came from the IRE mapper and errored when used
 
 ## 1.4.3 - 2026-08-23
 
