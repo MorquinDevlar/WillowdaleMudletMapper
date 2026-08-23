@@ -9,7 +9,7 @@ function mapper.doLockArea(search)
 		local r = rex.new(string.lower(search))
 		mapper.lastLockSearch = search
 		for name, id in pairs(getAreaTable()) do
-			if r:match(string.lower(name)) then
+			if mapper.islistablearea(id) and r:match(string.lower(name)) then
 				areaList = areaList or {}
 				areaList[name] = id
 			end
@@ -20,7 +20,12 @@ function mapper.doLockArea(search)
 		end
 	else
 		mapper.lastLockSearch = nil
-		areaList = getAreaTable()
+		areaList = {}
+		for name, id in pairs(getAreaTable()) do
+			if mapper.islistablearea(id) then
+				areaList[name] = id
+			end
+		end
 	end
 
 	for name, id in pairs(areaList) do

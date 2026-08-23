@@ -29,8 +29,8 @@ function mapper.createFirstRoom(roomId, areaName, x, y, z)
 	end
 	setRoomEnv(roomId, envId or mapper.defaultroomenv())
 
-	-- Store area data
-	setRoomUserData(roomId, "Area", areaName)
+	-- Store where the game says this room lives
+	mapper.storeroomorigin(roomId, areaName, gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.area)
 
 	-- Update mapper state
 	mapper.currentroom = roomId
@@ -78,25 +78,35 @@ function mapper.mappingnewroom(_, num)
 		end
 
 		-- GMCP coordinate handling for Willowdale
-		local currentRoomArea, currentRoomX, currentRoomY, currentRoomZ
+		-- The coordinate string is prefixed with the room's zone, but the area a room
+		-- is filed under is the map that zone belongs to, which GMCP sends separately
+		-- as area_name (see mapper.gmcpareaname).
+		local currentRoomArea = mapper.gmcpareaname()
+		local currentRoomZone = gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.area
+		local coordZone, currentRoomX, currentRoomY, currentRoomZ
 		if gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.coordinates and gmcp.Room.Info.Basic.coordinates ~= "" then
 			-- Try with spaces pattern
-			currentRoomArea, currentRoomX, currentRoomY, currentRoomZ =
+			coordZone, currentRoomX, currentRoomY, currentRoomZ =
 				gmcp.Room.Info.Basic.coordinates:match("([^,]+), ([^,]+), ([^,]+), ([^,]+)")
 
 			-- If that fails, try without spaces
-			if not (currentRoomArea and currentRoomX and currentRoomY and currentRoomZ) then
-				currentRoomArea, currentRoomX, currentRoomY, currentRoomZ =
+			if not (coordZone and currentRoomX and currentRoomY and currentRoomZ) then
+				coordZone, currentRoomX, currentRoomY, currentRoomZ =
 					gmcp.Room.Info.Basic.coordinates:match("([^,]+),([^,]+),([^,]+),([^,]+)")
 			end
 
-			if currentRoomArea and currentRoomX and currentRoomY and currentRoomZ then
+			if coordZone and currentRoomX and currentRoomY and currentRoomZ then
 				currentRoomX, currentRoomY, currentRoomZ =
 					tonumber(currentRoomX), tonumber(currentRoomY), tonumber(currentRoomZ)
 
+				-- The coordinate prefix is the zone, and it is all there is to go on if
+				-- the server is old enough not to send the two names apart.
+				currentRoomZone = (currentRoomZone ~= "" and currentRoomZone) or coordZone
+				currentRoomArea = currentRoomArea or coordZone
+
 				if mapper.settings.debug then
-					mapper.echo(string.format("Parsed coordinates for room %d: area='%s', x=%d, y=%d, z=%d",
-						num, currentRoomArea, currentRoomX, currentRoomY, currentRoomZ))
+					mapper.echo(string.format("Parsed coordinates for room %d: area='%s', zone='%s', x=%d, y=%d, z=%d",
+						num, tostring(currentRoomArea), tostring(currentRoomZone), currentRoomX, currentRoomY, currentRoomZ))
 				end
 
 				-- Update the current room's coordinates if they're different
@@ -109,7 +119,7 @@ function mapper.mappingnewroom(_, num)
 								num, mx, my, mz, currentRoomX, currentRoomY, currentRoomZ))
 						end
 						setRoomCoordinates(num, currentRoomX, currentRoomY, currentRoomZ)
-						setRoomUserData(num, "Area", currentRoomArea)
+						mapper.storeroomorigin(num, currentRoomArea, currentRoomZone)
 						s = s .. (#s > 0 and " " or "") .. string.format("Repositioned room to %d,%d,%d.", currentRoomX, currentRoomY, currentRoomZ)
 					end
 				end
@@ -140,7 +150,7 @@ function mapper.mappingnewroom(_, num)
 					addRoom(num)
 					setRoomCoordinates(num, currentRoomX, currentRoomY, currentRoomZ)
 					setRoomArea(num, areaId)
-					setRoomUserData(num, "Area", currentRoomArea)
+					mapper.storeroomorigin(num, currentRoomArea, currentRoomZone)
 
 					-- Set biome color if available, otherwise the neutral default
 					local envId
@@ -198,6 +208,18 @@ function mapper.mappingnewroom(_, num)
 				unHighlightRoom(num)
 				s = s .. (#s > 0 and " " or "") .. "Updated room name to '" .. rootroomname .. "'."
 			end
+			-- File the room under the area GMCP reports for it. A room mapped ahead of
+			-- the player, from an exit alone, was placed with the room it was seen from
+			-- or under the zone that exit named; standing in it is the first moment the
+			-- map it really belongs to is known, so that is when it is moved.
+			if mapper.settings.autocreateareas and currentRoomArea then
+				local areaId = mapper.findOrCreateArea(currentRoomArea)
+				if areaId and getRoomArea(num) ~= areaId then
+					setRoomArea(num, areaId)
+					mapper.storeroomorigin(num, currentRoomArea, currentRoomZone)
+					s = s .. (#s > 0 and " " or "") .. "Moved room into area '" .. currentRoomArea .. "'."
+				end
+			end
 			-- autolink exits
 			if not inwilderness() then
 				local x = getRoomExits(num) or {}
@@ -213,6 +235,10 @@ function mapper.mappingnewroom(_, num)
 					else
 						if not x[mapper.anytolong(exit)] then
 							if not mapper.roomexists(id) then
+								-- Check if exit leads out of this map
+								local targetZone = exitData.details and exitData.details.leads_to_area
+								local targetAreaId = mapper.exitareaid(targetZone)
+
 								-- Check if we should use absolute positioning from delta data or standard directional positioning
 								if
 									mapper.settings.autopositionrooms
@@ -235,50 +261,24 @@ function mapper.mappingnewroom(_, num)
 											num, currentRoomX, currentRoomY, currentRoomZ))
 									end
 
-									-- Check if exit leads to a different area
-									local targetAreaId = nil
-									if mapper.settings.autocreateareas and exitData.details and exitData.details.leads_to_area then
-										local targetAreaName = exitData.details.leads_to_area
-										-- Try to create the area if it doesn't exist
-										targetAreaId = mapper.areatable[targetAreaName]
-										if not targetAreaId then
-											targetAreaId = addAreaName(targetAreaName)
-											if targetAreaId then
-												if mapper.settings and mapper.settings.showmappingmessages then
-													mapper.echo(string.format("Created new area: %s (ID: %d)", targetAreaName, targetAreaId))
-												end
-												mapper.regenerateareas()
-											end
-										end
-									end
-
 									s = mapper.makeroom(num, id, newX, newY, newZ, targetAreaId)
-									setRoomUserData(id, "Area", exitData.details and exitData.details.leads_to_area or currentRoomArea)
 								else
 									-- Use standard directional positioning (+1 in direction)
-									-- Check if exit leads to a different area
-									local targetAreaId = nil
-									if mapper.settings.autocreateareas and exitData.details and exitData.details.leads_to_area then
-										local targetAreaName = exitData.details.leads_to_area
-										-- Try to create the area if it doesn't exist
-										targetAreaId = mapper.areatable[targetAreaName]
-										if not targetAreaId then
-											targetAreaId = addAreaName(targetAreaName)
-											if targetAreaId then
-												if mapper.settings and mapper.settings.showmappingmessages then
-													mapper.echo(string.format("Created new area: %s (ID: %d)", targetAreaName, targetAreaId))
-												end
-												mapper.regenerateareas()
-											end
-										end
-									end
-
 									s = mapper.makeroom(
 										num,
 										id,
 										mapper.getshiftedcoords(exit, getRoomCoordinates(num)),
 										targetAreaId
 									)
+								end
+
+								-- The zone is all an exit tells us about the room on the other
+								-- side; its area is only recorded once that zone is known to name
+								-- one, or once the room is entered.
+								if targetZone then
+									mapper.storeroomorigin(id, targetAreaId and targetZone or nil, targetZone)
+								else
+									mapper.storeroomorigin(id, currentRoomArea, nil)
 								end
 							end
 							-- Check if this is a standard exit or a special exit

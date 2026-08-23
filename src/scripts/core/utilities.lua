@@ -16,6 +16,15 @@ function mapper.deepcopy(orig)
     return copy
 end
 
+-- Whether an area is one a player maps into, and so one worth offering in a
+-- listing. Area -1 is Mudlet's own "Default Area", where it parks rooms that
+-- have no area yet, and area 0 is not a real area either: both are work areas of
+-- the map editor rather than places in the game.
+function mapper.islistablearea(id)
+    id = tonumber(id)
+    return id ~= nil and id ~= 0 and id ~= -1
+end
+
 function mapper.highlight_unfinished_rooms()
     if not mapper.areatable then
         return

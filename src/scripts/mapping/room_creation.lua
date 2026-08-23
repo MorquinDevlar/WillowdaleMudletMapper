@@ -25,6 +25,52 @@ function mapper.findOrCreateArea(areaName)
 	return newId
 end
 
+-- The area a room belongs to on the Mudlet map. GMCP names a room's place twice:
+-- `area` is the server's zone (one piece of a map, e.g. "West Willowdale
+-- Fields"), while `area_name` is the map that zone is part of (e.g. "Willowdale
+-- Village"). Every zone of a map shares one coordinate space, so the map is what
+-- a Mudlet area has to be - filing by zone would cut a single coordinate space
+-- into several areas whose rooms then cannot be drawn next to each other.
+function mapper.gmcpareaname()
+	local basic = gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic
+	if not basic then
+		return nil
+	end
+	local name = basic.area_name
+	if not name or name == "" then
+		-- Older servers, and zones with no map of their own, only send the zone.
+		name = basic.area
+	end
+	if not name or name == "" then
+		return nil
+	end
+	return name
+end
+
+-- A room reached through an exit is known only by the zone GMCP names on the
+-- other side of it, and a zone is not necessarily the name of the map its rooms
+-- are drawn on. So the zone is used as an area only when it already names one -
+-- which is what happens for a zone that is a map of its own. Anything else waits
+-- for the first visit, when GMCP reports the room's own area_name.
+function mapper.exitareaid(zone)
+	if not (mapper.settings and mapper.settings.autocreateareas) or not zone or zone == "" then
+		return nil
+	end
+	return mapper.areatable and mapper.areatable[zone] or nil
+end
+
+-- Record what the game says about where a room lives. The Mudlet area carries
+-- the map, so the zone is kept alongside it - it is the finer name the game uses
+-- and nothing else on the map preserves it.
+function mapper.storeroomorigin(roomId, areaName, zone)
+	if areaName and areaName ~= "" and getRoomUserData(roomId, "Area") ~= areaName then
+		setRoomUserData(roomId, "Area", areaName)
+	end
+	if zone and zone ~= "" and getRoomUserData(roomId, "Zone") ~= zone then
+		setRoomUserData(roomId, "Zone", zone)
+	end
+end
+
 function mapper.makeroom(oldid, newid, x, y, z, targetAreaId)
 	assert(x and y and z, "makeroom: need all 3 coordinates")
 	addRoom(newid)

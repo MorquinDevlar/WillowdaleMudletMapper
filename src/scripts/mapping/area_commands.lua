@@ -277,7 +277,7 @@ function mapper.commands.area.list(filter)
 
     -- Build sorted list
     for name, id in pairs(areaTable) do
-        if id ~= 0 then -- Skip area 0
+        if mapper.islistablearea(id) then
             if not filter or filter == "" or name:lower():find(filter:lower(), 1, true) then
                 local rooms = getAreaRooms(id) or {}
                 local roomCount = 0

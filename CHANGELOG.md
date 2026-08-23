@@ -15,6 +15,10 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+- Changed areas to be named after the area the game reports a room is in, rather than the zone it sits in, so the zones of one area are mapped together instead of being split into an area each
+- Changed rooms mapped ahead of you, from an exit alone, to move into their real area the first time you enter them
+- Removed Mudlet's own "Default Area" from the area listings of `mapper area list` and `arealock`; it is a work area of the map editor, not one you map into
+
 ## 1.4.2 - 2026-08-21
 
 - Changed unexplored rooms to be drawn in a muted dark red instead of the color of the room they were seen from; a room gets its real biome color when you enter it
