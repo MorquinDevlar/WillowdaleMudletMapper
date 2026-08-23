@@ -9,7 +9,14 @@ if not mapper.game then
 	return
 end
 
-if not matches[2] then
+-- 'mconfig help' mirrors 'mapper config help', which is where the shorthand is
+-- advertised
+if matches[2] == "help" then
+	mapper.commands.configHelp()
+	return
+end
+
+if not matches[2] or matches[2] == "" then
 	-- Show all options with the new display format
 	mapper.settings:showAllOptions(mapper.game)
 	return

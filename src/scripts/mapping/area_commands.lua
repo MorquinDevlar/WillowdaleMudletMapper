@@ -16,6 +16,7 @@ function mapper.commands.help()
         { cmd = "mapper lock",        args = "[room] <dir>",  desc = "Lock exit (prevent speedwalk)" },
         { cmd = "mapper unlock",      args = "[room] <dir>",  desc = "Unlock exit (allow speedwalk)" },
         { cmd = "mapper config",      args = "[option] [val]", desc = "View or change mapper settings" },
+        { cmd = "mconfig",            args = "[option] [val]", desc = "Shorthand for 'mapper config'" },
         { cmd = "mapper check",       args = "",              desc = "Check for mapper updates" },
         { cmd = "mapper update",      args = "",              desc = "Install available update" },
         { cmd = "mapper reload",      args = "",              desc = "Reload mapper settings" },
@@ -58,6 +59,7 @@ function mapper.commands.configHelp()
         { cmd = "mapper config",          args = "<option>",      desc = "Show details for a specific option" },
         { cmd = "mapper config",          args = "<option> <value>", desc = "Set an option to a new value" },
         { cmd = "mapper config help",     args = "",              desc = "Show this help" },
+        { cmd = "mconfig",                args = "[option] [value]", desc = "Shorthand for 'mapper config'" },
     }
 
     -- Calculate column widths

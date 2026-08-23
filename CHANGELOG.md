@@ -15,6 +15,9 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+- Added `mconfig` to the command list `mapper` prints, so the settings command can be found without knowing its name beforehand
+- Added `mconfig help`, which shows the same help as `mapper config help`
+
 ## 1.4.3 - 2026-08-23
 
 - Changed areas to be named after the area the game reports a room is in, rather than the zone it sits in, so the zones of one area are mapped together instead of being split into an area each
