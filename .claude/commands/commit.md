@@ -1,61 +1,85 @@
 ---
-description: Perform a comprehensive code review of current changes and write a commit message for the changes.
-allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(grep:*), Bash(rg:*), Bash(git merge-base:*), Bash(git show:*), Bash(git add:*), Bash(git commit:*), Bash(git status:*), Read, Edit, AskUserQuestion
+description: Review the current changes, commit them, then offer to cut a release with tools/release.sh.
+allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(grep:*), Bash(rg:*), Bash(git merge-base:*), Bash(git show:*), Bash(git add:*), Bash(git commit:*), Bash(git status:*), Bash(muddle:*), Bash(tools/release.sh:*), Read, Edit, AskUserQuestion
 ---
 
 IMPORTANT: Use ultrathink when doing the review.
 
-### Version Bump Process
-Before committing, handle version bumping:
+This command commits code. It does NOT release. Releasing is `tools/release.sh
+X.Y.Z` and nothing else, and this command's only involvement is to offer to run
+it once the commit is in.
 
-1. Read the current version from `mfile` (JSON file with "version" field using semver: MAJOR.MINOR.PATCH)
-2. Ask the user which version component to increment:
-   - **Patch** (1.0.0 → 1.0.1): Bug fixes, small changes
-   - **Minor** (1.0.0 → 1.1.0): New features, backward compatible
-   - **Major** (1.0.0 → 2.0.0): Breaking changes
-   - **Skip**: No version change for this commit
-3. If not skipped, update the version in `mfile` using the Edit tool
-4. Include `mfile` in the staged changes before committing
+## What this command must never do
 
-Example version bump:
-- Current: "version": "1.2.3"
-- User selects: Minor
-- New: "version": "1.3.0" (patch resets to 0 on minor bump, minor resets to 0 on major bump)
+`tools/release.sh` owns all of the following. Doing any of it here produces a
+half-made release that the script will then refuse to finish, or - worse - a
+version and a feed that disagree with what was actually published.
 
-If version was bumped, include "Bumped version to X.Y.Z" at the end of the commit message body.
+- NEVER edit the `"version"` field in `mfile`. Only the release script bumps it.
+- NEVER create or edit `releases/releases.json`. It is generated from
+  `CHANGELOG.md` by `tools/changelog_to_releases.lua`, written to a temp file,
+  and uploaded as a release asset. It is gitignored and hand-editing it is
+  forbidden.
+- NEVER promote `## Unreleased` in `CHANGELOG.md` to a version heading. The
+  script does that as part of cutting the release.
+- NEVER commit `build/` or `releases/`. Both are gitignored; the package and
+  the feed go up as release assets.
+- NEVER tag, push a tag, or create a GitHub release by hand.
 
-### Release Notes Update
-When a version is bumped (not skipped), update `releases/releases.json`:
+## Step 1: Review
 
-1. Read the current `releases/releases.json` file
-2. Add a new entry at the **beginning** of the array with:
-   - `version`: The new version number
-   - `released`: Today's date in YYYY-MM-DD format
-   - `changes`: Array of user-facing changelog entries
-3. Ask the user to provide or confirm the changelog entries:
-   - These should be short, player-friendly descriptions (not technical commit details)
-   - Focus on what the player will notice or benefit from
-   - Use past tense ("Added", "Fixed", "Improved")
-   - Keep each entry to one line
-4. Include `releases/releases.json` in the staged changes
+Read the working tree with `git status` and `git diff`, and compare against the
+previous commit. Review the changes for correctness and for anything that
+contradicts `CLAUDE.md`. Raise real problems before committing them.
 
-Example entry:
-```json
-{
-    "version": "1.1.0",
-    "released": "2025-01-20",
-    "changes": [
-        "Added support for locked doors",
-        "Fixed map not updating after teleport"
-    ]
-}
+## Step 2: Changelog
+
+`CHANGELOG.md` is the source of truth for release notes, so a change a player
+would notice gets its entry in the SAME commit as the change itself. A change
+committed without its note is a change no player is ever told about.
+
+1. Decide whether the change is player-visible: commands, settings, behaviour
+   they will see, or something that was going wrong for them. Development
+   tooling, build changes, and internal refactors are NOT listed - if the
+   change is one of those, skip to step 3 and say so.
+2. If it is player-visible, add one line per change under the existing
+   `## Unreleased` heading with the Edit tool. Do not create a version heading,
+   and do not touch any heading below `## Unreleased`.
+3. Entries are one line, past tense, player-facing, and start with `Added`,
+   `Fixed`, `Changed`, or `Removed`. Describe what the player sees, not how it
+   was implemented. Match the voice of the entries already in the file.
+4. Stage `CHANGELOG.md` together with the code.
+
+Example:
+
+```markdown
+## Unreleased
+
+- Added a `mapper showpath` command that highlights the route to your target
+- Fixed the map not following you after a teleport
 ```
 
-### Commit Message Style and Guidelines
-When writing commit messages, follow this format:
-NEVER add any information about the commit being written or handled by Claude Code
+## Step 3: Verify
 
-1. **Title**: Brief, factual description of changes (50-72 characters maximum, no adjectives like "better", "improved", etc.)
+There is no test suite in this repo, so the build is the check. From the repo
+root:
+
+```bash
+muddle
+```
+
+It must succeed before committing. It also proves the muddler `__VERSION__`
+substitution still lands. The build cannot validate Qt rendering, live GMCP
+framing, or the mapper against a real map - say so if the change needs testing
+against the running game. Do not stage anything the build produced.
+
+## Step 4: Commit
+
+NEVER add any information about the commit being written or handled by Claude
+Code, and NEVER add a Claude signature or Co-Authored-By trailer.
+
+1. **Title**: Brief, factual description of changes (50-72 characters maximum,
+   no adjectives like "better", "improved", etc.)
 2. **Body**: Bullet points listing specific changes:
    - Use past tense ("Fixed", "Added", "Removed", not "Fix", "Add", "Remove")
    - Be specific and technical
@@ -63,6 +87,7 @@ NEVER add any information about the commit being written or handled by Claude Co
    - No hyperbole
    - Just state what changed, not why it is good
    - Group related changes together in this order: Added, Fixed, Changed, Removed
+   - Never write up fixes for things broken earlier in the same commit
 3. **Breaking changes**: List any breaking changes separately at the end
 
 Example:
@@ -73,28 +98,50 @@ Example:
   - PlayerDespawn cleanup handlers to all combat modules
   - User validation with validateUserForGMCP helper function
   - ExitLockChanged event for exit state notifications
-  - GMCP handler to send Room.Info.Exits updates on lock changes
   - Exit details map with type, state, name, hasKey, and hasPicked fields
-  - Package documentation explaining design patterns for each module
 
   Fixed:
   - Memory leaks from uncleaned tracking maps
-  - Function naming inconsistencies in Status and Events modules
   - Redundant "exits" wrapper in Room.Info.Exits output
 
   Changed:
   - Cooldown timer interval from 250ms to 200ms
-  - Mutex usage to RLock for read-only operations
   - Exit state values to "locked" and "open"
 
   Removed:
   - Unused imports from gmcp.go and combat modules
-  - Unused gmcp_batcher.go file
-  - Rate limiting code from damage module
 
   Breaking Changes:
   - Room.Info.Exits now exists as a primary node (previously Room.Info.Exits.exits)
 
 Keep it neutral, factual, and technical.
 
-IMPORTANT: Make sure to remove the Claude Code signature.
+## Step 5: Offer a release
+
+Pushing main is not deploying; publishing the GitHub release is. So after the
+commit lands, ask - do not assume.
+
+1. Read the current version from `mfile` and work out the three candidates:
+   patch (bug fixes), minor (new features), major (breaking changes).
+2. Use AskUserQuestion to ask whether to cut a release now, offering:
+   - **No release** (recommended default): stop here, the commit stands on its own.
+   - **Patch X.Y.Z+1**, **Minor X.Y+1.0**, **Major X+1.0.0**: cut that release.
+   State plainly in the question that cutting a release deploys to the game
+   server: the server subscribes to this repo's release events and installs the
+   published assets, so every player is offered the update.
+3. If the user declines, report the commit and stop. Do not push.
+4. If the user picks a version, run exactly:
+
+   ```bash
+   tools/release.sh X.Y.Z
+   ```
+
+   Nothing else. The script checks the prerequisites, bumps `mfile`, promotes
+   the changelog, generates the feed, builds the package, commits, tags,
+   pushes, and publishes the release with both assets. Do not do any of that
+   yourself, and do not work around a check the script refuses on - a refusal
+   means the release is not ready. If it fails, report the failure; the script
+   restores `mfile` and `CHANGELOG.md` itself.
+5. When it succeeds, relay the release URL it prints and its closing note: give
+   the server's webhook a moment, then confirm the feed leads with the new
+   version before announcing it.
