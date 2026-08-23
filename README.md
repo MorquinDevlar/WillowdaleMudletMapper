@@ -31,6 +31,19 @@ This project uses Muddler for building. To build:
 muddler
 ```
 
+### Local CI profiles
+
+Muddler's local CI helper reinstalls the package on every build, and each
+uninstall would normally restore Mudlet's `generic_mapper` package - a download
+that then races the reinstall. The uninstall handler skips that restore when it
+sees the helper's own `Muddler` global, so a profile running local CI needs no
+setup. A profile that rebuilds some other way can opt out explicitly by setting
+the global `_willowdale_mapper_devmode` to `true` before the uninstall, for
+instance from the helper's `preremove` hook.
+
+A real uninstall in a profile with neither still restores `generic_mapper` as
+before.
+
 ## Credits
 
 Originally forked from the IRE Mudlet Mapper project and adapted specifically for WillowdaleMUD.

@@ -20,6 +20,17 @@ function mapper.handleUninstall(_, packageName)
 		return
 	end
 
+	-- Skip restoring generic_mapper in a development profile. A local muddler
+	-- build uninstalls and reinstalls this package on every rebuild, so the
+	-- restore would download generic_mapper and race the reinstall each time.
+	-- Muddler is the local CI helper's own global, so its presence identifies a
+	-- dev profile without any setup; _willowdale_mapper_devmode is the explicit
+	-- opt-out for a profile that builds some other way. Both are plain globals
+	-- rather than mapper.* fields so they survive the uninstall.
+	if _willowdale_mapper_devmode or Muddler then
+		return
+	end
+
 	-- Skip restoring generic_mapper if this is an update (not a real uninstall)
 	if mapper.isUpdating then
 		mapper.isUpdating = nil
