@@ -2,7 +2,7 @@
        "package": "WillowdaleMudletMapper",
        "title": "Willowdale Mudlet Mapper",
        "description": "Custom GMCP mapper for Willowdale.",
-       "version": "1.4.3",
+       "version": "1.4.4",
        "author": "Morquin - forked from the IRE Mudlet Mapper",
        "icon": "server-icon_small.png",
        "dependencies": "",

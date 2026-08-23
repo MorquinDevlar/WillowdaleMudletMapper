@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+## 1.4.4 - 2026-08-23
+
 - Added `mconfig` to the command list `mapper` prints, so the settings command can be found without knowing its name beforehand
 - Added `mconfig help`, which shows the same help as `mapper config help`
 - Fixed the mapper routing around doors you hold the key to or know the combination of; a locked door only keeps a path out now when you actually cannot open it
