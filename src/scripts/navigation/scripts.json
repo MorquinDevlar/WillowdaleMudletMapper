@@ -42,6 +42,12 @@
         "isFolder": "no"
     },
     {
+        "name": "move_signals",
+        "isActive": "yes",
+        "script": "",
+        "isFolder": "no"
+    },
+    {
         "name": "centerroominfo",
         "isActive": "yes",
         "script": "",

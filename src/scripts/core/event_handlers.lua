@@ -30,6 +30,8 @@ mapper.events.list = {
 	["gmcp.Room.Info"] = { "mapper.room_events", "mapper.centerroominfo" },
 	["gmcp.Room.Info.Exits"] = { "mapper.mappingnewroom", "mapper.updatedoors" },
 	["gmcp.Room.Wrongdir"] = { "mapper.wrongdir_handler" },
+	["gmcp.Room.MoveBlocked"] = { "mapper.moveblocked_handler" },
+	["gmcp.Room.MoveDelayed"] = { "mapper.movedelayed_handler" },
 
 	-- Custom mapper events
 	["mapper areas changed"] = { "mapper.regenerateareas" },

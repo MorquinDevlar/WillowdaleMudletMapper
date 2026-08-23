@@ -24,6 +24,9 @@ is generated, and the next release overwrites it.
 - Fixed area locks being lost, and the area list going stale, after loading a different map
 - Fixed room names losing a trailing period, and losing an opening "The ruins of", to a naming rule that belonged to another game
 - Removed the `who b` and `fr` commands, which came from the IRE mapper and errored when used
+- Added a route around a door that turns out to be locked mid-walk, and around an exit the map has that the room does not, instead of the walk simply stopping
+- Added the reason a walk stopped, so being in combat, held, or turned back by the room each say so rather than all reading the same
+- Added a note when a way onward takes a few seconds, so a walk that is waiting no longer looks like one that has hung
 
 ## 1.4.3 - 2026-08-23
 

@@ -1,11 +1,5 @@
 [
     {
-        "name": "wrongdir_handler",
-        "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
         "name": "environment_data",
         "isActive": "yes",
         "script": "",
