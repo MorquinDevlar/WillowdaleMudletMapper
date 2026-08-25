@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+## 1.5.0 - 2026-08-25
+
 - Changed the `showbiomesymbols` setting to `roomchar`, taking `all`, `biome`, `poi` or `none` in place of the old `off`
 - Changed `showpath` to name rooms the way the game does instead of shouting them in capitals
 - Changed `goto` to name the room it walks to, rather than showing only its ID
