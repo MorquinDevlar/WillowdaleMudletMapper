@@ -9,7 +9,7 @@ function mapper.createFirstRoom(roomId, areaName, x, y, z)
 	-- Create area if needed
 	local areaId = mapper.findOrCreateArea(areaName)
 	if not areaId then
-		mapper.echo("Failed to create area for first room")
+		mapper.notify("Failed to create area for first room")
 		return false
 	end
 
@@ -39,7 +39,7 @@ function mapper.createFirstRoom(roomId, areaName, x, y, z)
 
 	centerview(roomId)
 	if mapper.settings and mapper.settings.showmappingmessages then
-		mapper.echo("Created first room! Mapping is now enabled.")
+		mapper.notify("Created first room! Mapping is now enabled.")
 	end
 	return true
 end
@@ -50,7 +50,7 @@ function mapper.mappingnewroom(_, num)
 			return
 		end
 		if not gmcp.Room then
-			mapper.echo("You need to have GMCP turned on (see preferences on a recent Mudlet) for mapping stuff.")
+			mapper.notify("You need to have GMCP turned on (see preferences on a recent Mudlet) for mapping stuff.")
 			return
 		end
 		local getRoomName, getRoomCoordinates = getRoomName, getRoomCoordinates
@@ -65,9 +65,9 @@ function mapper.mappingnewroom(_, num)
 				table.insert(exitList, string.format("%s->%d", exit, exitData.room_id))
 			end
 			if #exitList > 0 then
-				mapper.echo("GMCP exits for room " .. tostring(num) .. ": " .. table.concat(exitList, ", "))
+				mapper.notify("GMCP exits for room " .. tostring(num) .. ": " .. table.concat(exitList, ", "))
 			else
-				mapper.echo("No GMCP exits received for room " .. tostring(num))
+				mapper.notify("No GMCP exits received for room " .. tostring(num))
 			end
 		end
 
@@ -99,7 +99,7 @@ function mapper.mappingnewroom(_, num)
 				currentRoomArea = currentRoomArea or coordZone
 
 				if mapper.settings.debug then
-					mapper.echo(string.format("Parsed coordinates for room %d: area='%s', zone='%s', x=%d, y=%d, z=%d",
+					mapper.notify(string.format("Parsed coordinates for room %d: area='%s', zone='%s', x=%d, y=%d, z=%d",
 						num, tostring(currentRoomArea), tostring(currentRoomZone), currentRoomX, currentRoomY, currentRoomZ))
 				end
 
@@ -109,7 +109,7 @@ function mapper.mappingnewroom(_, num)
 					local mx, my, mz = getRoomCoordinates(num)
 					if mx ~= currentRoomX or my ~= currentRoomY or mz ~= currentRoomZ then
 						if mapper.settings.debug then
-							mapper.echo(string.format("Moving room %d from (%d,%d,%d) to (%d,%d,%d)",
+							mapper.notify(string.format("Moving room %d from (%d,%d,%d) to (%d,%d,%d)",
 								num, mx, my, mz, currentRoomX, currentRoomY, currentRoomZ))
 						end
 						setRoomCoordinates(num, currentRoomX, currentRoomY, currentRoomZ)
@@ -119,7 +119,7 @@ function mapper.mappingnewroom(_, num)
 				end
 			else
 				if mapper.settings.debug then
-					mapper.echo("Failed to parse coordinates from: " .. (gmcp.Room.Info.Basic.coordinates or "nil"))
+					mapper.notify("Failed to parse coordinates from: " .. (gmcp.Room.Info.Basic.coordinates or "nil"))
 				end
 			end
 		end
@@ -156,7 +156,7 @@ function mapper.mappingnewroom(_, num)
 					s = string.format("Created room %d at %d,%d,%d in %s.", num, currentRoomX, currentRoomY, currentRoomZ, currentRoomArea)
 
 					if mapper.settings.debug then
-						mapper.echo(s)
+						mapper.notify(s)
 					end
 				end
 			-- otherwise place it next to a room we already know, using the exit we came by
@@ -230,7 +230,7 @@ function mapper.mappingnewroom(_, num)
 								local newZ = currentRoomZ + exitData.delta_z
 
 								if mapper.settings.debug then
-									mapper.echo(string.format("Creating room %d at (%d,%d,%d) using delta (%d,%d,%d) from room %d at (%d,%d,%d)",
+									mapper.notify(string.format("Creating room %d at (%d,%d,%d) using delta (%d,%d,%d) from room %d at (%d,%d,%d)",
 										id, newX, newY, newZ, exitData.delta_x, exitData.delta_y, exitData.delta_z,
 										num, currentRoomX, currentRoomY, currentRoomZ))
 								end
@@ -382,18 +382,18 @@ function mapper.mappingnewroom(_, num)
 		end
 		if #s > 0 then
 			if mapper.settings and mapper.settings.showmappingmessages then
-				mapper.echo(s)
+				mapper.notify(s)
 			end
 			centerview(mapper.currentroom)
 			-- Clear path cache since map was modified
 			raiseEvent("mapper updated map")
 		end
 	end, function(error)
-		mapper.echo("Oops! Had a small problem (" .. error .. ").")
+		mapper.notify("Oops! Had a small problem (" .. error .. ").")
 		echo("  ")
 		echoLink("view steps", "echo[[" .. debug.traceback() .. "]]", "View steps of code that led up to it")
 	end)
 	if not s then
-		mapper.echo(m)
+		mapper.notify(m)
 	end
 end

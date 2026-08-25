@@ -13,8 +13,8 @@ function mapper.getPath(from, to)
 		mapper.computeGetPath = mapper.computeGetPath or createStopWatch()
 		startStopWatch(mapper.computeGetPath)
 		local boolean = getPath(from, to)
-		if mapper.debug then
-			mapper.echo(
+		if mapper.settings.debug then
+			mapper.notify(
 				"a new getPath() from " .. from .. " to " .. to .. " took " .. stopStopWatch(mapper.computeGetPath) .. "s."
 			)
 		end
@@ -29,8 +29,8 @@ function mapper.getPath(from, to)
 end
 
 function mapper.clearpathcache()
-	if mapper.debug then
-		mapper.echo("path cache cleared")
+	if mapper.settings.debug then
+		mapper.notify("path cache cleared")
 	end
 	getpathcache = {}
 end

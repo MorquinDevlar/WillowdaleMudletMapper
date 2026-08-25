@@ -15,6 +15,17 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+- Changed the speedwalk path highlight to move along a room at a time as you walk, in place of being wiped off the whole map and drawn again in every room, which drops a search across every room you have mapped out of each step and makes a long walk with `showspeedwalkpath` on markedly lighter
+- Changed walking with a `showpath` destination set to stop redrawing the whole map in every room
+- Fixed the `showpath` highlight freezing when you walk into a room being mapped for the first time; the path now recalculates once the new room's exits are on the map
+- Fixed the cleanup of path highlights left over from a session that ended mid-walk, which had been clearing the borders of the lowest-numbered rooms on the map instead of the leftover ones
+- Changed `mdg`/`mdebug` to switch the same `debug` setting as `mapper option debug`, so the performance timings it gated separately now print alongside the other debug messages and the choice survives a restart
+- Fixed every walk through a room with a special exit rebuilding the pathfinding data and marking the map as changed, which made the next `goto` slower to start than it needed to be
+- Fixed a special exit locking or unlocking not being seen by paths computed earlier, which could keep a speedwalk routed through a way that had just shut
+- Changed the `Mapper: ` prefix to appear only on messages that arrive on their own - a walk reporting in, a room being mapped, an update being available - so an answer to a command you typed prints without it
+- Changed long mapper messages to be wrapped by the mapper rather than by Mudlet, so the rest of a wrapped line lines up under the text it belongs to instead of restarting at the left edge, and a message of several lines carries the prefix on its first line instead of on all of them
+- Changed the update notice to list every release you have not got yet, each under its own version heading, in place of the newest release's notes alone
+
 ## 1.5.0 - 2026-08-25
 
 - Changed the `showbiomesymbols` setting to `roomchar`, taking `all`, `biome`, `poi` or `none` in place of the old `off`

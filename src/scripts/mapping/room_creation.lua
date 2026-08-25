@@ -19,7 +19,7 @@ function mapper.findOrCreateArea(areaName)
 		mapper.regenerateareas()
 		raiseEvent("mapper areas changed")
 		if mapper.settings and mapper.settings.showmappingmessages then
-			mapper.echo("Created new area: " .. areaName)
+			mapper.notify("Created new area: " .. areaName)
 		end
 	end
 	return newId
@@ -156,7 +156,7 @@ function mapper.getshiftedcoords(original, ox, oy, oz)
 		y = (y or oy)
 		z = (z or oz) + 1
 	else
-		mapper.echo(
+		mapper.notify(
 			"Don't know where to shift the coordinates for a " .. tostring(w) .. " (" .. tostring(original) .. ") exit."
 		)
 	end

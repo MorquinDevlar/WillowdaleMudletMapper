@@ -11,7 +11,7 @@ end
 
 local where = matches[2]:lower()
 
-if mapper.debug then
+if mapper.settings.debug then
 	mapper.gotoPerf = mapper.gotoPerf or createStopWatch()
 	startStopWatch(mapper.gotoPerf)
 end
@@ -32,6 +32,6 @@ else
 		end
 	end
 end
-if mapper.debug then
+if mapper.settings.debug then
 	mapper.echo("goto alias took " .. stopStopWatch(mapper.gotoPerf) .. "s to run.")
 end

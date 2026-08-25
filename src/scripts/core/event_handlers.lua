@@ -8,7 +8,7 @@ mapper.events = mapper.events or {}
 -- Functions stay in the mapper.* namespace
 mapper.events.list = {
 	-- System events
-	sysLoadEvent = { "mapper.startup", "mapper.loadoptions" },
+	sysLoadEvent = { "mapper.startup", "mapper.loadoptions", "mapper.clearStalePathHighlights" },
 	sysExitEvent = { "mapper.saveoptions" },
 	sysUninstallPackage = { "mapper.handleUninstall" },
 	sysDownloadDone = { "mapper.downloadedfile" },
@@ -28,7 +28,9 @@ mapper.events.list = {
 	-- GMCP Room events. Mapping runs before doors so that a room created on this
 	-- pass has its doors set now rather than on the next visit.
 	["gmcp.Room.Info"] = { "mapper.room_events", "mapper.centerroominfo" },
-	["gmcp.Room.Info.Exits"] = { "mapper.mappingnewroom", "mapper.updatedoors" },
+	-- The showpath update comes last: it paths from the room the player is in,
+	-- which on a first visit only has its exits once mapping has linked them.
+	["gmcp.Room.Info.Exits"] = { "mapper.mappingnewroom", "mapper.updatedoors", "mapper.updateshowpath" },
 	["gmcp.Room.Wrongdir"] = { "mapper.wrongdir_handler" },
 	["gmcp.Room.MoveBlocked"] = { "mapper.moveblocked_handler" },
 	["gmcp.Room.MoveDelayed"] = { "mapper.movedelayed_handler" },
@@ -37,7 +39,7 @@ mapper.events.list = {
 	["mapper areas changed"] = { "mapper.regenerateareas" },
 	-- A freshly loaded map has its own areas, and the room locks that keep
 	-- pathfinding out of an area the player locked are not part of the map file.
-	["mapper map reloaded"] = { "mapper.regenerateareas", "mapper.relockareas" },
+	["mapper map reloaded"] = { "mapper.regenerateareas", "mapper.relockareas", "mapper.clearStalePathHighlights" },
 }
 
 -- Register all events from the table

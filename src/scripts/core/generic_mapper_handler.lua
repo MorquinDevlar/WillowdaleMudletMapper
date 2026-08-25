@@ -9,7 +9,7 @@ function mapper.checkGenericMapper()
 	local packages = getPackages()
 	if packages and table.contains(packages, "generic_mapper") then
 		uninstallPackage("generic_mapper")
-		mapper.echo("Detected generic_mapper package. Uninstalling to avoid conflicts with WillowdaleMudletMapper.")
+		mapper.notify("Detected generic_mapper package. Uninstalling to avoid conflicts with WillowdaleMudletMapper.")
 	end
 end
 
@@ -42,7 +42,7 @@ function mapper.handleUninstall(_, packageName)
 		return
 	end
 
-	mapper.echo("WillowdaleMudletMapper uninstalled. Reinstalling generic_mapper...")
+	mapper.notify("WillowdaleMudletMapper uninstalled. Reinstalling generic_mapper...")
 
 	-- Use global variables so they survive package uninstall
 	local downloadfolder = getMudletHomeDir() .. "/map downloads/"

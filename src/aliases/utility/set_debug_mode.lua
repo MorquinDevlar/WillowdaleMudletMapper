@@ -1,7 +1,3 @@
-if matches[2] == "on" then
-	mapper.debug = true
-else
-	mapper.debug = false
-end
-
-mapper.echo("Debug & performance telemetry " .. (mapper.debug and "enabled" or "disabled") .. ".")
+-- Shorthand for `mapper option debug on|off`: one debug switch, persisted and
+-- echoed by the option system rather than tracked in a flag of its own.
+mapper.settings:setOption("debug", matches[2])

@@ -43,7 +43,7 @@ end
 -- Put the loaded values into effect once, with one message instead of the
 -- running commentary each option would print on its own.
 function mapper.applysettings()
-	mapper.echo("Applying existing settings...")
+	mapper.notify("Applying existing settings...")
 	if mapper.roomCharMode and mapper.roomCharMode() == "none" then
 		if mapper.clearRoomChars then
 			mapper.clearRoomChars(true)

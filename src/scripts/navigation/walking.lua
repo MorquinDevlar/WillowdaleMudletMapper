@@ -23,7 +23,7 @@ function mapper.move()
 	-- Check if we have a valid direction to move
 	if not mapper.speedWalkDir or not mapper.speedWalkDir[mapper.speedWalkCounter] then
 		if mapper.settings.debug then
-			mapper.echo("No more directions to walk, stopping.")
+			mapper.notify("No more directions to walk, stopping.")
 		end
 		mapper.autowalking = false
 		return
@@ -85,7 +85,7 @@ function mapper.stop()
 	mapper.specials = {}
 	-- Clear path highlighting
 	mapper.clearPathHighlight()
-	mapper.echo("Stopped walking.")
+	mapper.notify("Stopped walking.")
 	raiseEvent("mapper stopped")
 end
 
@@ -181,12 +181,12 @@ function mapper.failpath()
 	if mapper.speedWalkWatch then
 		local walktime = stopStopWatch(mapper.speedWalkWatch)
 		if walktime then
-			mapper.echo(string.format("Can't continue further! Took us %.1fs to get here.\n", walktime))
+			mapper.notify(string.format("Can't continue further! Took us %.1fs to get here.\n", walktime))
 		else
-			mapper.echo("Can't continue further!")
+			mapper.notify("Can't continue further!")
 		end
 	else
-		mapper.echo("Can't continue further!")
+		mapper.notify("Can't continue further!")
 	end
 	mapper.autowalking = false
 	mapper.speedWalkPath = {}

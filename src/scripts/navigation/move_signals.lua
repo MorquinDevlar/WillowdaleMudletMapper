@@ -30,10 +30,10 @@ local function repath(what)
 	-- the exit that just changed may be on a cached path
 	mapper.clearpathcache()
 	if mapper.getPath(mapper.currentroom, destination) then
-		mapper.echo(what .. " Going around.")
+		mapper.notify(what .. " Going around.")
 		mapper.gotoRoom(destination)
 	else
-		mapper.echo(string.format("%s No other way to %s (%d) from here.", what, getRoomName(destination), destination))
+		mapper.notify(string.format("%s No other way to %s (%d) from here.", what, getRoomName(destination), destination))
 		mapper.stop()
 	end
 end
@@ -66,7 +66,7 @@ function mapper.wrongdir_handler()
 		repath(string.format("There is no %s exit here after all.", dir))
 	else
 		-- A room script claimed the direction, or an older server sent no reason.
-		mapper.echo(string.format('Cannot go "%s" from here.', dir))
+		mapper.notify(string.format('Cannot go "%s" from here.', dir))
 		mapper.stop()
 	end
 end
@@ -84,7 +84,7 @@ function mapper.moveblocked_handler()
 		return
 	end
 
-	mapper.echo("Cannot move - " .. (blockedReasons[signal.reason] or "the game will not let you") .. ".")
+	mapper.notify("Cannot move - " .. (blockedReasons[signal.reason] or "the game will not let you") .. ".")
 	mapper.stop()
 end
 
@@ -101,6 +101,6 @@ function mapper.movedelayed_handler()
 		return
 	end
 	if mapper.settings and mapper.settings.showcmds then
-		mapper.echo(string.format("Waiting %ds for the way %s.", seconds, signal.dir or "onward"))
+		mapper.notify(string.format("Waiting %ds for the way %s.", seconds, signal.dir or "onward"))
 	end
 end

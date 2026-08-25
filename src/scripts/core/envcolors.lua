@@ -17,7 +17,7 @@ function mapper.setEnvironmentColors()
     end
     
     if count > 0 and mapper.settings and mapper.settings.debug then
-        mapper.echo(string.format("Applied custom colors to %d environments", count))
+        mapper.notify(string.format("Applied custom colors to %d environments", count))
     end
     
     return count > 0

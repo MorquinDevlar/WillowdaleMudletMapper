@@ -56,7 +56,7 @@ function mapper.updateDoorStatuses(roomNum)
 					setDoor(roomNum, shortExit, wantType)
 					changed = true
 					if mapper.settings.debug then
-						mapper.echo(string.format("Door on %s in room %d set to %d.", exit, roomNum, wantType))
+						mapper.notify(string.format("Door on %s in room %d set to %d.", exit, roomNum, wantType))
 					end
 				end
 
@@ -64,7 +64,7 @@ function mapper.updateDoorStatuses(roomNum)
 					mapper.lockExit(roomNum, exit, shouldLock)
 					locksChanged = true
 					if mapper.settings.debug then
-						mapper.echo(
+						mapper.notify(
 							string.format(
 								"%s exit %s in room %d for pathfinding.",
 								shouldLock and "Locked" or "Unlocked",
@@ -74,12 +74,21 @@ function mapper.updateDoorStatuses(roomNum)
 						)
 					end
 				end
-			elseif lockSpecialExit and exitData.room_id then
+			elseif lockSpecialExit and hasSpecialExitLock and exitData.room_id then
 				-- A lock can sit on an exit with any name the room gives it, and
 				-- Mudlet can neither draw a door on one of those nor lock it through
 				-- the compass-direction calls - it wants the destination room and the
-				-- command. Setting it every time is why no before-state is read here.
-				lockSpecialExit(roomNum, tonumber(exitData.room_id), exit, shouldLock)
+				-- command. Mudlet's lockSpecialExit dirties the map, redraws the
+				-- area, and invalidates the pathfinding graph even when the lock is
+				-- already in the wanted state, and a walk passes through here on
+				-- every room, so only an actual change may reach it. The second
+				-- argument to both calls is the destination room ID, which current
+				-- Mudlet ignores but older ones require.
+				local wasLocked = hasSpecialExitLock(roomNum, tonumber(exitData.room_id), exit) or false
+				if wasLocked ~= shouldLock then
+					lockSpecialExit(roomNum, tonumber(exitData.room_id), exit, shouldLock)
+					locksChanged = true
+				end
 			end
 		end
 	end
@@ -98,7 +107,7 @@ function mapper.updateDoorStatuses(roomNum)
 				setDoor(roomNum, exit, 0)
 				changed = true
 				if mapper.settings.debug then
-					mapper.echo(string.format("Removed door from %s in room %d - the exit is gone.", exit, roomNum))
+					mapper.notify(string.format("Removed door from %s in room %d - the exit is gone.", exit, roomNum))
 				end
 			end
 		end
@@ -124,6 +133,6 @@ function mapper.updatedoors()
 	end
 
 	if mapper.updateDoorStatuses(num) and mapper.settings and mapper.settings.showmappingmessages then
-		mapper.echo("Door statuses updated for room " .. num)
+		mapper.notify("Door statuses updated for room " .. num)
 	end
 end

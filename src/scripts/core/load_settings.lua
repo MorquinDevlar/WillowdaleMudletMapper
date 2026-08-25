@@ -32,7 +32,7 @@ mapper.speedWalkPath = mapper.speedWalkPath or {}
 mapper.speedWalkDir = mapper.speedWalkDir or {}
 local newversion = "__VERSION__"
 if mapper.version and mapper.version ~= newversion then
-	mapper.echo("Mapper script updated - thanks! You don't need to restart.")
+	mapper.notify("Script updated - thanks! You don't need to restart.")
 end
 mapper.version = newversion
 
@@ -100,5 +100,5 @@ function mapper.startup()
 
 	raiseEvent("mapper areas changed")
 	mapper.firstRun = false
-	mapper.echo("Mudlet Mapper script for Willowdale (" .. tostring(mapper.version) .. ") loaded...")
+	mapper.notify("Willowdale mapper " .. tostring(mapper.version) .. " loaded.")
 end

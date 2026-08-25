@@ -69,7 +69,7 @@ function mapper.checkforupdate()
 	end
 
 	if not downloadFile then
-		mapper.echo("Your version of Mudlet doesn't support downloading files - please upgrade to 2.0+")
+		mapper.notify("Your version of Mudlet doesn't support downloading files - please upgrade to 2.0+")
 		return
 	end
 
@@ -78,11 +78,11 @@ function mapper.checkforupdate()
 		if lfs and lfs.mkdir then
 			local t, s = lfs.mkdir(downloadfolder)
 			if not t and s ~= "File exists" then
-				mapper.echo("Couldn't make the '" .. downloadfolder .. "' folder; " .. s)
+				mapper.notify("Couldn't make the '" .. downloadfolder .. "' folder; " .. s)
 				return
 			end
 		else
-			mapper.echo(
+			mapper.notify(
 				"Sorry, but you need LuaFileSystem (lfs) installed, or have the '"
 				.. downloadfolder
 				.. "' folder exist."
@@ -160,13 +160,13 @@ function mapper.downloadedfile(_, filename)
 		-- Parse JSON
 		local ok, releases = pcall(yajl.to_value, content)
 		if not ok or not releases or #releases == 0 then
-			mapper.echo("Failed to parse releases.json")
+			mapper.notify("Failed to parse releases.json")
 			return
 		end
 
 		local latest = releases[1]
 		if not latest or not latest.version then
-			mapper.echo("Invalid releases.json format")
+			mapper.notify("Invalid releases.json format")
 			return
 		end
 
@@ -183,25 +183,34 @@ function mapper.downloadedfile(_, filename)
 		mapper.newmapperversion = latest.version
 
 		echo("\n")
-		mapper.echo("------------------[ Mapper Update Available ]------------------")
-		mapper.echo(
-			"Version <orange>"
+
+		-- Every release the player has not got yet, newest first and each under
+		-- its own heading: an update that skips versions still says what changed
+		-- in the ones it skipped, instead of running their notes together into one
+		-- list that looks like a single release.
+		local block = {
+			"Update available: <orange>"
 			.. tostring(mapper.version)
 			.. "<reset> -> <green>"
 			.. tostring(latest.version)
-			.. "<reset>"
-		)
-		if latest.released then
-			mapper.echo("Released: " .. latest.released)
-		end
-		mapper.echo("")
-		if latest.changes and #latest.changes > 0 then
-			mapper.echo("Changes:")
-			for _, change in ipairs(latest.changes) do
-				mapper.echo("  - " .. change)
+			.. "<reset>",
+		}
+		for _, release in ipairs(releases) do
+			if release.version and mapper.compare_versions(release.version, mapper.version) then
+				block[#block + 1] = ""
+				block[#block + 1] = "<white>"
+					.. release.version
+					.. (release.released and (" <reset><dim_grey>- " .. release.released) or "")
+					.. "<reset>"
+				for _, change in ipairs(release.changes or {}) do
+					block[#block + 1] = "  - " .. change
+				end
 			end
-			mapper.echo("")
 		end
+		block[#block + 1] = ""
+		mapper.notify(block)
+
+		mapper.notifyIndent()
 		cechoLink(
 			"<ForestGreen>[Click here to install update]<reset>",
 			"mapper.downloadmapperscript()",
@@ -210,7 +219,7 @@ function mapper.downloadedfile(_, filename)
 		)
 		echo(" or type ")
 		cecho("<yellow>mapper update<reset>")
-		echo("\n\n")
+		echo("\n")
 		mapper.updateCheckVerbose = false
 
 		-- Handle downloaded mapper package
@@ -240,7 +249,7 @@ function mapper.seedownloaderrors(_, filename, errorMessage)
 
 	-- Handle mapper package download errors
 	if filename == mapper.downloadedscript then
-		mapper.echo("Failed to download mapper update: " .. tostring(errorMessage or "Unknown error"))
+		mapper.notify("Failed to download the update: " .. tostring(errorMessage or "Unknown error"))
 		return
 	end
 

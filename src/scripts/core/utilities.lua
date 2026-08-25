@@ -154,47 +154,72 @@ function mapper.clearRoomChars(quiet)
 end
 
 -- Speedwalk path highlighting using room borders
+--
+-- The rooms currently carrying a highlight, as roomId -> role, where the role
+-- is "start", "mid" or "end". Keeping the role lets a repaint touch only the
+-- rooms whose part in the path actually changed.
 mapper.highlightedPathRooms = {}
 mapper.showPathDestination = nil  -- Destination for showpath command
 
+-- Border colour per role, indexed the same way the tracking table is
+local pathHighlightColors = {
+    start = { 255, 220, 0 },    -- current room: yellow
+    mid = { 100, 220, 100 },    -- in-between rooms: light green
+    ["end"] = { 100, 180, 255 } -- destination room: light blue
+}
+
+-- Paint roomIds as the path, with fromRoom (or the current room) as its start.
+-- The highlight already on the map is diffed against the one asked for, so a
+-- walk one room further along only clears the room left behind and recolours
+-- the room arrived in.
 function mapper.highlightPath(roomIds, fromRoom)
     -- Check if the new border functions are available
     if not setRoomBorderColor then
         return
     end
 
-    -- Clear any existing highlights first
-    mapper.clearPathHighlight()
-
     if not roomIds or #roomIds == 0 then
+        mapper.clearPathHighlight()
         return
     end
 
-    -- Highlight current room (fromRoom) as yellow if provided
+    -- Work out what the map should look like
+    local desired = {}
     local startRoom = fromRoom or mapper.currentroom
     if startRoom and roomExists(startRoom) then
-        setRoomBorderColor(startRoom, 255, 220, 0)
-        setRoomBorderThickness(startRoom, 2)
-        setRoomUserData(startRoom, "showpath", "1")
-        mapper.highlightedPathRooms[#mapper.highlightedPathRooms + 1] = startRoom
+        desired[startRoom] = "start"
     end
-
-    -- Highlight each room in the path with colored borders
-    -- End: light blue, In-between: light green
     for i, roomId in ipairs(roomIds) do
         if roomExists(roomId) and roomId ~= startRoom then
-            if i == #roomIds then
-                -- Destination room: light blue border
-                setRoomBorderColor(roomId, 100, 180, 255)
-            else
-                -- In-between rooms: light green border
-                setRoomBorderColor(roomId, 100, 220, 100)
-            end
-            setRoomBorderThickness(roomId, 2)
-            setRoomUserData(roomId, "showpath", "1")
-            mapper.highlightedPathRooms[#mapper.highlightedPathRooms + 1] = roomId
+            desired[roomId] = (i == #roomIds) and "end" or "mid"
         end
     end
+
+    -- Rooms that have dropped out of the path lose their highlight
+    for roomId, _ in pairs(mapper.highlightedPathRooms) do
+        if not desired[roomId] and roomExists(roomId) then
+            clearRoomBorderColor(roomId)
+            clearRoomBorderThickness(roomId)
+            clearRoomUserDataItem(roomId, "showpath")
+        end
+    end
+
+    -- Rooms that are new to the path, or have changed their part in it, are
+    -- repainted; a room that only changed role keeps its thickness and its
+    -- stored marker, so it costs a single colour call
+    for roomId, role in pairs(desired) do
+        local previous = mapper.highlightedPathRooms[roomId]
+        if previous ~= role then
+            local color = pathHighlightColors[role]
+            setRoomBorderColor(roomId, color[1], color[2], color[3])
+            if not previous then
+                setRoomBorderThickness(roomId, 2)
+                setRoomUserData(roomId, "showpath", "1")
+            end
+        end
+    end
+
+    mapper.highlightedPathRooms = desired
 end
 
 -- Clear path highlight from map (does not clear destination)
@@ -202,7 +227,7 @@ function mapper.clearPathHighlight()
     -- Check if the new border functions are available
     if not clearRoomBorderColor then
         -- Fallback to old method if new functions not available
-        for _, roomId in ipairs(mapper.highlightedPathRooms) do
+        for roomId, _ in pairs(mapper.highlightedPathRooms) do
             if roomExists(roomId) then
                 unHighlightRoom(roomId)
             end
@@ -211,7 +236,7 @@ function mapper.clearPathHighlight()
         return
     end
 
-    for _, roomId in ipairs(mapper.highlightedPathRooms) do
+    for roomId, _ in pairs(mapper.highlightedPathRooms) do
         if roomExists(roomId) then
             clearRoomBorderColor(roomId)
             clearRoomBorderThickness(roomId)
@@ -219,10 +244,20 @@ function mapper.clearPathHighlight()
         end
     end
     mapper.highlightedPathRooms = {}
+end
 
-    -- Clean up any orphaned highlights (e.g. from before a package reload)
+-- Clear highlights the tracking table above knows nothing about: ones a session
+-- that ended mid-walk persisted into the map, or ones a package reload left
+-- behind when it dropped the table. The search reads every room on the map, so
+-- this runs once when the package or a map loads rather than on every clear.
+function mapper.clearStalePathHighlights()
+    if not clearRoomBorderColor then
+        return
+    end
+
+    -- searchRoomUserData with key and value returns a plain list of room IDs
     local orphans = searchRoomUserData("showpath", "1") or {}
-    for roomId, _ in pairs(orphans) do
+    for _, roomId in ipairs(orphans) do
         if roomExists(roomId) then
             clearRoomBorderColor(roomId)
             clearRoomBorderThickness(roomId)

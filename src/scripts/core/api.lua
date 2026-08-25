@@ -2,24 +2,144 @@
 -- This script lists some of the API functions available from the IRE mudlet-mapper
 -- not all functions that are available are included here, however.
 
-function mapper.echo(what)
-	what = what or ""
-	moveCursorEnd("main")
-	if getCurrentLine() ~= "" then
-		echo("\n")
-	end
-	decho("<73,149,0>Mapper: <255,255,255>")
-	cecho(tostring(what))
-	echo("\n")
+-------------------------------------------------
+-- Output
+--
+-- Two kinds of message, told apart by who asked for it. An answer to a command
+-- the player just typed prints bare - they know where it came from. Anything
+-- that arrives on its own, a walk reporting in or a room being mapped, carries
+-- the "Mapper: " prefix, because it lands in the middle of the game's own
+-- output and has to be told apart from it.
+--
+-- Both fold their own long lines. Left to Mudlet, the tail of a folded line
+-- restarts in column zero and reads as a message of its own; folded here it
+-- lines up under the text it belongs to, and a block of lines carries the
+-- prefix on its first line instead of on all of them.
+
+local PREFIX = "Mapper: "
+
+-- The column output is folded at: the narrower of what the player set the main
+-- window to wrap at and what fits in it, and 80 if Mudlet will not say.
+local function foldcolumn()
+    local width
+    local function narrower(get)
+        if type(get) ~= "function" then
+            return
+        end
+        local ok, columns = pcall(get, "main")
+        if ok and type(columns) == "number" and columns > 20 then
+            width = math.min(width or columns, columns)
+        end
+    end
+    narrower(getWindowWrap)
+    narrower(getColumnCount)
+    return (width or 80) - 1
 end
 
+-- What a line takes up on screen: colour markup is not characters.
+local function displaywidth(text)
+    local plain = text:gsub("<[^<>]*>", "")
+    return (utf8 and utf8.len and utf8.len(plain)) or #plain
+end
+
+-- One line as the lines it is written on, broken at spaces. The tail lines up
+-- under the text it came from - under the words of a bullet, not under its
+-- dash - and is indented by `hang` on top of that, which is what keeps an
+-- unprefixed message from folding back into column zero and reading as a new
+-- one. A line that already fits is returned untouched, so output laid out in
+-- columns keeps its spacing.
+local function fold(text, width, hang)
+    if width < 20 or displaywidth(text) <= width then
+        return { text }
+    end
+    local lead = text:match("^[ \t]*")
+    local bullet = text:match("^[ \t]*(%-[ \t]+)")
+    hang = hang .. lead .. string.rep(" ", bullet and #bullet or 0)
+    local folded, line, used, empty = {}, lead, #lead, true
+    for gap, word in text:sub(#lead + 1):gmatch("([ \t]*)([^ \t]+)") do
+        local wide = displaywidth(word)
+        if not empty and used + #gap + wide > width then
+            folded[#folded + 1] = line
+            line, used = hang .. word, #hang + wide
+        else
+            line, used = line .. gap .. word, used + #gap + wide
+        end
+        empty = false
+    end
+    folded[#folded + 1] = line
+    return folded
+end
+
+-- The lines of a message: a string, or a list of strings that belong together,
+-- either of which may carry newlines of its own.
+local function lines(what)
+    local given = type(what) == "table" and what or { what }
+    local result = {}
+    for i = 1, #given do
+        for line in (tostring(given[i] or "") .. "\n"):gmatch("([^\n]*)\n") do
+            result[#result + 1] = line
+        end
+    end
+    return result
+end
+
+-- Writes a message on its own line, with the margin in front of the first line
+-- and as many spaces in front of every line that follows.
+local function write(margin, what)
+    moveCursorEnd("main")
+    if getCurrentLine() ~= "" then
+        echo("\n")
+    end
+    local indent = string.rep(" ", #margin)
+    local width = foldcolumn() - #margin
+    -- A margin already sets a folded tail apart from the line above it; without
+    -- one the tail has to say so itself.
+    local hang = margin == "" and "  " or ""
+    local first = true
+    for _, line in ipairs(lines(what)) do
+        for _, folded in ipairs(fold(line, width, hang)) do
+            if first then
+                decho("<73,149,0>" .. margin .. "<255,255,255>")
+                first = false
+            elseif folded ~= "" then
+                decho("<255,255,255>" .. indent)
+            end
+            cecho(folded)
+            echo("\n")
+        end
+    end
+end
+
+-- An answer to something the player just typed.
+function mapper.echo(what)
+    write("", what or "")
+end
+
+-- A message that arrives on its own, in among the game's own output: a walk
+-- reporting in, a room being mapped, an update being available, debug.
+function mapper.notify(what)
+    write(PREFIX, what or "")
+end
+
+-- As mapper.echo, but leaves the cursor on the line for a caller that writes
+-- the rest of it itself.
 function mapper.echon(what)
-	moveCursorEnd("main")
-	if getCurrentLine() ~= "" then
-		echo("\n")
-	end
-	decho("<73,149,0>Mapper: <255,255,255>")
-	cecho(tostring(what))
+    moveCursorEnd("main")
+    if getCurrentLine() ~= "" then
+        echo("\n")
+    end
+    decho("<255,255,255>")
+    cecho(tostring(what))
+end
+
+-- Opens a line inside a mapper.notify block for a caller that writes it itself,
+-- which is what a line with a clickable link in it has to do.
+function mapper.notifyIndent()
+    moveCursorEnd("main")
+    if getCurrentLine() ~= "" then
+        echo("\n")
+    end
+    decho("<255,255,255>" .. string.rep(" ", #PREFIX))
 end
 
 function mapper.deleteLineP()
@@ -221,7 +341,7 @@ end
 
 -- returns rooms in an area that have entrances from outside the area (border rooms)
 function mapper.getAreaBorders(areaid)
-	if mapper.debug then
+	if mapper.settings.debug then
 		mapper.getAreaBordersTimer = mapper.getAreaBordersTimer or createStopWatch()
 		startStopWatch(mapper.getAreaBordersTimer)
 	end
@@ -273,8 +393,8 @@ function mapper.getAreaBorders(areaid)
 			end
 		end
 	end
-	if mapper.debug then
-		mapper.echo(
+	if mapper.settings.debug then
+		mapper.notify(
 			"mapper.getAreaBorders() on areaid "
 				.. areaid
 				.. " took "
