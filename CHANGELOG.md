@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+## 1.5.2 - 2026-08-26
+
 - Fixed the two `attempt to index field 'settings'` errors printed when a profile opened, which came from the map being loaded before the mapper's settings existed
 
 ## 1.5.1 - 2026-08-26
