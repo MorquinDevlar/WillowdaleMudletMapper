@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+## 1.5.1 - 2026-08-26
+
 - Changed the speedwalk path highlight to move along a room at a time as you walk, in place of being wiped off the whole map and drawn again in every room, which drops a search across every room you have mapped out of each step and makes a long walk with `showspeedwalkpath` on markedly lighter
 - Changed walking with a `showpath` destination set to stop redrawing the whole map in every room
 - Fixed the `showpath` highlight freezing when you walk into a room being mapped for the first time; the path now recalculates once the new room's exits are on the map
