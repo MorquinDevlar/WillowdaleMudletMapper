@@ -39,13 +39,13 @@ function mapper.gotoRoom(where, gotoType)
 		return
 	end
 	if tonumber(where) == mapper.currentroom then
-		mapper.echo("We're already at " .. where .. "!")
+		mapper.echo("We're already at " .. mapper.roomName(where, true) .. "!")
 		raiseEvent("mapper arrived")
 		return
 	end
 	-- if getPath worked, then the dirs and room #'s tables were populated for us
 	if not mapper.getPath(mapper.currentroom, tonumber(where)) then
-		mapper.echo("Don't know how to get there (" .. tostring(where) .. ") from here :(")
+		mapper.echo("Don't know how to get to " .. mapper.roomName(where, true) .. " from here :(")
 		mapper.speedWalkPath = {}
 		mapper.speedWalkDir = {}
 		mapper.speedWalkCounter = 0

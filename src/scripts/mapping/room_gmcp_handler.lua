@@ -353,8 +353,8 @@ function mapper.mappingnewroom(_, num)
 					setRoomUserData(num, "biome_symbol", symbol)
 				end
 
-				-- Set room character for biomes based on showbiomesymbols setting
-				if symbol ~= "" and mapper.shouldShowSymbol(envLower) then
+				-- Set room character for biomes based on roomchar setting
+				if symbol ~= "" and mapper.shouldShowRoomChar(envLower) then
 					if getRoomChar(num) ~= symbol then
 						setRoomChar(num, symbol)
 						s = s .. (#s > 0 and " " or "") .. "Set room symbol to '" .. symbol .. "'."

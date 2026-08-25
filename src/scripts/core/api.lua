@@ -33,21 +33,6 @@ function mapper.deleteLineP()
 	)
 end
 
-function mapper.pause(what)
-	assert(what == nil or what == "on" or what == "off", "mapper.pause wants 'on', 'off' or nothing as an argument")
-
-	if what == "on" or (what == nil and not mapper.paused) then
-		mapper.paused = true
-	elseif what == "off" or (what == nil and mapper.paused) then
-		mapper.paused = false
-	end
-
-	mapper.echo("Speedwalking " .. (mapper.paused and "paused" or "unpaused") .. ".")
-	if not mapper.paused then
-		mapper.move()
-	end
-end
-
 function mapper.mapLook(roomid, delay)
 	centerview(roomid)
 	if mapper.maplooktimer then

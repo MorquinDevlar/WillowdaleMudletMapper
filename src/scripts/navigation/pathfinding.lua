@@ -41,9 +41,9 @@ registerAnonymousEventHandler("mapper updated map", "mapper.clearpathcache")
 function mapper.echoPath(from, to)
 	assert(tonumber(from) and tonumber(to), "mapper.echoPath: both from and to have to be room IDs")
 	if mapper.getPath(from, to) then
-		local fromName = getRoomName(from) or tostring(from)
-		local toName = getRoomName(to) or tostring(to)
-		mapper.echo("<white>Directions from <yellow>" .. string.upper(fromName) .. " <white>to <yellow>" .. string.upper(toName) .. "<white>:")
+		local fromName = mapper.roomName(from)
+		local toName = mapper.roomName(to)
+		mapper.echo("<white>Directions from <yellow>" .. fromName .. " <white>to <yellow>" .. toName .. "<white>:")
 		mapper.echo(table.concat(speedWalkDir, ", "))
 		-- Store destination for dynamic path updates
 		mapper.showPathDestination = tonumber(to)
@@ -53,9 +53,9 @@ function mapper.echoPath(from, to)
 		end
 		return speedWalkDir
 	else
-		local fromName = getRoomName(from) or tostring(from)
-		local toName = getRoomName(to) or tostring(to)
-		mapper.echo("<white>I can't find a way from <yellow>" .. string.upper(fromName) .. " <white>to <yellow>" .. string.upper(toName) .. "<white>")
+		local fromName = mapper.roomName(from)
+		local toName = mapper.roomName(to)
+		mapper.echo("<white>I can't find a way from <yellow>" .. fromName .. " <white>to <yellow>" .. toName .. "<white>")
 	end
 end
 

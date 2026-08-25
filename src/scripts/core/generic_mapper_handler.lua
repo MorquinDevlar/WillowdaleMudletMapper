@@ -20,6 +20,11 @@ function mapper.handleUninstall(_, packageName)
 		return
 	end
 
+	-- Save before the scripts go, whether this is an update or a real uninstall
+	if mapper.saveoptions then
+		mapper.saveoptions()
+	end
+
 	-- Skip restoring generic_mapper in a development profile. A local muddler
 	-- build uninstalls and reinstalls this package on every rebuild, so the
 	-- restore would download generic_mapper and race the reinstall each time.

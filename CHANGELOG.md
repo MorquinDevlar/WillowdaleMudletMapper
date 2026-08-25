@@ -15,6 +15,15 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+- Changed the `showbiomesymbols` setting to `roomchar`, taking `all`, `biome`, `poi` or `none` in place of the old `off`
+- Changed `showpath` to name rooms the way the game does instead of shouting them in capitals
+- Changed `goto` to name the room it walks to, rather than showing only its ID
+- Fixed room characters being drawn in rooms already on the map regardless of the setting, where POI characters showed even with characters turned off
+- Added the accepted values to the message a setting prints when it is given a value it doesn't take
+- Removed the `mpp` pause command, which came from the IRE mapper this one was forked from and paused a speedwalk mid-route
+- Fixed settings and area locks being lost on `mapper reload`, on an update, and on any exit that wasn't a clean one; both are now written out as they change rather than only when Mudlet closes
+- Fixed restored settings not taking effect until the option was set again, so a saved room character mode now shows on the map at once; the mapper says `Applying existing settings...` once while it does, in place of the reload and reinstall lines that used to claim the same thing twice more afterwards
+
 ## 1.4.4 - 2026-08-23
 
 - Added `mconfig` to the command list `mapper` prints, so the settings command can be found without knowing its name beforehand

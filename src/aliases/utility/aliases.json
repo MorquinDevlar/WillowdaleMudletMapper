@@ -82,12 +82,5 @@
         "regex": "^(?:mdg|mdebug) (on|off)$",
         "script": "",
         "isFolder": "no"
-    },
-    {
-        "name": "toggle_pause",
-        "isActive": "yes",
-        "regex": "^mpp(?:\\s?(on|off))?$",
-        "script": "",
-        "isFolder": "no"
     }
 ]

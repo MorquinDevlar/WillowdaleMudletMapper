@@ -68,6 +68,10 @@ function mapper.lockArea(name, lock, dontreshow)
 	end
 
 	mapper.locked[areas[name]] = lock and true or nil
+	-- Locks live in the same file as the settings, so save them as they change
+	if mapper.saveoptions then
+		mapper.saveoptions()
+	end
 	mapper.echo(
 		string.format(
 			"Area '%s' %slocked! All %s room%s within it.",

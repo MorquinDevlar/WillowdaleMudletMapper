@@ -85,29 +85,35 @@ mapper.option_definitions = {
         end
     },
 
-    showbiomesymbols = {
+    roomchar = {
         default = "poi",
         type = "string",
-        description = "all|poi|biome|off",
+        description = "all|biome|poi|none",
         validate = function(v)
-            local valid = { all = true, poi = true, biome = true, off = true }
+            if type(v) ~= "string" then
+                return false
+            end
+            local valid = { all = true, biome = true, poi = true, none = true }
             return valid[v:lower()] == true
         end,
         onChange = function(name, value)
-            value = value:lower()
-            mapper.settings[name] = value
-            if value == "off" then
-                mapper.echo("Room symbols will be hidden from the map")
-                mapper.clearBiomeSymbols()
-            elseif value == "poi" then
-                mapper.echo("Only POI symbols (shop, inn, post office) will be shown")
-                mapper.refreshBiomeSymbols()
-            elseif value == "biome" then
-                mapper.echo("Only biome symbols will be shown (not POI)")
-                mapper.refreshBiomeSymbols()
-            elseif value == "all" then
-                mapper.echo("All room symbols will be shown")
-                mapper.refreshBiomeSymbols()
+            local mode = tostring(value):lower()
+            -- Store the canonical spelling, without running this handler again
+            if mode ~= value then
+                mapper.settings:setOption(name, mode, true)
+            end
+            if mode == "none" then
+                mapper.echo("Room characters will be hidden from the map")
+                mapper.clearRoomChars()
+            elseif mode == "poi" then
+                mapper.echo("Only POI characters (shop, inn, post office) will be shown")
+                mapper.refreshRoomChars()
+            elseif mode == "biome" then
+                mapper.echo("Only biome characters will be shown (not POI)")
+                mapper.refreshRoomChars()
+            elseif mode == "all" then
+                mapper.echo("All room characters will be shown")
+                mapper.refreshRoomChars()
             end
         end
     },

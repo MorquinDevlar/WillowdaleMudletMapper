@@ -12,7 +12,7 @@ end
 -- moves to the next room we need to.
 
 function mapper.move()
-	if mapper.paused or not mapper.autowalking or not mapper.canmove() then
+	if not mapper.autowalking or not mapper.canmove() then
 		return
 	end
 	-- sometimes it's 0 - default to 1
@@ -152,27 +152,24 @@ doSpeedWalk = function()
 		mapper.highlightPath(mapper.speedWalkPath, mapper.currentroom)
 	end
 
-	if not mapper.paused then
-		mapper.echon("Starting speedwalk from " .. tostring(mapper.currentroom) .. " to ")
-		cechoLink(
-			"<yellow>" .. mapper.speedWalkPath[#mapper.speedWalkPath],
-			'mapper.gotoRoom "' .. mapper.speedWalkPath[#mapper.speedWalkPath] .. '"',
-			"Go to " .. mapper.speedWalkPath[#mapper.speedWalkPath],
-			true
-		)
-		echo(": ")
-		mapper.speedWalkCounter = 1
-		if mapper.canmove() then
-			mapper.hasty = true
-			-- Start moving immediately (with delay if configured)
-			local delay = mapper.settings.walkdelay
-			if delay == nil then delay = 0.3 end
-			mapper.delayedMove(delay)
-		else
-			echo("(when we get balance back / aren't hindered)")
-		end
+	local destination = mapper.speedWalkPath[#mapper.speedWalkPath]
+	mapper.echon("Starting speedwalk from " .. mapper.roomName(mapper.currentroom) .. " to ")
+	cechoLink(
+		"<yellow>" .. mapper.roomName(destination),
+		'mapper.gotoRoom "' .. destination .. '"',
+		"Go to " .. mapper.roomName(destination, true),
+		true
+	)
+	echo(": ")
+	mapper.speedWalkCounter = 1
+	if mapper.canmove() then
+		mapper.hasty = true
+		-- Start moving immediately (with delay if configured)
+		local delay = mapper.settings.walkdelay
+		if delay == nil then delay = 0.3 end
+		mapper.delayedMove(delay)
 	else
-		mapper.echo("Will go to " .. mapper.speedWalkPath[#mapper.speedWalkPath] .. " as soon as the mapper is unpaused.")
+		echo("(when we get balance back / aren't hindered)")
 	end
 end
 end

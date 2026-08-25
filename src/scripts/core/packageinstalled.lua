@@ -14,12 +14,10 @@ function mapper.onPackageInstalled(_, package)
             if mapper and mapper.defineDoSpeedWalk then
                 mapper.defineDoSpeedWalk()
             end
+            -- reload() rebuilds the settings and reads the saved ones back,
+            -- which sysLoadEvent would have done had it fired on a reinstall
             if mapper and mapper.reload then
                 mapper.reload()
-            end
-            -- Load saved options (normally done by sysLoadEvent which doesn't fire on reinstall)
-            if mapper and mapper.loadoptions then
-                mapper.loadoptions()
             end
             -- Restore Mudlet's current room from GMCP data so double-click works
             if gmcp and gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic then
@@ -32,7 +30,6 @@ function mapper.onPackageInstalled(_, package)
                     updateMap()
                 end
             end
-            mapper.echo("WillowdaleMudletMapper reinitialized after package installation.")
         end)
     end
 end

@@ -38,12 +38,15 @@ function mapper.room_events(event, num)
 				setRoomUserData(num, "biome_symbol", symbol)
 			end
 
-			-- Set room character for special biomes if enabled
-			if mapper.settings.showbiomesymbols and symbol ~= "" then
-				if envLower == "shop" or envLower == "inn" or envLower == "post office" then
+			-- Set room character based on the roomchar setting
+			if symbol ~= "" then
+				if mapper.shouldShowRoomChar(envLower) then
 					if getRoomChar(num) ~= symbol then
 						setRoomChar(num, symbol)
 					end
+				elseif getRoomChar(num) == symbol then
+					-- Clear the character if the setting no longer shows it
+					setRoomChar(num, "")
 				end
 			end
 		end

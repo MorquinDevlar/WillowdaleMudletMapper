@@ -25,6 +25,24 @@ function mapper.islistablearea(id)
     return id ~= nil and id ~= 0 and id ~= -1
 end
 
+-- How a room is named in messages: the game's own name, in the game's own
+-- casing, and the ID for a room we have no name for. Pass withId to name both.
+-- Not to be confused with mapper.roomLabel, which puts a label on the map.
+function mapper.roomName(roomId, withId)
+    local id = tonumber(roomId)
+    if not id then
+        return tostring(roomId)
+    end
+    local name = getRoomName(id)
+    if not name or name == "" then
+        return tostring(id)
+    end
+    if withId then
+        return string.format("%s (%s)", name, id)
+    end
+    return name
+end
+
 function mapper.highlight_unfinished_rooms()
     if not mapper.areatable then
         return
@@ -48,31 +66,40 @@ function mapper.isPOI(biome)
     return biomeLower == "shop" or biomeLower == "inn" or biomeLower == "post office"
 end
 
--- Check if a symbol should be shown based on current settings
-function mapper.shouldShowSymbol(biome)
-    local setting = mapper.settings.showbiomesymbols
-    if not setting or setting == "off" then
+-- Which room characters the player wants drawn: all, biome, poi or none
+function mapper.roomCharMode()
+    local mode = mapper.settings and mapper.settings.roomchar
+    if type(mode) ~= "string" then
+        return "none"
+    end
+    return mode:lower()
+end
+
+-- Check if a room character should be shown based on current settings
+function mapper.shouldShowRoomChar(biome)
+    local mode = mapper.roomCharMode()
+    if mode == "none" then
         return false
     end
     local isPOI = mapper.isPOI(biome)
-    if setting == "all" then
+    if mode == "all" then
         return true
-    elseif setting == "poi" then
+    elseif mode == "poi" then
         return isPOI
-    elseif setting == "biome" then
+    elseif mode == "biome" then
         return not isPOI
     end
     return false
 end
 
--- Refresh biome symbols on all rooms that have stored biome data
-function mapper.refreshBiomeSymbols()
+-- Refresh room characters on all rooms that have stored biome data. Pass quiet
+-- to skip the count, for a caller that reports on its own.
+function mapper.refreshRoomChars(quiet)
     if not mapper.areatable then
         return
     end
     local count = 0
-    local setting = mapper.settings.showbiomesymbols
-    if not setting or setting == "off" then
+    if mapper.roomCharMode() == "none" then
         return
     end
     for _, areaId in pairs(mapper.areatable) do
@@ -81,7 +108,7 @@ function mapper.refreshBiomeSymbols()
             local biome = getRoomUserData(roomId, "biome")
             local symbol = getRoomUserData(roomId, "biome_symbol")
             if biome ~= "" and symbol ~= "" then
-                if mapper.shouldShowSymbol(biome) then
+                if mapper.shouldShowRoomChar(biome) then
                     if getRoomChar(roomId) ~= symbol then
                         setRoomChar(roomId, symbol)
                         count = count + 1
@@ -96,13 +123,14 @@ function mapper.refreshBiomeSymbols()
             end
         end
     end
-    if count > 0 then
-        mapper.echo("Updated symbols on " .. count .. " room(s).")
+    if count > 0 and not quiet then
+        mapper.echo("Updated characters on " .. count .. " room(s).")
     end
 end
 
--- Clear biome symbols from all rooms that have stored biome data
-function mapper.clearBiomeSymbols()
+-- Clear room characters from all rooms that have stored biome data. Pass quiet
+-- to skip the count, for a caller that reports on its own.
+function mapper.clearRoomChars(quiet)
     if not mapper.areatable then
         return
     end
@@ -120,8 +148,8 @@ function mapper.clearBiomeSymbols()
             end
         end
     end
-    if count > 0 then
-        mapper.echo("Cleared symbols from " .. count .. " room(s).")
+    if count > 0 and not quiet then
+        mapper.echo("Cleared characters from " .. count .. " room(s).")
     end
 end
 

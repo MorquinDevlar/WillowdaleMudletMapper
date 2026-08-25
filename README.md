@@ -19,10 +19,14 @@ A custom GMCP mapper for WillowdaleMUD, providing automatic room mapping and nav
 ## Usage
 
 Common commands:
-- `goto <room ID>` - Navigate to a specific room
-- `goto <area name>` - Navigate to an area
-- `mconfig` - View mapper settings
-- `mm` - Toggle mapping mode
+- `mapper` - List every command the mapper has
+- `mapper goto <room ID>` - Walk to a specific room
+- `mapper goto <area name>` - Walk to an area, or `mapper goto feature <name>` for a feature
+- `mapper find <name>` - Find rooms by name, to get the ID to walk to
+- `showpath <room ID>` - Show the directions there and highlight the path, without walking it
+- `mstop` - Stop walking
+- `mconfig` - View or change mapper settings
+- `mapper start` / `mapper stop` - Turn the creation of new rooms on and off
 
 ## Development
 

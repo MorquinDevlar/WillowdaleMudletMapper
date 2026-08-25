@@ -110,6 +110,25 @@ function mapper.createOptionsTable(defaultTable)
 		return nil
 	end
 
+	-- Tell the player what the option does take, rather than only that this
+	-- value isn't it. Booleans read on|off; a value list lives in the
+	-- description of the options that have one.
+	local function dispBadValue(option, def)
+		local accepted = ""
+		if def and def.allowedVarTypes and table.contains(def.allowedVarTypes, "boolean") then
+			accepted = "on|off"
+		elseif def and def.allowedVarTypes and table.contains(def.allowedVarTypes, "number") then
+			accepted = ""
+		elseif def then
+			accepted = def.use or ""
+		end
+		if accepted ~= "" then
+			proxyTable.disp("You can't set '" .. option .. "' to that! Accepted: " .. accepted .. "\n")
+		else
+			proxyTable.disp("You can't set '" .. option .. "' to that!\n")
+		end
+	end
+
 	function proxyTable:setOption(option, value, silent)
 		if self[option] == nil then
 			proxyTable.disp("No such option!\n")
@@ -142,7 +161,7 @@ function mapper.createOptionsTable(defaultTable)
 					and self["_customOptions"][option].checkOption(value)
 				)
 			then
-				proxyTable.disp("You can't set '" .. option .. "' to that!\n")
+				dispBadValue(option, self["_customOptions"][option])
 				return
 			end
 			self["_customOptions"][option].value = value
@@ -156,7 +175,7 @@ function mapper.createOptionsTable(defaultTable)
 					and self[index][option].checkOption(value)
 				)
 			then
-				proxyTable.disp("You can't set '" .. option .. "' to that!\n")
+				dispBadValue(option, self[index][option])
 				return
 			end
 			rawset(self[index][option], "value", value)
@@ -167,6 +186,12 @@ function mapper.createOptionsTable(defaultTable)
 		end
 		if mapper and mapper.clearpathcache then
 			mapper.clearpathcache()
+		end
+		-- Write the change out now. Saving only at exit lost every setting to a
+		-- reload, an update or a crash. Loading passes silent, so restoring the
+		-- file doesn't write it straight back.
+		if not silent and mapper and mapper.saveoptions then
+			mapper.saveoptions()
 		end
 	end
 

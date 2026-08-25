@@ -35,6 +35,24 @@ function mapper.loadoptions()
 				mapper.settings:setOption(k, v, true)
 			end
 		end
+		mapper.applysettings()
+	end
+end
+
+-- Settings are restored silently, so the handlers that act on the map never run.
+-- Put the loaded values into effect once, with one message instead of the
+-- running commentary each option would print on its own.
+function mapper.applysettings()
+	mapper.echo("Applying existing settings...")
+	if mapper.roomCharMode and mapper.roomCharMode() == "none" then
+		if mapper.clearRoomChars then
+			mapper.clearRoomChars(true)
+		end
+	elseif mapper.refreshRoomChars then
+		mapper.refreshRoomChars(true)
+	end
+	if not mapper.settings.showspeedwalkpath and mapper.clearPathHighlight then
+		mapper.clearPathHighlight()
 	end
 end
 
@@ -55,6 +73,7 @@ function mapper.loadlocks()
 	if loadTable.locked_areas then
 		mapper.locked = loadTable.locked_areas
 	end
+	mapper.locked = mapper.locked or {}
 
 	local lockRoom, getAreaRooms = lockRoom, getAreaRooms
 	for area in pairs(mapper.locked) do

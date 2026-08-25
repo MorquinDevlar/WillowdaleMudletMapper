@@ -121,6 +121,11 @@ end
 
 -- Install the downloaded mapper package
 function mapper.installMapperScript()
+	-- Write the settings out before the package goes away, so an update keeps
+	-- whatever the player changed this session
+	if mapper.saveoptions then
+		mapper.saveoptions()
+	end
 	local path = getModulePath("WillowdaleMudletMapper")
 	if not path then
 		-- Set flag so handleUninstall knows this is an update, not a real uninstall
