@@ -55,7 +55,7 @@ function mapper.updateDoorStatuses(roomNum)
 				if (doorStatus[shortExit] or 0) ~= wantType then
 					setDoor(roomNum, shortExit, wantType)
 					changed = true
-					if mapper.settings.debug then
+					if mapper.debugging() then
 						mapper.notify(string.format("Door on %s in room %d set to %d.", exit, roomNum, wantType))
 					end
 				end
@@ -63,7 +63,7 @@ function mapper.updateDoorStatuses(roomNum)
 				if mapper.hasExitLock(roomNum, exit) ~= shouldLock then
 					mapper.lockExit(roomNum, exit, shouldLock)
 					locksChanged = true
-					if mapper.settings.debug then
+					if mapper.debugging() then
 						mapper.notify(
 							string.format(
 								"%s exit %s in room %d for pathfinding.",
@@ -106,7 +106,7 @@ function mapper.updateDoorStatuses(roomNum)
 			if not found then
 				setDoor(roomNum, exit, 0)
 				changed = true
-				if mapper.settings.debug then
+				if mapper.debugging() then
 					mapper.notify(string.format("Removed door from %s in room %d - the exit is gone.", exit, roomNum))
 				end
 			end

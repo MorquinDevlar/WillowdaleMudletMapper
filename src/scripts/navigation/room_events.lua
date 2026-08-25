@@ -36,7 +36,7 @@ function mapper.room_events(event, num)
 	mapper.currentroomname = getRoomName(num)
 
 	-- Debug speedwalking
-	if mapper.settings.debug and mapper.autowalking then
+	if mapper.debugging() and mapper.autowalking then
 		mapper.notify(
 			string.format(
 				"Room change detected: %d (counter: %d/%d, dest: %s)",

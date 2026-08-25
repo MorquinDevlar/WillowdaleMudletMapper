@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+- Fixed the two `attempt to index field 'settings'` errors printed when a profile opened, which came from the map being loaded before the mapper's settings existed
+
 ## 1.5.1 - 2026-08-26
 
 - Changed the speedwalk path highlight to move along a room at a time as you walk, in place of being wiped off the whole map and drawn again in every room, which drops a search across every room you have mapped out of each step and makes a long walk with `showspeedwalkpath` on markedly lighter

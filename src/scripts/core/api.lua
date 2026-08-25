@@ -121,6 +121,14 @@ function mapper.notify(what)
     write(PREFIX, what or "")
 end
 
+-- Whether debug output is on. Read through this rather than off the settings
+-- table: the map, and the handlers a loaded map runs, arrive before
+-- sysLoadEvent builds the settings, so mapper.settings.debug is an index into
+-- nil for the first part of a profile's life.
+function mapper.debugging()
+    return mapper.settings ~= nil and mapper.settings.debug == true
+end
+
 -- As mapper.echo, but leaves the cursor on the line for a caller that writes
 -- the rest of it itself.
 function mapper.echon(what)
@@ -341,7 +349,7 @@ end
 
 -- returns rooms in an area that have entrances from outside the area (border rooms)
 function mapper.getAreaBorders(areaid)
-	if mapper.settings.debug then
+	if mapper.debugging() then
 		mapper.getAreaBordersTimer = mapper.getAreaBordersTimer or createStopWatch()
 		startStopWatch(mapper.getAreaBordersTimer)
 	end
@@ -393,7 +401,7 @@ function mapper.getAreaBorders(areaid)
 			end
 		end
 	end
-	if mapper.settings.debug then
+	if mapper.debugging() then
 		mapper.notify(
 			"mapper.getAreaBorders() on areaid "
 				.. areaid

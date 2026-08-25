@@ -22,7 +22,7 @@ function mapper.move()
 
 	-- Check if we have a valid direction to move
 	if not mapper.speedWalkDir or not mapper.speedWalkDir[mapper.speedWalkCounter] then
-		if mapper.settings.debug then
+		if mapper.debugging() then
 			mapper.notify("No more directions to walk, stopping.")
 		end
 		mapper.autowalking = false

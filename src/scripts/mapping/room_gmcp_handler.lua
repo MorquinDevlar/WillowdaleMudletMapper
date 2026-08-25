@@ -59,7 +59,7 @@ function mapper.mappingnewroom(_, num)
 		local s = ""
 		
 		-- Debug: Show what exits we received from GMCP
-		if mapper.settings.debug then
+		if mapper.debugging() then
 			local exitList = {}
 			for exit, exitData in pairs(currentexits) do
 				table.insert(exitList, string.format("%s->%d", exit, exitData.room_id))
@@ -98,7 +98,7 @@ function mapper.mappingnewroom(_, num)
 				currentRoomZone = (currentRoomZone ~= "" and currentRoomZone) or coordZone
 				currentRoomArea = currentRoomArea or coordZone
 
-				if mapper.settings.debug then
+				if mapper.debugging() then
 					mapper.notify(string.format("Parsed coordinates for room %d: area='%s', zone='%s', x=%d, y=%d, z=%d",
 						num, tostring(currentRoomArea), tostring(currentRoomZone), currentRoomX, currentRoomY, currentRoomZ))
 				end
@@ -108,7 +108,7 @@ function mapper.mappingnewroom(_, num)
 				if mapper.settings.autopositionrooms and mapper.roomexists(num) then
 					local mx, my, mz = getRoomCoordinates(num)
 					if mx ~= currentRoomX or my ~= currentRoomY or mz ~= currentRoomZ then
-						if mapper.settings.debug then
+						if mapper.debugging() then
 							mapper.notify(string.format("Moving room %d from (%d,%d,%d) to (%d,%d,%d)",
 								num, mx, my, mz, currentRoomX, currentRoomY, currentRoomZ))
 						end
@@ -118,7 +118,7 @@ function mapper.mappingnewroom(_, num)
 					end
 				end
 			else
-				if mapper.settings.debug then
+				if mapper.debugging() then
 					mapper.notify("Failed to parse coordinates from: " .. (gmcp.Room.Info.Basic.coordinates or "nil"))
 				end
 			end
@@ -155,7 +155,7 @@ function mapper.mappingnewroom(_, num)
 
 					s = string.format("Created room %d at %d,%d,%d in %s.", num, currentRoomX, currentRoomY, currentRoomZ, currentRoomArea)
 
-					if mapper.settings.debug then
+					if mapper.debugging() then
 						mapper.notify(s)
 					end
 				end
@@ -229,7 +229,7 @@ function mapper.mappingnewroom(_, num)
 								local newY = currentRoomY + exitData.delta_y
 								local newZ = currentRoomZ + exitData.delta_z
 
-								if mapper.settings.debug then
+								if mapper.debugging() then
 									mapper.notify(string.format("Creating room %d at (%d,%d,%d) using delta (%d,%d,%d) from room %d at (%d,%d,%d)",
 										id, newX, newY, newZ, exitData.delta_x, exitData.delta_y, exitData.delta_z,
 										num, currentRoomX, currentRoomY, currentRoomZ))
