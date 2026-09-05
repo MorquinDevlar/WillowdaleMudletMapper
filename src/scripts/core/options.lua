@@ -407,9 +407,11 @@ end
 
 -- Settings are restored silently, so the handlers that act on the map never run.
 -- Put the loaded values into effect once, with one message instead of the
--- running commentary each option would print on its own.
+-- running commentary each option would print on its own. The message comes
+-- after the work: the sweeps below run inside one script call, so nothing
+-- printed before them is shown any earlier, and a line that reads as "in
+-- progress" with nothing after it looks like a restore that never finished.
 function mapper.applysettings()
-    mapper.notify("Applying existing settings...")
     mapper.refreshRoomChars(true)
     if not mapper.settings.showspeedwalkpath then
         mapper.clearPathHighlight()
@@ -419,4 +421,5 @@ function mapper.applysettings()
     -- way, carries the wrong costs until they are put back in line with what
     -- has just been loaded.
     mapper.applyallterrain()
+    mapper.notify("Settings restored.")
 end

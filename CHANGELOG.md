@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+- Fixed the mapper leaving `Applying existing settings...` as its last line after an update and on connecting, with nothing to say it had finished; it now says `Settings restored.` once they are
+
 ## 1.6.0 - 2026-09-05
 
 - Added room tags, which are words you put on rooms to find your way back to them: `mapper tag <name> [room]` tags a room, `mapper untag <name> [room]` takes the tag off, `mapper tags` lists every tag with how many rooms carry it, `mapper tags <name>` lists those rooms, and `mapper goto <name>` walks to the nearest one
