@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+## 1.6.1 - 2026-09-05
+
 - Fixed the mapper leaving `Applying existing settings...` as its last line after an update and on connecting, with nothing to say it had finished; it now says `Settings restored.` once they are
 
 ## 1.6.0 - 2026-09-05
