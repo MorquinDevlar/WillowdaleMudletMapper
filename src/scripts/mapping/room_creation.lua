@@ -1,14 +1,21 @@
 -- Room creation and coordinate calculation functions
 
+-- The areas are looked up in the mapper's own table rather than asked of Mudlet:
+-- this runs for every room the player walks into, and getAreaTable builds a
+-- fresh table of every area on the map each time it is called. The table is
+-- rebuilt whenever the areas change, including by the branch below.
 function mapper.findOrCreateArea(areaName)
 	if not areaName or areaName == "" then
 		return nil
 	end
 
-	-- Check if area already exists
-	local areaTable = getAreaTable()
-	for name, id in pairs(areaTable) do
-		if name:lower() == areaName:lower() then
+	local known = mapper.areatable or {}
+	if known[areaName] then
+		return known[areaName]
+	end
+	local wanted = areaName:lower()
+	for name, id in pairs(known) do
+		if name:lower() == wanted then
 			return id
 		end
 	end
@@ -98,67 +105,4 @@ function mapper.makeroom(oldid, newid, x, y, z, targetAreaId)
 	end
 	setRoomEnv(newid, envId or mapper.unexploredroomenv())
 	return string.format("Created new room %d at %dx,%dy,%dz.", newid, x, y, z)
-end
-
--- gives the reverse shifted coordinates, ie asking for the sw exit + coords will give the coords at ne
-
-function mapper.getshiftedcoords(original, ox, oy, oz)
-	local x, y, z
-	local has = table.contains
-	-- reverse the exit
-	local w = mapper.ranytolong(original)
-	if has({ "west", "left", "w", "l" }, w) then
-		x = (x or ox) - 1
-		y = (y or oy)
-		z = (z or oz)
-	elseif has({ "east", "right", "e", "r" }, w) then
-		x = (x or ox) + 1
-		y = (y or oy)
-		z = (z or oz)
-	elseif has({ "north", "top", "n", "t" }, w) then
-		x = (x or ox)
-		y = (y or oy) + 1
-		z = (z or oz)
-	elseif has({ "south", "bottom", "s", "b" }, w) then
-		x = (x or ox)
-		y = (y or oy) - 1
-		z = (z or oz)
-	elseif has({ "northwest", "topleft", "nw", "tl" }, w) then
-		x = (x or ox) - 1
-		y = (y or oy) + 1
-		z = (z or oz)
-	elseif has({ "northeast", "topright", "ne", "tr" }, w) then
-		x = (x or ox) + 1
-		y = (y or oy) + 1
-		z = (z or oz)
-	elseif has({ "southeast", "bottomright", "se", "br" }, w) then
-		x = (x or ox) + 1
-		y = (y or oy) - 1
-		z = (z or oz)
-	elseif has({ "southwest", "bottomleft", "sw", "bl" }, w) then
-		x = (x or ox) - 1
-		y = (y or oy) - 1
-		z = (z or oz)
-	elseif has({ "up", "u" }, w) then
-		x = (x or ox)
-		y = (y or oy)
-		z = (z or oz) + 1
-	elseif has({ "down", "d" }, w) then
-		x = (x or ox)
-		y = (y or oy)
-		z = (z or oz) - 1
-	elseif has({ "in", "i" }, w) then
-		x = (x or ox)
-		y = (y or oy)
-		z = (z or oz) - 1
-	elseif has({ "out", "o" }, w) then
-		x = (x or ox)
-		y = (y or oy)
-		z = (z or oz) + 1
-	else
-		mapper.notify(
-			"Don't know where to shift the coordinates for a " .. tostring(w) .. " (" .. tostring(original) .. ") exit."
-		)
-	end
-	return x, y, z
 end

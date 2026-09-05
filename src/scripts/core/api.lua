@@ -83,13 +83,19 @@ local function lines(what)
     return result
 end
 
--- Writes a message on its own line, with the margin in front of the first line
--- and as many spaces in front of every line that follows.
-local function write(margin, what)
+-- Puts the cursor at the start of a line of its own, so nothing the mapper
+-- prints begins in the middle of a line the game left open.
+local function startline()
     moveCursorEnd("main")
     if getCurrentLine() ~= "" then
         echo("\n")
     end
+end
+
+-- Writes a message on its own line, with the margin in front of the first line
+-- and as many spaces in front of every line that follows.
+local function write(margin, what)
+    startline()
     local indent = string.rep(" ", #margin)
     local width = foldcolumn() - #margin
     -- A margin already sets a folded tail apart from the line above it; without
@@ -132,10 +138,7 @@ end
 -- As mapper.echo, but leaves the cursor on the line for a caller that writes
 -- the rest of it itself.
 function mapper.echon(what)
-    moveCursorEnd("main")
-    if getCurrentLine() ~= "" then
-        echo("\n")
-    end
+    startline()
     decho("<255,255,255>")
     cecho(tostring(what))
 end
@@ -143,111 +146,179 @@ end
 -- Opens a line inside a mapper.notify block for a caller that writes it itself,
 -- which is what a line with a clickable link in it has to do.
 function mapper.notifyIndent()
-    moveCursorEnd("main")
-    if getCurrentLine() ~= "" then
-        echo("\n")
-    end
+    startline()
     decho("<255,255,255>" .. string.rep(" ", #PREFIX))
 end
 
-function mapper.deleteLineP()
-	deleteLine()
-	tempLineTrigger(
-		1,
-		1,
-		[[
-    if isPrompt() then deleteLine() end
-  ]]
-	)
+-------------------------------------------------
+-- Listings
+--
+-- Every listing the mapper prints - the settings, each help, the areas, the
+-- tags, a room's exits - is drawn by mapper.printtable, so they all line up the
+-- same way and a new one costs a table of rows rather than another copy of the
+-- column arithmetic.
+--
+-- A column is { title = "Name:", min = 24, align = "left"|"right" }; a cell is
+-- a string, a number, or { text = ..., link = "lua code", hint = "tooltip",
+-- color = { r, g, b } }.
+
+-- The first column green, the second white, the rest grey. A column's title is
+-- drawn in the column's own colour, so a title says which column it heads.
+local COLUMNCOLORS = { { 112, 229, 0 }, { 255, 255, 255 } }
+local GREY = { 128, 128, 128 }
+
+-- Listings are laid out to a fixed width rather than to the window: columns
+-- that move with the window do not line up from one printing to the next. The
+-- rule under the titles is never drawn narrower than the settings listing's,
+-- which is the look every other listing was brought in line with.
+local TABLEWIDTH = 100
+local RULEWIDTH = 78
+
+local function columncolor(index)
+    return COLUMNCOLORS[index] or GREY
 end
 
-function mapper.mapLook(roomid, delay)
-	centerview(roomid)
-	if mapper.maplooktimer then
-		killTimer(mapper.maplooktimer)
-	end
-	mapper.maplooktimer = tempTimer(tonumber(delay) or 4, [[centerview(mapper.currentroom); mapper.maplooktimer = nil]])
+-- Cells are printed literally rather than through cecho, so every character in
+-- one counts towards its column: "<room id>" is nine columns of help, not a
+-- colour name that disappears.
+local function cellwidth(text)
+    text = tostring(text)
+    return (utf8 and utf8.len and utf8.len(text)) or #text
 end
 
-function mapper.getnums(roomname, exact)
-	if tonumber(roomname) then
-		return { roomname }
-	end
-
-	local t = (not exact and mapper.searchRoom or mapper.searchRoomExact)(roomname)
-
-	if not t or not next(t) then
-		return nil
-	end
-
-	local result = {}
-
-	if not tonumber(select(2, next(t))) then
-		for roomid, _ in pairs(t) do
-			if roomid ~= 0 then
-				result[#result + 1] = tonumber(roomid)
-			end
-		end
-	else
-		for _, roomid in pairs(t) do
-			if roomid ~= 0 then
-				result[#result + 1] = tonumber(roomid)
-			end
-		end
-	end
-
-	return result
+local function ascell(cell)
+    if type(cell) == "table" then
+        return cell
+    end
+    return { text = cell == nil and "" or tostring(cell) }
 end
 
--- searchRoom with a cache!
-local cache = {}
-setmetatable(cache, { __mode = "kv" }) -- weak keys/values = it'll periodically get cleaned up by gc
-
-function mapper.searchRoom(what)
-	local result = cache[what]
-	if not result then
-		result = searchRoom(what)
-		local realResult = {}
-		for key, value in pairs(type(result) == "table" and result or {}) do
-			-- both ways, because searchRoom can return either id-room name or the reverse
-			if type(key) == "string" then
-				realResult[key:ends(" (road)") and key:sub(1, -8) or key] = value
-			else
-				realResult[key] = value:ends(" (road)") and value:sub(1, -8) or value
-			end
-		end
-		cache[what] = realResult
-		result = realResult
-	end
-	return result
+-- One cell, in its column's colour unless it names its own, padded out to the
+-- column's width. The last cell of a line is left unpadded: trailing spaces are
+-- invisible right up until someone copies the line out.
+local function drawcell(cell, color, width, align, last)
+    local text = tostring(cell.text or "")
+    local pad = math.max(width - cellwidth(text), 0)
+    if align == "right" then
+        echo(string.rep(" ", pad))
+    end
+    setFgColor(unpack(cell.color or color))
+    if cell.link then
+        setUnderline(true)
+        echoLink(text, cell.link, cell.hint or "", true)
+    else
+        echo(text)
+    end
+    resetFormat()
+    if align ~= "right" and not last then
+        echo(string.rep(" ", pad))
+    end
 end
 
-local function endswith(s, suffix)
-	return s:sub(#s - #suffix + 1) == suffix
+-- One line of cells, each in its column. A line stops at the last cell with
+-- anything in it: an empty column at the end of a row is nothing to line up
+-- with, and padding out to it would leave the line ending in spaces.
+local function drawline(cells, columns, widths)
+    local last = 0
+    for i = 1, #cells do
+        if tostring(cells[i].text or "") ~= "" then
+            last = i
+        end
+    end
+    startline()
+    for i = 1, last do
+        if i > 1 then
+            echo(" ")
+        end
+        drawcell(cells[i], columncolor(i), widths[i] or 0, columns[i] and columns[i].align, i == last)
+    end
+    echo("\n")
 end
 
-function mapper.searchRoomExact(what)
-	if type(what) ~= "string" then
-		return
-	end
+-- opts.title is printed above the table through mapper.echo; opts.footer is a
+-- list of grey lines printed under it.
+function mapper.printtable(columns, rows, opts)
+    opts, rows = opts or {}, rows or {}
 
-	local roomTable = mapper.searchRoom(what)
-	local realResult = {}
-	what = what:lower()
-	for key, value in pairs(roomTable) do
-		if type(key) == "string" and (key:lower() == what or (endswith(key, ".") and key:sub(1, -2) == what)) then
-			realResult[key:ends(" (road)") and key:sub(1, -8) or key] = value
-		elseif
-			type(value) == "string" and (value:lower() == what or (endswith(value, ".") and value:sub(1, -2) == what))
-		then
-			realResult[key] = value:ends(" (road)") and value:sub(1, -8) or value
-		end
-	end
-	if table.is_empty(realResult) then
-		return roomTable
-	else
-		return realResult
-	end
+    local widths = {}
+    for i, column in ipairs(columns) do
+        widths[i] = math.max(cellwidth(column.title or ""), column.min or 0)
+    end
+    for _, row in ipairs(rows) do
+        for i = 1, #columns do
+            widths[i] = math.max(widths[i], cellwidth(ascell(row[i]).text or ""))
+        end
+    end
+
+    -- What the table is over its width comes off the last column, which is the
+    -- one whose text can be carried onto a line of its own.
+    local last = #columns
+    local indent = 0
+    for i = 1, last - 1 do
+        indent = indent + widths[i] + 1
+    end
+    widths[last] = math.min(widths[last], math.max(TABLEWIDTH - indent, 1))
+
+    if opts.title then
+        mapper.echo(opts.title)
+    end
+
+    local titles = {}
+    for i, column in ipairs(columns) do
+        titles[i] = { text = column.title or "" }
+    end
+    drawline(titles, columns, widths)
+
+    startline()
+    drawcell({ text = string.rep("-", math.max(indent + widths[last], RULEWIDTH)) }, GREY, 0, nil, true)
+    echo("\n")
+
+    local hang = string.rep(" ", indent)
+    for _, row in ipairs(rows) do
+        local cells = {}
+        for i = 1, last do
+            cells[i] = ascell(row[i])
+        end
+
+        -- A link is one clickable word wherever it lands, so only a plain cell
+        -- is carried over onto the lines below it.
+        local cell = cells[last]
+        local text = tostring(cell.text or "")
+        local folded = cell.link and { text } or fold(text, widths[last], hang)
+        cells[last] = { text = folded[1], link = cell.link, hint = cell.hint, color = cell.color }
+        drawline(cells, columns, widths)
+
+        for i = 2, #folded do
+            startline()
+            drawcell({ text = folded[i], color = cell.color }, columncolor(last), 0, nil, true)
+            echo("\n")
+        end
+    end
+
+    for _, line in ipairs(opts.footer or {}) do
+        for _, folded in ipairs(fold(line, TABLEWIDTH, "")) do
+            startline()
+            drawcell({ text = folded }, GREY, 0, nil, true)
+            echo("\n")
+        end
+    end
+end
+
+-- A key/value block: what one thing is, rather than a column of many of them.
+-- A field is { label, value } or { label, cell, cell... }; the labels line up
+-- with each other and there is no rule over them.
+function mapper.printfields(fields)
+    local labelwidth = 0
+    for _, field in ipairs(fields) do
+        labelwidth = math.max(labelwidth, cellwidth(tostring(field[1] or "")))
+    end
+    for _, field in ipairs(fields) do
+        local cells = { { text = tostring(field[1] or "") } }
+        for i = 2, #field do
+            cells[i] = ascell(field[i])
+        end
+        drawline(cells, {}, { labelwidth })
+    end
 end
 
 function mapper.findAreaID(areaname, exact)
@@ -274,90 +345,27 @@ function mapper.findAreaID(areaname, exact)
 end
 
 function mapper.roomexists(num)
-	if not num then
-		return false
-	end
-	if roomExists then
-		return roomExists(num)
-	end
-
-	local s, m = pcall(getRoomArea, tonumber(num))
-	return (s and true or false)
+	local id = tonumber(num)
+	return id ~= nil and roomExists(id)
 end
 
 function mapper.isMapEmpty()
-	local areaTable = getAreaTable()
-	for _, areaId in pairs(areaTable) do
-		if areaId ~= 0 then
-			local rooms = getAreaRooms(areaId) or {}
-			if next(rooms) then
-				return false
-			end
-		end
-	end
-	return true
-end
-
--- accepts areaname or ID
-function mapper.cleanAreaName(area)
-	local areaname = type(area) == "number" and mapper.areatabler[area] or area
-	if not areaname then
-		return area
-	end
-
-	-- strip , the
-	areaname = areaname:gsub(", the$", "")
-
-	-- strip , the Type of
-	areaname = areaname:gsub(", the %w+ of$", "")
-
-	-- strip , the Type of (important)
-	areaname = areaname:gsub(", the %w+ of %((.+)%)$", " (%1)")
-
-	-- strip , the (important)
-	areaname = areaname:gsub(", the %((.+)%)$", " (%1)")
-
-	return areaname
-end
-
--- if this room is in a unique area, report it. Otherwise gives nil
-function mapper.getexactarea(roomname)
-	local rooms = mapper.searchRoomExact(roomname)
-
-	if not rooms or not next(rooms) then
-		return nil
-	end
-
-	local areaid
-	for roomid, roomname in pairs(rooms) do
-		local caid = getRoomArea(roomid)
-		if areaid and areaid ~= caid then
-			return nil
-		end
-		areaid = caid
-	end
-
-	if areaid then
-		return mapper.areatabler[areaid]
-	end
-end
-
--- returns the area name of a room or ?
-function mapper.getAreaName(roomid)
-	return mapper.areatabler[getRoomArea(roomid)] or "?"
+	return next(getRooms()) == nil
 end
 
 -- returns rooms in an area that have entrances from outside the area (border rooms)
 function mapper.getAreaBorders(areaid)
 	if mapper.debugging() then
 		mapper.getAreaBordersTimer = mapper.getAreaBordersTimer or createStopWatch()
-		startStopWatch(mapper.getAreaBordersTimer)
+		if mapper.getAreaBordersTimer then
+			startStopWatch(mapper.getAreaBordersTimer)
+		end
 	end
-	local roomlist, endresult = getAreaRooms(areaid), {}
-	-- sometimes getAreaRooms can give us no result
+	local roomlist, endresult = getAreaRooms1(areaid), {}
+	-- sometimes getAreaRooms1 can give us no result
 	if not roomlist then
 		mapper.echo(
-			"Sorry, seems we can't go there - getAreaRooms("
+			"Sorry, seems we can't go there - getAreaRooms1("
 				.. areaid
 				.. ") didn't give us any results (Mudlet problem - redownloading the map might help fix it)"
 		)
@@ -369,35 +377,15 @@ function mapper.getAreaBorders(areaid)
 	end
 	-- make a key-value list of room IDs
 	local reverselist = {}
-	for i = 0, #roomlist do
-		reverselist[roomlist[i]] = true
+	for _, id in ipairs(roomlist) do
+		reverselist[id] = true
 	end
-	local getRoomName, pairs = getRoomName, pairs
-	if getAllRoomEntrances then
-		for i = 0, #roomlist do
-			local id = roomlist[i]
-			local entrancesFrom = getAllRoomEntrances(id)
-			for remoteRoomIndex = 1, #entrancesFrom do
-				if not reverselist[entrancesFrom[remoteRoomIndex]] then
-					endresult[id] = getRoomName(id)
-				end
-			end
-		end
-	else
-		local getRoomExits, getSpecialExitsSwap = getRoomExits, getSpecialExitsSwap
-		for i = 0, #roomlist do
-			local id = roomlist[i]
-			local exits = getRoomExits(id)
-			for _, to in pairs(exits) do
-				if not reverselist[to] then
-					endresult[id] = getRoomName(id)
-				end
-			end
-			local specialexits = getSpecialExitsSwap(id)
-			for _, to in pairs(specialexits) do
-				if not reverselist[to] then
-					endresult[id] = getRoomName(id)
-				end
+	local getRoomName = getRoomName
+	for _, id in ipairs(roomlist) do
+		local entrancesFrom = getAllRoomEntrances(id)
+		for remoteRoomIndex = 1, #entrancesFrom do
+			if not reverselist[entrancesFrom[remoteRoomIndex]] then
+				endresult[id] = getRoomName(id)
 			end
 		end
 	end

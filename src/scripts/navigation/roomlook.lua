@@ -4,94 +4,76 @@ function mapper.roomFind(query, lines)
 		query = query:sub(1, -2)
 	end
 	local defaultLine = 30
-	local result = mapper.searchRoom(query)
+	local result = searchRoom(query)
+	if type(result) == "string" or not next(result) then
+		mapper.echo("You have no recollection of any room with that name.")
+		return
+	end
+	local found = table.size(result)
 	if lines == "all" then
-		lines = table.size(result)
+		lines = found
 	end
 	lines = (lines ~= "") and tonumber(lines) or defaultLine
 
-	-- create a new table (roomsTable) with keys and add areas to the table
+	-- searchRoom answers with room ID -> name, but has answered name -> room ID
+	-- in the past; either way round, a row is the ID, the name and the area.
+	local byid = tonumber(select(2, next(result))) == nil
 	local roomsTable = {}
 	for k, v in pairs(result) do
-		local a = (mapper.areatabler and mapper.areatabler[getRoomArea(k)]) or "unknown"
-		roomsTable[#roomsTable + 1] = { num = k, area = a, name = v }
+		local id = tonumber(byid and k or v)
+		roomsTable[#roomsTable + 1] = {
+			num = id,
+			name = tostring(byid and v or k),
+			area = (mapper.areatabler and mapper.areatabler[getRoomArea(id)]) or "unknown",
+		}
 	end
-	-- sort roomsTable by area name
 	table.sort(roomsTable, function(a, b)
-		return a.area < b.area
+		if a.area ~= b.area then
+			return a.area < b.area
+		end
+		return a.name < b.name
 	end)
-	-- start displaying info
-	if type(result) == "string" or not next(result) then
-		cecho("<grey>You have no recollection of any room with that name.")
-		return
-	end
-	cecho("<DarkSlateGrey>You know the following relevant rooms:\n")
 
-	local i = 1
-	if not tonumber(select(2, next(result))) then
-		cecho(string.format("<white> %-10s%-40s%s\n", "ROOM ID", "ROOM NAME", "ROOM AREA"))
-		for _, v in ipairs(roomsTable) do
-			if i > lines then
-				break
-			end
-			local roomid = tonumber(v.num)
-			local roomname = v.name
-			local roomarea = v.area
-			cechoLink(
-				string.format("<yellow> %-10s", roomid),
-				"mapper.gotoRoom(" .. roomid .. ")",
-				string.format("Go to %s (%s)", roomid, tostring(roomname)),
-				true
-			)
-			cecho(string.format("<LightSlateGray>%-40s", string.sub(tostring(roomname), 1, 39)))
-			cechoLink(
-				string.format(
-					"<DarkSlateGrey>%s<DarkSlateGrey>\n",
-					mapper.cleanAreaName(tostring(mapper.areatabler and mapper.areatabler[getRoomArea(roomid)] or "?"))
-				),
-				[[mapper.echoPath(mapper.currentroom, ]] .. roomid .. [[)]],
-				"Display directions from here to " .. roomname,
-				true
-			)
-			resetFormat()
-			i = i + 1
+	local rows = {}
+	for _, room in ipairs(roomsTable) do
+		if #rows >= lines then
+			break
 		end
-	else
-		for roomname, roomid in pairs(result) do
-			roomid = tonumber(roomid)
-			cecho(string.format("  <LightSlateGray>%s<DarkSlateGrey> (", tostring(roomname)))
-			cechoLink(
-				"<yellow>" .. roomid,
-				"mapper.gotoRoom(" .. roomid .. ")",
-				string.format("Go to %s (%s)", roomid, tostring(roomname)),
-				true
-			)
-			cecho(
-				string.format(
-					"<DarkSlateGrey>) in <LightSlateGray>%s<DarkSlateGrey>.",
-					mapper.cleanAreaName(tostring(mapper.areatabler and mapper.areatabler[getRoomArea(roomid)] or "?"))
-				)
-			)
-			fg("DarkSlateGrey")
-			echoLink(
-				" > Show path\n",
-				[[mapper.echoPath(mapper.currentroom, ]] .. roomid .. [[)]],
-				"Display directions from here to " .. roomname,
-				true
-			)
-			resetFormat()
-		end
+		rows[#rows + 1] = {
+			{
+				text = tostring(room.num),
+				link = "mapper.gotoRoom(" .. room.num .. ")",
+				hint = string.format("Go to %s (%s)", room.num, room.name),
+			},
+			room.name,
+			{
+				text = room.area,
+				link = [[mapper.echoPath(mapper.currentroom, ]] .. room.num .. [[)]],
+				hint = "Display directions from here to " .. room.name,
+			},
+		}
 	end
-	if table.size(result) <= lines then
-		cecho(string.format("<DarkSlateGrey>%d rooms found.\n", table.size(result)))
+
+	mapper.printtable({
+		{ title = "ID:" },
+		{ title = "Name:" },
+		{ title = "Area:" },
+	}, rows, { title = "You know the following relevant rooms:" })
+
+	if found <= lines then
+		mapper.echo(string.format("%d rooms found.", found))
 	else
 		mapper.lastRoomQuery = query
+		-- The table left the cursor on a line of its own, so the link can start
+		-- here; it is echoed rather than printed as a row because it is one line
+		-- about the table rather than another row of it.
 		cechoLink(
-			string.format("<DarkSlateGrey>%d of %d rooms shown. Click to see all rooms.\n", lines, table.size(result)),
+			string.format("<dim_grey>%d of %d rooms shown. Click to see all rooms.", lines, found),
 			'mapper.roomFind(mapper.lastRoomQuery, "all")',
-			string.format("Show all %d rooms.", table.size(result)),
+			string.format("Show all %d rooms.", found),
 			true
 		)
+		echo("\n")
 	end
 end
 
@@ -99,31 +81,34 @@ end
 function mapper.echoRoomList(areaname, exact)
 	local areaid, msg, multiples = mapper.findAreaID(areaname, exact)
 	if areaid then
-		local roomlist, endresult = getAreaRooms(areaid) or {}, {}
+		-- getAreaRooms1, not getAreaRooms: the latter starts at index 0, which
+		-- table.sort leaves out and so prints one room out of order
+		local roomlist, endresult = getAreaRooms1(areaid) or {}, {}
 		local getRoomName = getRoomName
-		for _, id in pairs(roomlist) do
+		for _, id in ipairs(roomlist) do
 			endresult[id] = getRoomName(id)
 		end
 		table.sort(roomlist)
-		cecho(
-			string.format(
-				"<DarkSlateGrey>List of all rooms in <grey>%s<DarkSlateGrey> (areaid <grey>%s<DarkSlateGrey> - <grey>%d<DarkSlateGrey> rooms):\n",
-				msg,
-				areaid,
-				table.size(endresult)
-			)
-		)
-		for _, roomid in pairs(roomlist) do
-			local roomname = endresult[roomid]
-			fg("blue")
-			cechoLink(
-				"<yellow>" .. string.format("%6s", roomid),
-				"mapper.gotoRoom(" .. roomid .. ")",
-				string.format("Go to %s (%s)", roomid, tostring(roomname)),
-				true
-			)
-			cecho(string.format("<DarkSlateGrey>: <LightSlateGray>%s<DarkSlateGrey>.\n", roomname))
+		local rows = {}
+		for _, roomid in ipairs(roomlist) do
+			local roomname = tostring(endresult[roomid])
+			rows[#rows + 1] = {
+				{
+					text = tostring(roomid),
+					link = "mapper.gotoRoom(" .. roomid .. ")",
+					hint = string.format("Go to %s (%s)", roomid, roomname),
+				},
+				roomname,
+			}
 		end
+
+		mapper.printtable({
+			{ title = "ID:" },
+			{ title = "Name:" },
+		}, rows, {
+			title = string.format("List of all rooms in %s (areaid %s - %d rooms):",
+				msg, areaid, table.size(endresult)),
+		})
 	elseif multiples and #multiples > 0 then
 		mapper.echo("For which area would you want to list rooms for?")
 		fg("DimGrey")
@@ -145,62 +130,27 @@ function mapper.echoRoomList(areaname, exact)
 	end
 end
 
--- Clear all map labels in an area or the entire map
-function mapper.clearLabels(areaid)
-	local function clearlabels(aid)
-		local t = getMapLabels(aid)
-		if type(t) ~= "table" then
-			return
-		end
-		for labelid, _ in pairs(t) do
-			deleteMapLabel(aid, labelid)
-		end
-	end
-
-	if areaid == "map" then
-		for aid in pairs(mapper.areatabler or {}) do
-			clearlabels(aid)
-		end
-		mapper.echo("Cleared labels in all of the map.")
-		return
-	end
-	clearlabels(areaid)
-	mapper.echo(string.format("Cleared all labels in '%s'.", mapper.areatabler and mapper.areatabler[areaid] or areaid))
-end
-
--- Add a label to a room on the map
--- Usage: mapper.roomLabel("text") or mapper.roomLabel("roomid text") or mapper.roomLabel("roomid color text")
+-- Write a label on the map, at the room the player is in or at one named by ID.
+-- Every label is drawn alike, so the whole of the text is the label rather than
+-- the first words of it being read as colour names.
 function mapper.roomLabel(input)
-	if not createMapLabel then
-		mapper.echo("Your Mudlet doesn't support createMapLabel() yet - please update.")
-		return
-	end
 	local tk = input:split(" ")
-	local room, fgcolor, bgcolor, message = mapper.currentroom, "yellow", "red", "Some room label"
+	local room, message = mapper.currentroom, "Some room label"
 	-- input always have to be something, so tk[1] at least always exists
-	if tonumber(tk[1]) then
+	if tonumber(tk[1]) and #tk > 1 then
 		room = tonumber(table.remove(tk, 1))
 	end
-	-- next: is this a foreground color?
-	if tk[1] and color_table[tk[1]] then
-		fgcolor = table.remove(tk, 1)
-	end
-	-- next: is this a background color?
-	if tk[1] and color_table[tk[1]] then
-		bgcolor = table.remove(tk, 1)
-	end
-	-- the rest would be our message
 	if tk[1] then
 		message = table.concat(tk, " ")
 	end
 	-- if we haven't provided a room ID and we don't know where we are yet, we can't make a label
-	if not room then
+	if not room or not roomExists(room) then
 		mapper.echo("We don't know where we are to make a label here.")
 		return
 	end
 	local x, y, z = getRoomCoordinates(room)
-	local f1, f2, f3 = unpack(color_table[fgcolor])
-	local b1, b2, b3 = unpack(color_table[bgcolor])
+	local f1, f2, f3 = unpack(color_table.yellow)
+	local b1, b2, b3 = unpack(color_table.red)
 	local lid = createMapLabel(getRoomArea(room), message, x, y, z, f1, f2, f3, b1, b2, b3)
 	mapper.echo(string.format("Created new label #%d '%s' in %s.", lid, message, getRoomAreaName(getRoomArea(room))))
 end
@@ -230,98 +180,77 @@ function mapper.roomlook(input)
 		local env = getRoomEnv(num)
 		local envname = (mapper.envidsr and mapper.envidsr[env]) or "?"
 		-- generate a report
-		mapper.echo(string.format("Room: %s #: %d area: %s (%d)", name, num, tostring(mapper.areatabler and mapper.areatabler[areanum] or "?"), areanum))
-		mapper.echo(
-			string.format(
-				"Coordinates: x:%d, y:%d, z:%d, locked: %s, weight: %s",
-				coords[1],
-				coords[2],
-				coords[3],
-				(islocked and "yep" or "nope"),
-				tostring(weight)
-			)
-		)
-		mapper.echo(
-			string.format(
-				"Environment: %s (%d)%s",
-				tostring(envname),
-				env,
-				(getRoomUserData(num, "indoors") ~= "" and ", indoors" or "")
-			)
-		)
-		mapper.echo(string.format("Exits (%d):", table.size(exits)))
+		mapper.printfields({
+			{ "Room:", name },
+			{ "ID:", num },
+			{ "Area:", string.format("%s (%d)",
+				tostring(mapper.areatabler and mapper.areatabler[areanum] or "?"), areanum) },
+			{ "Coordinates:", string.format("x:%d, y:%d, z:%d", coords[1], coords[2], coords[3]) },
+			{ "Locked:", islocked and "yep" or "nope" },
+			{ "Weight:", tostring(weight) },
+			{ "Environment:", string.format("%s (%d)%s", tostring(envname), env,
+				(getRoomUserData(num, "indoors") ~= "" and ", indoors" or "")) },
+		})
+
+		-- Where an exit leads, the area it lands in and what it costs a walk are
+		-- columns of their own rather than parentheses trailing off the line
+		local exitrows = {}
 		for exit, leadsto in pairs(exits) do
-			echo(
-				string.format(
-					"  %s -> %s (%d)%s%s\n",
-					exit,
-					getRoomName(leadsto),
-					leadsto,
-					(
-						(getRoomArea(leadsto) or "?") == areanum and ""
-						or " (in " .. (mapper.areatabler and mapper.areatabler[getRoomArea(leadsto)] or "?") .. ")"
-					),
-					(
-						(not exitweights[mapper.anytoshort(exit)] or exitweights[mapper.anytoshort(exit)] == 0) and ""
-						or " (weight: " .. exitweights[mapper.anytoshort(exit)] .. ")"
-					)
-				)
-			)
+			local exitweight = exitweights[mapper.dirdoor(exit)]
+			exitrows[#exitrows + 1] = {
+				exit,
+				string.format("%s (%d)", tostring(getRoomName(leadsto)), leadsto),
+				tostring(mapper.areatabler and mapper.areatabler[getRoomArea(leadsto)] or "?"),
+				(not exitweight or exitweight == 0) and "" or tostring(exitweight),
+			}
 		end
+		table.sort(exitrows, function(a, b)
+			return a[1] < b[1]
+		end)
+		mapper.printtable({
+			{ title = "Exit:" },
+			{ title = "Leads to:" },
+			{ title = "Area:" },
+			{ title = "Weight:", align = "right" },
+		}, exitrows, { title = string.format("Exits (%d):", table.size(exits)) })
+
 		-- display special exits if we got any
 		if next(specexits) then
-			mapper.echo(string.format("Special exits (%d):", table.size(specexits)))
+			local specialrows = {}
+			local function specialrow(command, leadsto, locked)
+				specialrows[#specialrows + 1] = {
+					tostring(command),
+					string.format("%s (%d)", tostring(getRoomName(leadsto)), leadsto),
+					tostring(mapper.areatabler and mapper.areatabler[getRoomArea(leadsto)] or "?"),
+					locked and "locked" or "",
+				}
+			end
 			for leadsto, command in pairs(specexits) do
 				if type(command) == "string" then
-					echo(string.format("  %s -> %s (%d)\n", command, getRoomName(leadsto), leadsto))
+					specialrow(command, leadsto, false)
 				else
 					-- new format - exit name, command
 					for cmd, locked in pairs(command) do
-						if locked == "1" then
-							cecho(
-								string.format(
-									"<DarkSlateGrey>  %s -> %s (%d) (locked)\n",
-									cmd,
-									getRoomName(leadsto),
-									leadsto
-								)
-							)
-						else
-							echo(string.format("  %s -> %s (%d)\n", cmd, getRoomName(leadsto), leadsto))
-						end
+						specialrow(cmd, leadsto, locked == "1")
 					end
 				end
 			end
+			table.sort(specialrows, function(a, b)
+				return a[1] < b[1]
+			end)
+			mapper.printtable({
+				{ title = "Exit:" },
+				{ title = "Leads to:" },
+				{ title = "Area:" },
+				{ title = "Status:" },
+			}, specialrows, { title = string.format("Special exits (%d):", table.size(specexits)) })
 		end
-		local message = "This room has the feature '%s'."
-		for _, mapFeature in pairs(mapper.getRoomMapFeatures(num)) do
-			mapper.echo(string.format(message, mapFeature))
+		local tags = mapper.roomtags(num)
+		if #tags > 0 then
+			mapper.echo(string.format("Tags (%d): %s", #tags, table.concat(tags, ", ")))
 		end
 		-- actions we can do. This will be a short menu of sorts for actions
 		mapper.echo("Stuff you can do:")
-		echo("  ")
-		echo("Clear all labels ")
-		setUnderline(true)
-		echoLink("(in area)", "mapper.clearLabels(" .. areanum .. ")", "", true)
-		setUnderline(false)
-		echo(" ")
-		setUnderline(true)
-		echoLink(
-			"(whole map)",
-			[[
-    if not mapper.clearinglabels then
-      mapper.echo("Are you sure you want to clear all of your labels on this map? If yes, click the link again.")
-      mapper.clearinglabels = true
-    else
-      mapper.clearLabels("map")
-      mapper.clearinglabels = nil
-    end
-    ]],
-			"",
-			true
-		)
-		setUnderline(false)
-		echo("\n")
 		echo("  ")
 		setUnderline(true)
 		echoLink("Check for mapper updates", 'mapper.echo("Checking...") mapper.checkupdateverbose()', "", true)
@@ -332,7 +261,7 @@ function mapper.roomlook(input)
 	-- see if we can do anything with the name
 
 	local function handle_name(name)
-		local result = mapper.searchRoom(name)
+		local result = searchRoom(name)
 		if type(result) == "string" then
 			cecho("<grey>You have no recollection of any room with that name.")
 			return

@@ -2,7 +2,7 @@
     {
         "name": "core",
         "isActive": "yes",
-        "script": "mudlet = mudlet or {};mudlet.mapper_script = true;mapper = mapper or {}",
+        "script": "mudlet = mudlet or {}; mudlet.mapper_script = true; local old = mapper; mapper = {}; if type(old) == 'table' then mapper.version = old.version; mapper.currentroom = old.currentroom; mapper.currentroomname = old.currentroomname; mapper.editing = old.editing; mapper.packageInstalledHandler = old.packageInstalledHandler; mapper.speedWalkWatch = old.speedWalkWatch end",
         "isFolder": "yes"
     },
     {

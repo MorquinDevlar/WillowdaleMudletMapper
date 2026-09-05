@@ -49,11 +49,11 @@ function mapper.updateDoorStatuses(roomNum)
 			-- way out of a room.
 			local shouldLock = isDoor and not exitIsPassable(details)
 
-			if mapper.isStandardExit(exit) then
-				local shortExit = mapper.anytoshort(exit)
+			local doorExit = mapper.dirdoor(exit)
+			if doorExit then
 				local wantType = isDoor and (doorTypeForState[details.state] or 1) or 0
-				if (doorStatus[shortExit] or 0) ~= wantType then
-					setDoor(roomNum, shortExit, wantType)
+				if (doorStatus[doorExit] or 0) ~= wantType then
+					setDoor(roomNum, doorExit, wantType)
 					changed = true
 					if mapper.debugging() then
 						mapper.notify(string.format("Door on %s in room %d set to %d.", exit, roomNum, wantType))
@@ -74,19 +74,17 @@ function mapper.updateDoorStatuses(roomNum)
 						)
 					end
 				end
-			elseif lockSpecialExit and hasSpecialExitLock and exitData.room_id then
+			elseif hasSpecialExitLock and exitData.room_id then
 				-- A lock can sit on an exit with any name the room gives it, and
 				-- Mudlet can neither draw a door on one of those nor lock it through
-				-- the compass-direction calls - it wants the destination room and the
-				-- command. Mudlet's lockSpecialExit dirties the map, redraws the
-				-- area, and invalidates the pathfinding graph even when the lock is
-				-- already in the wanted state, and a walk passes through here on
-				-- every room, so only an actual change may reach it. The second
-				-- argument to both calls is the destination room ID, which current
-				-- Mudlet ignores but older ones require.
-				local wasLocked = hasSpecialExitLock(roomNum, tonumber(exitData.room_id), exit) or false
-				if wasLocked ~= shouldLock then
-					lockSpecialExit(roomNum, tonumber(exitData.room_id), exit, shouldLock)
+				-- the compass-direction calls. mapper.lockSpecialExit takes it from
+				-- here, including dropping cached routes and refusing to touch a lock
+				-- that is already in the state asked for; the check below is only so
+				-- this room can report that something changed.
+				local destination = tonumber(exitData.room_id)
+				local wasLocked = destination and hasSpecialExitLock(roomNum, destination, exit) or false
+				if destination and wasLocked ~= shouldLock then
+					mapper.lockSpecialExit(roomNum, destination, exit, shouldLock)
 					locksChanged = true
 				end
 			end
@@ -98,7 +96,7 @@ function mapper.updateDoorStatuses(roomNum)
 		if doorType > 0 then
 			local found = false
 			for gmcpExit in pairs(currentexits) do
-				if mapper.anytoshort(gmcpExit) == exit then
+				if mapper.dirdoor(gmcpExit) == exit then
 					found = true
 					break
 				end
@@ -120,19 +118,4 @@ function mapper.updateDoorStatuses(roomNum)
 	end
 
 	return changed or locksChanged
-end
-
--- Event handler for door updates whenever GMCP room info is received
-function mapper.updatedoors()
-	-- The same room mapping works from, rather than mapper.currentroom, so that
-	-- doors land on a room the moment it is created rather than on the next visit.
-	local num = (gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic and tonumber(gmcp.Room.Info.Basic.id))
-		or mapper.currentroom
-	if not num or not mapper.roomexists(num) then
-		return
-	end
-
-	if mapper.updateDoorStatuses(num) and mapper.settings and mapper.settings.showmappingmessages then
-		mapper.notify("Door statuses updated for room " .. num)
-	end
 end

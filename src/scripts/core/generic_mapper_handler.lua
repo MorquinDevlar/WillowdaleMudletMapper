@@ -25,6 +25,15 @@ function mapper.handleUninstall(_, packageName)
 		mapper.saveoptions()
 	end
 
+	-- The info line and the menu entries are held by Mudlet and by the map, not
+	-- by this package, so they outlive it unless they are taken back.
+	if mapper.removemapinfo then
+		mapper.removemapinfo()
+	end
+	if mapper.removemapmenu then
+		mapper.removemapmenu()
+	end
+
 	-- Skip restoring generic_mapper in a development profile. A local muddler
 	-- build uninstalls and reinstalls this package on every rebuild, so the
 	-- restore would download generic_mapper and race the reinstall each time.

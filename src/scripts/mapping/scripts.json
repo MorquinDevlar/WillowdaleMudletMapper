@@ -18,13 +18,13 @@
         "isFolder": "no"
     },
     {
-        "name": "map_features",
+        "name": "tags",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "mm_mapping",
+        "name": "terrain",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
@@ -48,13 +48,7 @@
         "isFolder": "no"
     },
     {
-        "name": "roomArea",
-        "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "area_commands",
+        "name": "commands",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"

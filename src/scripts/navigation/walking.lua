@@ -1,5 +1,72 @@
 -- Core walking mechanics
 
+-- The watchdog on a move the game never answers.
+--
+-- Every step of a walk is driven by the room change GMCP sends when the move
+-- lands, so a move that is swallowed - a dropped packet, a command the server
+-- never acted on - leaves the walk waiting for a message that will not come.
+-- One timer per step catches that: the first time it fires the move is sent
+-- again, the second time the walk is given up on rather than left hanging.
+
+local watchdog   -- the timer waiting on the move we last sent
+local watchroom  -- the room we were in when we sent it
+local retried    -- this step has already been sent a second time
+
+function mapper.disarmwatchdog()
+	if watchdog then
+		killTimer(watchdog)
+		watchdog = nil
+	end
+end
+
+-- A step really landed, so the next one gets its own two tries.
+function mapper.resetwatchdog()
+	retried = false
+end
+
+local function movetimedout(waited, what)
+	watchdog = nil
+	-- The walk ended, or the move landed after all, while the timer ran
+	if not mapper.autowalking or mapper.currentroom ~= watchroom then
+		return
+	end
+
+	if retried then
+		mapper.notify(string.format("No reply to %s after %gs. Stopped walking.", what, waited))
+		mapper.endwalk("failed")
+		return
+	end
+
+	retried = true
+	mapper.notify(string.format("No reply to %s after %gs - trying it again.", what, waited))
+	mapper.move()
+end
+
+-- Start the wait for the move we just sent. `extra` is time the game has
+-- already told us to expect on top of the usual wait, as a delayed exit does.
+function mapper.armwatchdog(what, extra)
+	mapper.disarmwatchdog()
+	if not mapper.autowalking then
+		return
+	end
+
+	local timeout = mapper.settings and mapper.settings.walktimeout
+	if type(timeout) ~= "number" then
+		timeout = 5
+	end
+	-- getNetworkLatency reports seconds, and a laggy connection is exactly when
+	-- a reply is slowest rather than missing
+	local latency = getNetworkLatency and getNetworkLatency() or 0
+	if type(latency) ~= "number" or latency < 0 then
+		latency = 0
+	end
+
+	local waited = timeout + (tonumber(extra) or 0)
+	what = what or (mapper.speedWalkDir and mapper.speedWalkDir[mapper.speedWalkCounter]) or "that move"
+	watchroom = mapper.currentroom
+	watchdog = tempTimer(waited + latency, function() movetimedout(waited, what) end)
+end
+
 -- Simple delay function for movement
 function mapper.delayedMove(delay)
 	if delay and delay > 0 then
@@ -29,86 +96,107 @@ function mapper.move()
 		return
 	end
 
-	local cmd
-	if mapper.settings["caravan"] then
-		cmd = "lead caravan " .. mapper.speedWalkDir[mapper.speedWalkCounter]
-	else
-		cmd = mapper.speedWalkDir[mapper.speedWalkCounter]
-	end
-	cmd = cmd or ""
+	local cmd = mapper.speedWalkDir[mapper.speedWalkCounter] or ""
+	local shown = cmd
 	if string.starts(cmd, "script:") then
-		cmd = string.gsub(cmd, "script:", "")
-		loadstring(cmd)()
-		if mapper.settings.showcmds and not mapper.hasty then
-			cecho(
-				string.format(
-					"<red>(<maroon>%d - <dark_slate_grey>%s<red>)",
-					#mapper.speedWalkDir - mapper.speedWalkCounter + 1,
-					"<script>"
-				)
-			)
-		end
-		mapper.hasty = false
+		loadstring((string.gsub(cmd, "script:", "")))()
+		shown = "<script>"
 	else
 		send(cmd, false)
-		if mapper.settings.showcmds and not mapper.hasty then
-			cecho(
-				string.format(
-					"<red>(<maroon>%d - <dark_slate_grey>%s<red>)",
-					#mapper.speedWalkDir - mapper.speedWalkCounter + 1,
-					cmd
-				)
-			)
-		end
-		mapper.hasty = false
 	end
-	-- Movement continues when GMCP room change event fires
+	if mapper.settings.showcmds then
+		cecho(
+			string.format(
+				"<red>(<maroon>%d - <dark_slate_grey>%s<red>)",
+				#mapper.speedWalkDir - mapper.speedWalkCounter + 1,
+				shown
+			)
+		)
+	end
+	-- Movement continues when GMCP room change event fires - or, if it does not,
+	-- when this runs out
+	mapper.armwatchdog(shown)
 end
 
-function mapper.customwalkdelay(delay)
-	local latency = getNetworkLatency() / 1000  -- Convert ms to seconds
-	tempTimer(latency + delay, function() mapper.move() end)
-end
-
-function mapper.stop()
+-- Every way a walk ends. What it leaves behind is the same whichever way it was
+-- - no path, no counter, no balance poll and no highlight - so only the message
+-- and the event told the rest of the profile differ. "failed" says nothing of
+-- its own: the caller has just printed why, and two messages would be worse than
+-- one. Outcomes: "arrived", "there" (we were already), "stopped", "failed".
+function mapper.endwalk(outcome)
+	local walktime = mapper.speedWalkWatch and stopStopWatch(mapper.speedWalkWatch)
 	mapper.speedWalkPath = {}
 	mapper.speedWalkDir = {}
 	mapper.speedWalkCounter = 0
-	stopStopWatch(mapper.speedWalkWatch)
 	mapper.autowalking = false
-	-- clear all the temps we've got
-	if mapper.specials then
-		for trigger, ID in pairs(mapper.specials) do
-			killTrigger(ID)
-		end
+	-- Left running, the balance poll goes on prompting a walk that has ended
+	if mapper.balancetimer then
+		killTimer(mapper.balancetimer)
+		mapper.balancetimer = nil
 	end
-	mapper.specials = {}
-	-- Clear path highlighting
+	-- and the watchdog goes on waiting for a move nobody is making
+	mapper.disarmwatchdog()
+	mapper.resetwatchdog()
 	mapper.clearPathHighlight()
-	mapper.notify("Stopped walking.")
-	raiseEvent("mapper stopped")
+
+	if outcome == "arrived" then
+		if type(walktime) == "number" then
+			mapper.notify(string.format("We've arrived! Took us %.1fs.\n", walktime))
+		else
+			mapper.notify("We've arrived!")
+		end
+		raiseEvent("mapper arrived")
+	elseif outcome == "there" then
+		mapper.echo("We're already at the destination!")
+		raiseEvent("mapper arrived")
+	elseif outcome == "stopped" then
+		mapper.notify("Stopped walking.")
+		raiseEvent("mapper stopped")
+	else
+		raiseEvent("mapper failed path")
+	end
 end
 
--- Willowdale and other games can implement their own balance checking
--- if we can't move, setup a polling timer to prompt walking when we can again.
+function mapper.stop()
+	if not mapper.autowalking and #mapper.speedWalkPath == 0 then
+		mapper.echo("We're not walking anywhere.")
+		return
+	end
+	mapper.endwalk("stopped")
+end
+
+-- Willowdale and other games can implement their own balance checking.
+--
+-- If we cannot move yet, poll until we can. One timer at a time and only while
+-- a walk is actually running: every blocked move used to arm its own, so
+-- several chains ran at once and went on prompting after mstop.
 
 function mapper.canmove(fromtimer)
-	if mapper.mapperCanMove and mapper.mapperCanMove() then
-		if fromtimer then
-			mapper.move()
-		else
-			return true
+	if fromtimer then
+		mapper.balancetimer = nil
+	end
+
+	if mapper.mapperCanMove and not mapper.mapperCanMove() then
+		if mapper.autowalking and not mapper.balancetimer then
+			mapper.balancetimer = tempTimer(0.2, [[mapper.canmove(true)]])
 		end
-	elseif mapper.mapperCanMove then
-		tempTimer(0.2, [[mapper.canmove(true)]])
 		return false
 	end
-	-- Default behavior: assume we can move
+
 	if fromtimer then
 		mapper.move()
-	else
-		return true
 	end
+	return true
+end
+
+-- Mudlet hands the route over in two flat lists, of commands and of room IDs,
+-- so a copy of one is a copy of its elements.
+local function copylist(list)
+	local copy = {}
+	for i = 1, #list do
+		copy[i] = list[i]
+	end
+	return copy
 end
 
 -- doSpeedWalk is used by the mudlet mapping script and should not be changed
@@ -116,16 +204,20 @@ end
 -- removing conflicting packages like generic_mapper
 function mapper.defineDoSpeedWalk()
 doSpeedWalk = function()
-	mapper.speedWalkDir = mapper.deepcopy(speedWalkDir)
-	mapper.speedWalkPath = mapper.deepcopy(speedWalkPath)
+	mapper.speedWalkDir = copylist(speedWalkDir)
+	mapper.speedWalkPath = copylist(speedWalkPath)
 	speedWalkDir, speedWalkPath = {}, {}
-	resetStopWatch(mapper.speedWalkWatch)
-	startStopWatch(mapper.speedWalkWatch)
-	mapper.fixSpecialExits(mapper.speedWalkDir)
+	-- Made here rather than at load: Mudlet will not create a stopwatch while
+	-- it is loading scripts, and hands back nil instead. Without one the walk
+	-- still runs, it just cannot say how long it took.
+	mapper.speedWalkWatch = mapper.speedWalkWatch or createStopWatch()
+	if mapper.speedWalkWatch then
+		resetStopWatch(mapper.speedWalkWatch)
+		startStopWatch(mapper.speedWalkWatch)
+	end
 	if #mapper.speedWalkPath == 0 then
-		mapper.autowalking = false
 		mapper.echo("Couldn't find a path to the destination :(")
-		raiseEvent("mapper failed path")
+		mapper.endwalk("failed")
 		return
 	end
 	-- this is a fix: convert nums to actual numbers
@@ -134,18 +226,12 @@ doSpeedWalk = function()
 	end
 	-- Check if we're already at the destination
 	if mapper.currentroom == mapper.speedWalkPath[#mapper.speedWalkPath] then
-		mapper.echo("We're already at the destination!")
-		raiseEvent("mapper arrived")
-		mapper.speedWalkPath = {}
-		mapper.speedWalkDir = {}
-		mapper.speedWalkCounter = 0
-		mapper.autowalking = false
-		mapper.clearPathHighlight()
+		mapper.endwalk("there")
 		return
 	end
 
 	mapper.autowalking = true
-	raiseEvent("s")
+	mapper.resetwatchdog()
 
 	-- Highlight the path on the map if enabled
 	if mapper.settings.showspeedwalkpath then
@@ -163,7 +249,6 @@ doSpeedWalk = function()
 	echo(": ")
 	mapper.speedWalkCounter = 1
 	if mapper.canmove() then
-		mapper.hasty = true
 		-- Start moving immediately (with delay if configured)
 		local delay = mapper.settings.walkdelay
 		if delay == nil then delay = 0.3 end
@@ -176,24 +261,3 @@ end
 
 -- Define doSpeedWalk on load
 mapper.defineDoSpeedWalk()
-
-function mapper.failpath()
-	if mapper.speedWalkWatch then
-		local walktime = stopStopWatch(mapper.speedWalkWatch)
-		if walktime then
-			mapper.notify(string.format("Can't continue further! Took us %.1fs to get here.\n", walktime))
-		else
-			mapper.notify("Can't continue further!")
-		end
-	else
-		mapper.notify("Can't continue further!")
-	end
-	mapper.autowalking = false
-	mapper.speedWalkPath = {}
-	mapper.speedWalkDir = {}
-	mapper.speedWalkCounter = 0
-	-- Clear path highlighting
-	mapper.clearPathHighlight()
-	-- No longer using movetimer, movement is GMCP-driven
-	raiseEvent("mapper failed path")
-end

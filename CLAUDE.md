@@ -15,11 +15,29 @@
 
 ## Project Structure
 
-The mapper script is organized into several key modules:
-- Core functionality in `/src/scripts/core/`
-- Navigation features in `/src/scripts/navigation/`
-- Mapping features in `/src/scripts/mapping/`
-- Game-specific code in `/src/scripts/game_specific/`
+Four aliases in `src/aliases/aliases.json` (`mapper`, `mconfig`, `mstop`,
+`showpath`) dispatch into `src/scripts/mapping/commands.lua`, which holds the
+whole command tree. Everything else is scripts:
+
+- `src/scripts/core/` - output (`api.lua`), the one directions table
+  (`directions.lua`), settings and their file (`options.lua`), event bindings
+  (`event_handlers.lua`), room-character rules (`utilities.lua`), colours
+- `src/scripts/mapping/` - room creation and GMCP mapping
+  (`room_gmcp_handler.lua`, `room_creation.lua`), exit and lock wrappers
+  (`exit_functions.lua`), area locks, tags (`tags.lua`), terrain weights
+  (`terrain.lua`), the command tree (`commands.lua`)
+- `src/scripts/navigation/` - the room-arrival pipeline
+  (`room_pipeline.lua`, one handler on `gmcp.Room.Info.Exits`), walking and
+  its watchdog (`walking.lua`), path cache (`pathfinding.lua`), doors, move
+  signals, destinations, the right-click map menu and map info line
+  (`mapmenu.lua`)
+- `src/scripts/game_specific/` - Willowdale environment ids and colours
+- `src/scripts/updates/` - the self-updater
+
+Commands are `mapper <verb>` only; no other alias is added. Rooms are placed
+and moved from the coordinates the game sends, so there are no manual
+room-editing commands. Updates are checked on connection and by `mapper
+check`; there is no periodic check.
 
 ## Releases and self-update
 
@@ -98,18 +116,19 @@ Commit message best practices:
 - Never write up fixes for things that you broke yourself inside the same commit
 - If possible, add these sections to the commit message: Added, Fixed, Changed, Removed
 
-## Recent Changes
+## Notes verified from source
 
-### Simplified Option System
-- Options are now defined in a simple table structure in `option_definitions.lua`
-- Easy to add new options without complex function calls
-- Supports all existing features (validation, onChange handlers, game-specific options)
-
-### GMCP Structure Support
-- Handles hierarchical GMCP room data (Info.Basic, Info.Exits, etc.)
-- Automatic door creation and state tracking
-- Coordinate system conversion for Y-axis inversion
-
-### Package Installation Handler
-- Automatically reloads mapper settings when package is reinstalled
-- Listens to `sysInstallPackage` event
+- The server sends `Room.Info.Basic` then `Room.Info.Exits` per room change,
+  and `Room.Info.Exits` alone when a door or lock changes. Mudlet raises one
+  event per level of a GMCP key, so a handler on `gmcp.Room.Info` runs once per
+  message; the mapper therefore hangs everything off `gmcp.Room.Info.Exits`.
+- Mudlet's `setDoor`, `getDoors` and exit weights key directions as `n`, `ne`,
+  `e`, `se`, `s`, `sw`, `w`, `nw`, `up`, `down`, `in`, `out`; `mapper.dirdoor`
+  gives that spelling. `getAreaRooms` is 0-indexed; use `getAreaRooms1`.
+- `getNetworkLatency()` returns seconds. `setExitStub` raises on a missing
+  room. A map-info callback returning nil for its colour gets Mudlet's own
+  adaptive one.
+- Local checkouts for checking such things: the server at
+  `/Users/jens/mud/WillowdaleMUD` (`modules/gmcp/gmcp.Room.go`,
+  `internal/usercommands/movesignals.go`) and Mudlet at
+  `/Users/jens/mud/Mudlet/src` (`TLuaInterpreterMapper.cpp`).

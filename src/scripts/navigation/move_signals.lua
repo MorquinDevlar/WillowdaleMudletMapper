@@ -17,6 +17,7 @@ local blockedReasons = {
 	restrained = "something is holding you",
 	["exit-refused"] = "the room will not let you leave",
 	["entry-refused"] = "the way ahead will not let you in",
+	["in-transit"] = "the way onward is still underway",
 }
 
 -- Head for the same destination again, now that one more thing about the map is
@@ -53,10 +54,10 @@ function mapper.wrongdir_handler()
 		-- gone. Record that before repathing, or the same route comes straight back.
 		if mapper.isStandardExit(dir) then
 			mapper.lockExit(room, dir, true)
-		elseif lockSpecialExit then
+		else
 			local destination = tonumber((getSpecialExitsSwap(room) or {})[dir])
 			if destination then
-				lockSpecialExit(room, destination, dir, true)
+				mapper.lockSpecialExit(room, destination, dir, true)
 			end
 		end
 		repath(string.format("The %s exit is locked and we cannot open it.", dir))
@@ -79,8 +80,20 @@ function mapper.moveblocked_handler()
 	end
 
 	if signal.reason == "unbalanced" then
-		-- Not a refusal so much as a "not yet"; canmove polls and resumes the walk.
+		-- Not a refusal so much as a "not yet"; canmove polls and resumes the walk,
+		-- and the move it resends arms a fresh watchdog, so this one would only be
+		-- counting down against a move nobody has made yet.
+		mapper.disarmwatchdog()
 		mapper.canmove(true)
+		return
+	end
+
+	if signal.reason == "in-transit" then
+		-- A move already accepted is still landing. Say so and keep waiting for the
+		-- room change: stopping here would abandon a walk that is about to continue.
+		-- The wait starts again from here, since this is the last we have heard.
+		mapper.notify("Waiting - " .. blockedReasons["in-transit"] .. ".")
+		mapper.armwatchdog()
 		return
 	end
 
@@ -103,4 +116,7 @@ function mapper.movedelayed_handler()
 	if mapper.settings and mapper.settings.showcmds then
 		mapper.notify(string.format("Waiting %ds for the way %s.", seconds, signal.dir or "onward"))
 	end
+	-- The watchdog was armed for a move that lands straight away. This one has
+	-- been promised for later, so it gets the wait the game named on top.
+	mapper.armwatchdog(signal.dir, seconds)
 end

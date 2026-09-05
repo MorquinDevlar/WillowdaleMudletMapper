@@ -72,7 +72,6 @@ mapper.colorcodes = {
 }
 
 -- Build reverse lookup table
-mapper.waterenvs = {}
 mapper.envidsr = {}
 for name, id in pairs(mapper.envids) do
     mapper.envidsr[id] = name
@@ -101,6 +100,62 @@ function mapper.registergomudenvdata(_, game)
 
     -- Build hex→envId lookup from GMCP biome_colors
     mapper.buildBiomeColorLookup()
+    mapper.buildSafeBiomeSet()
+end
+
+-- Take the game's own list of safe biomes when it sends one. The `safe` flag a
+-- biome carries in the game's data is not part of GMCP today, so terrain.lua
+-- names the biomes that have it; a list here replaces that set, so the game can
+-- start sending one without the mapper having to change with it.
+function mapper.buildSafeBiomeSet()
+    local list = gmcp and gmcp.Game and gmcp.Game.Info and gmcp.Game.Info.safe_biomes
+    if type(list) ~= "table" then
+        return
+    end
+
+    local safe = {}
+    for _, name in ipairs(list) do
+        if type(name) == "string" and name ~= "" then
+            safe[name:lower()] = true
+        end
+    end
+    -- An empty or malformed list is no reason to call every biome unsafe
+    if not next(safe) then
+        return
+    end
+
+    -- The same set as the one in use changes nothing, and a reconnect sends
+    -- Game.Info again, so this is the common case
+    local current = mapper.safebiomes or {}
+    local same = true
+    for name in pairs(safe) do
+        if not current[name] then
+            same = false
+            break
+        end
+    end
+    if same then
+        for name in pairs(current) do
+            if not safe[name] then
+                same = false
+                break
+            end
+        end
+    end
+    if same then
+        return
+    end
+
+    mapper.safebiomes = safe
+    -- The load-time sweep ran before Game.Info arrived, against the built-in
+    -- set. With safe walking on, rooms weighted by that set are wrong now, and
+    -- would otherwise only be put right one at a time as they are walked into.
+    if mapper.settings and mapper.settings.safewalk and mapper.applyallterrain then
+        local changed = mapper.applyallterrain()
+        if changed > 0 and mapper.debugging() then
+            mapper.notify(string.format("The game's safe biomes differ from the built-in set; reweighted %d rooms.", changed))
+        end
+    end
 end
 
 -- Build hex color → static env ID lookup from GMCP biome_colors

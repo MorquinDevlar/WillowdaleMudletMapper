@@ -44,20 +44,31 @@ function mapper.createFirstRoom(roomId, areaName, x, y, z)
 	return true
 end
 
-function mapper.mappingnewroom(_, num)
-	local s, m = xpcall(function()
-		if not mapper.editing then
-			return
-		end
+-- Bring the map's idea of a room in line with what GMCP says about it: create
+-- it if it is new, place it, file it under its area, and link its exits.
+function mapper.mappingnewroom(num)
+	local ok, err = xpcall(function()
 		if not gmcp.Room then
 			mapper.notify("You need to have GMCP turned on (see preferences on a recent Mudlet) for mapping stuff.")
 			return
 		end
 		local getRoomName, getRoomCoordinates = getRoomName, getRoomCoordinates
-		local num = tonumber(num) or (gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic and tonumber(gmcp.Room.Info.Basic.id))
+		num = tonumber(num) or (gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic and tonumber(gmcp.Room.Info.Basic.id))
 		local currentexits = gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Exits or {}
-		local s = ""
-		
+
+		-- What this pass did, and whether any of it changed the shape of the map.
+		-- A room, an exit, a lock or a room's area moving makes routes worked out
+		-- earlier worthless; a name, a colour, a symbol or an indoors flag does
+		-- not, and saying so for one of those threw the whole path cache away on
+		-- every step of a walk through rooms being seen for the first time.
+		local report, topology = "", false
+		local function note(what, changedshape)
+			report = report .. (#report > 0 and " " or "") .. what
+			if changedshape then
+				topology = true
+			end
+		end
+
 		-- Debug: Show what exits we received from GMCP
 		if mapper.debugging() then
 			local exitList = {}
@@ -114,7 +125,7 @@ function mapper.mappingnewroom(_, num)
 						end
 						setRoomCoordinates(num, currentRoomX, currentRoomY, currentRoomZ)
 						mapper.storeroomorigin(num, currentRoomArea, currentRoomZone)
-						s = s .. (#s > 0 and " " or "") .. string.format("Repositioned room to %d,%d,%d.", currentRoomX, currentRoomY, currentRoomZ)
+						note(string.format("Repositioned room to %d,%d,%d.", currentRoomX, currentRoomY, currentRoomZ), true)
 					end
 				end
 			else
@@ -128,7 +139,7 @@ function mapper.mappingnewroom(_, num)
 			-- Check if this is the first room (empty map with GMCP coordinates)
 			if mapper.isMapEmpty() and currentRoomX and currentRoomY and currentRoomZ and currentRoomArea then
 				if mapper.createFirstRoom(num, currentRoomArea, currentRoomX, currentRoomY, currentRoomZ) then
-					-- First room created, continue to process exits below
+					topology = true
 				end
 			-- If we have GMCP coordinates, use them directly to create the room
 			-- This handles moving to new areas via special exits (e.g., "touch tree")
@@ -153,22 +164,25 @@ function mapper.mappingnewroom(_, num)
 					end
 					setRoomEnv(num, envId or mapper.defaultroomenv())
 
-					s = string.format("Created room %d at %d,%d,%d in %s.", num, currentRoomX, currentRoomY, currentRoomZ, currentRoomArea)
+					local made = string.format("Created room %d at %d,%d,%d in %s.", num, currentRoomX, currentRoomY, currentRoomZ, currentRoomArea)
+					note(made, true)
 
 					if mapper.debugging() then
-						mapper.notify(s)
+						mapper.notify(made)
 					end
 				end
-			-- otherwise place it next to a room we already know, using the exit we came by
+			-- otherwise place it next to a room we already know. This room has
+			-- `exit` leading to that one, so it sits one step the other way from it.
 			else
 				for exit, exitData in pairs(currentexits) do
 					local id = exitData.room_id
 					-- Only use standard exits for coordinate calculation
 					if mapper.roomexists(id) and mapper.isStandardExit(exit) then
-						-- getshiftedcoords internally reverses the direction, so if we have exit 'east' to room 'id',
-						-- it will place the new room to the west of room 'id' (which is correct)
-						s = mapper.makeroom(id, num, mapper.getshiftedcoords(exit, getRoomCoordinates(id)))
-						break -- Room created, exit the loop
+						local x, y, z = mapper.shiftcoords(mapper.dirreverse(exit), getRoomCoordinates(id))
+						if x then
+							note(mapper.makeroom(id, num, x, y, z), true)
+							break -- Room created, exit the loop
+						end
 					end
 				end
 			end
@@ -181,7 +195,7 @@ function mapper.mappingnewroom(_, num)
 			if getRoomName(num) ~= rootroomname then
 				setRoomName(num, rootroomname)
 				unHighlightRoom(num)
-				s = s .. (#s > 0 and " " or "") .. "Updated room name to '" .. rootroomname .. "'."
+				note("Updated room name to '" .. rootroomname .. "'.")
 			end
 			-- File the room under the area GMCP reports for it. A room mapped ahead of
 			-- the player, from an exit alone, was placed with the room it was seen from
@@ -192,7 +206,7 @@ function mapper.mappingnewroom(_, num)
 				if areaId and getRoomArea(num) ~= areaId then
 					setRoomArea(num, areaId)
 					mapper.storeroomorigin(num, currentRoomArea, currentRoomZone)
-					s = s .. (#s > 0 and " " or "") .. "Moved room into area '" .. currentRoomArea .. "'."
+					note("Moved room into area '" .. currentRoomArea .. "'.", true)
 				end
 			end
 			-- autolink exits
@@ -200,51 +214,55 @@ function mapper.mappingnewroom(_, num)
 			-- check for missing exits
 			for exit, exitData in pairs(currentexits) do
 				local id = exitData.room_id
+				local longname = mapper.dirlong(exit)
 				if id == 0 then
-					s = s
-						.. (#s > 0 and " " or "")
-						.. "Can't link to the "
-						.. exit
-						.. ", it leads to a room with ID 0 (and that's not supported yet)."
-				else
-					if not x[mapper.anytolong(exit)] then
-						if not mapper.roomexists(id) then
-							-- Check if exit leads out of this map
-							local targetZone = exitData.details and exitData.details.leads_to_area
-							local targetAreaId = mapper.exitareaid(targetZone)
+					-- The game says there is a way out here but will not name the
+					-- room on the other side. A stub is exactly that: the map draws
+					-- the exit as one nobody has been through, instead of drawing
+					-- nothing and reading as a wall.
+					if mapper.isStandardExit(exit) then
+						if mapper.setExitStub(num, exit, true) then
+							note("Marked the " .. exit .. " exit as unexplored.", true)
+						end
+					else
+						note("Can't link to the " .. exit .. ", it leads to a room with ID 0 (and that's not supported yet).")
+					end
+				elseif not (longname and x[longname]) then
+					if not mapper.roomexists(id) then
+						-- Check if exit leads out of this map
+						local targetZone = exitData.details and exitData.details.leads_to_area
+						local targetAreaId = mapper.exitareaid(targetZone)
 
-							-- Check if we should use absolute positioning from delta data or standard directional positioning
-							if
-								mapper.settings.autopositionrooms
-								and exitData.delta_x
-								and exitData.delta_y
-								and exitData.delta_z
-								and currentRoomX
-								and currentRoomY
-								and currentRoomZ
-							then
-								-- Use absolute positioning from GMCP delta data
-								-- Delta values match Mudlet's coordinate system directly (no inversion needed)
-								local newX = currentRoomX + exitData.delta_x
-								local newY = currentRoomY + exitData.delta_y
-								local newZ = currentRoomZ + exitData.delta_z
+						-- Check if we should use absolute positioning from delta data or standard directional positioning
+						local newX, newY, newZ
+						if
+							mapper.settings.autopositionrooms
+							and exitData.delta_x
+							and exitData.delta_y
+							and exitData.delta_z
+							and currentRoomX
+							and currentRoomY
+							and currentRoomZ
+						then
+							-- Use absolute positioning from GMCP delta data
+							-- Delta values match Mudlet's coordinate system directly (no inversion needed)
+							newX = currentRoomX + exitData.delta_x
+							newY = currentRoomY + exitData.delta_y
+							newZ = currentRoomZ + exitData.delta_z
 
-								if mapper.debugging() then
-									mapper.notify(string.format("Creating room %d at (%d,%d,%d) using delta (%d,%d,%d) from room %d at (%d,%d,%d)",
-										id, newX, newY, newZ, exitData.delta_x, exitData.delta_y, exitData.delta_z,
-										num, currentRoomX, currentRoomY, currentRoomZ))
-								end
-
-								s = mapper.makeroom(num, id, newX, newY, newZ, targetAreaId)
-							else
-								-- Use standard directional positioning (+1 in direction)
-								s = mapper.makeroom(
-									num,
-									id,
-									mapper.getshiftedcoords(exit, getRoomCoordinates(num)),
-									targetAreaId
-								)
+							if mapper.debugging() then
+								mapper.notify(string.format("Creating room %d at (%d,%d,%d) using delta (%d,%d,%d) from room %d at (%d,%d,%d)",
+									id, newX, newY, newZ, exitData.delta_x, exitData.delta_y, exitData.delta_z,
+									num, currentRoomX, currentRoomY, currentRoomZ))
 							end
+						else
+							-- Nothing to go on but the direction: the room is reached BY
+							-- `exit` from here, so it sits one step along `exit`.
+							newX, newY, newZ = mapper.shiftcoords(exit, getRoomCoordinates(num))
+						end
+
+						if newX then
+							note(mapper.makeroom(num, id, newX, newY, newZ, targetAreaId), true)
 
 							-- The zone is all an exit tells us about the room on the other
 							-- side; its area is only recorded once that zone is known to name
@@ -255,61 +273,48 @@ function mapper.mappingnewroom(_, num)
 								mapper.storeroomorigin(id, currentRoomArea, nil)
 							end
 						end
-						-- Check if this is a standard exit or a special exit
-						if mapper.isStandardExit(exit) then
-							if mapper.setExit(num, id, exit) then
-								s = s
-									.. (#s > 0 and " " or "")
-									.. "Added missing exit "
-									.. exit
-									.. " to "
-									.. (getRoomName(id) ~= "" and getRoomName(id) or "''")
-									.. " ("
-									.. id
-									.. ")."
-							else
-								s = s
-									.. (#s > 0 and " " or "")
-									.. string.format(
-										"Failed to link %d with %d via %s exit for some reason :/",
-										num,
-										id,
-										exit
-									)
-							end
+					end
+					-- Check if this is a standard exit or a special exit
+					if mapper.isStandardExit(exit) then
+						if mapper.setExit(num, id, exit) then
+							note("Added missing exit "
+								.. exit
+								.. " to "
+								.. (getRoomName(id) ~= "" and getRoomName(id) or "''")
+								.. " ("
+								.. id
+								.. ").", true)
 						else
-							-- This is a special exit (like "touch tree", "enter portal", etc.)
-							-- Where the command goes can change - a gangway that leads to
-							-- whichever dock the boat is at now, a portal that was mapped
-							-- wrong once. Keeping the first destination we ever saw would
-							-- send speedwalks to a room the command no longer reaches, so
-							-- an exit that already exists is repointed rather than skipped.
-							local existingSpecialExits = getSpecialExitsSwap(num) or {}
-							local knownDestination = tonumber(existingSpecialExits[exit])
-							if not knownDestination then
-								addSpecialExit(num, id, exit)
-								s = s
-									.. (#s > 0 and " " or "")
-									.. "Added special exit '"
-									.. exit
-									.. "' to "
-									.. (getRoomName(id) ~= "" and getRoomName(id) or "''")
-									.. " ("
-									.. id
-									.. ")."
-							elseif knownDestination ~= tonumber(id) then
-								removeSpecialExit(num, exit)
-								addSpecialExit(num, id, exit)
-								s = s
-									.. (#s > 0 and " " or "")
-									.. "Special exit '"
-									.. exit
-									.. "' now leads to "
-									.. (getRoomName(id) ~= "" and getRoomName(id) or "''")
-									.. " ("
-									.. id
-									.. ")."
-							end
+							note(string.format("Failed to link %d with %d via %s exit for some reason :/", num, id, exit))
+						end
+					else
+						-- This is a special exit (like "touch tree", "enter portal", etc.)
+						-- Where the command goes can change - a gangway that leads to
+						-- whichever dock the boat is at now, a portal that was mapped
+						-- wrong once. Keeping the first destination we ever saw would
+						-- send speedwalks to a room the command no longer reaches, so
+						-- an exit that already exists is repointed rather than skipped.
+						local existingSpecialExits = getSpecialExitsSwap(num) or {}
+						local knownDestination = tonumber(existingSpecialExits[exit])
+						if not knownDestination then
+							addSpecialExit(num, id, exit)
+							note("Added special exit '"
+								.. exit
+								.. "' to "
+								.. (getRoomName(id) ~= "" and getRoomName(id) or "''")
+								.. " ("
+								.. id
+								.. ").", true)
+						elseif knownDestination ~= tonumber(id) then
+							removeSpecialExit(num, exit)
+							addSpecialExit(num, id, exit)
+							note("Special exit '"
+								.. exit
+								.. "' now leads to "
+								.. (getRoomName(id) ~= "" and getRoomName(id) or "''")
+								.. " ("
+								.. id
+								.. ").", true)
 						end
 					end
 				end
@@ -322,12 +327,18 @@ function mapper.mappingnewroom(_, num)
 					-- So we should check against the long form directly
 					if not currentexits[exit] then
 						mapper.setExit(num, -1, exit)
-						s = s
-							.. (#s > 0 and " " or "")
-							.. exit
-							.. " exit to "
-							.. id
-							.. " doesn't actually exist, removed it."
+						note(exit .. " exit to " .. id .. " doesn't actually exist, removed it.", true)
+					end
+				end
+				-- The same for the ways out the map only knows as unexplored:
+				-- the game has stopped reporting them, so they are not there.
+				if getExitStubs1 then
+					for _, stub in ipairs(getExitStubs1(num) or {}) do
+						local stubname = mapper.dirlong(stub)
+						if stubname and not currentexits[stubname]
+							and mapper.setExitStub(num, stub, false) then
+							note("The unexplored " .. stubname .. " exit isn't there any more, removed it.", true)
+						end
 					end
 				end
 			end
@@ -336,32 +347,7 @@ function mapper.mappingnewroom(_, num)
 				local envId = mapper.getBiomeEnvId(gmcp.Room.Info.Basic.biome_color)
 				if envId and envId ~= getRoomEnv(num) then
 					setRoomEnv(num, envId)
-					s = s .. (#s > 0 and " " or "") .. "Updated room color to " .. gmcp.Room.Info.Basic.biome_color .. "."
-				end
-			end
-			-- store and display biome data
-			if gmcp.Room.Info.Basic and gmcp.Room.Info.Basic.environment then
-				local environment = gmcp.Room.Info.Basic.environment
-				local envLower = environment:lower()
-				local symbol = gmcp.Room.Info.Basic.biome_symbol or ""
-
-				-- Store biome data on the room
-				if getRoomUserData(num, "biome") ~= environment then
-					setRoomUserData(num, "biome", environment)
-				end
-				if getRoomUserData(num, "biome_symbol") ~= symbol then
-					setRoomUserData(num, "biome_symbol", symbol)
-				end
-
-				-- Set room character for biomes based on roomchar setting
-				if symbol ~= "" and mapper.shouldShowRoomChar(envLower) then
-					if getRoomChar(num) ~= symbol then
-						setRoomChar(num, symbol)
-						s = s .. (#s > 0 and " " or "") .. "Set room symbol to '" .. symbol .. "'."
-					end
-				elseif symbol ~= "" and getRoomChar(num) == symbol then
-					-- Clear symbol if settings changed and it shouldn't be shown
-					setRoomChar(num, "")
+					note("Updated room color to " .. gmcp.Room.Info.Basic.biome_color .. ".")
 				end
 			end
 			-- check indoors status
@@ -369,23 +355,21 @@ function mapper.mappingnewroom(_, num)
 			if indoors and (getRoomUserData(num, "indoors") == "" or getRoomUserData(num, "outdoors") ~= "") then
 				setRoomUserData(num, "indoors", "y")
 				clearRoomUserDataItem(num, "outdoors")
-				s = s .. (#s > 0 and " " or "") .. "Updated room to be indoors."
+				note("Updated room to be indoors.")
 			elseif
 				not indoors and (getRoomUserData(num, "indoors") ~= "" or getRoomUserData(num, "outdoors") == "")
 			then
 				clearRoomUserDataItem(num, "indoors")
 				setRoomUserData(num, "outdoors", "y")
-				s = s .. (#s > 0 and " " or "") .. "Updated room to be outdoors."
+				note("Updated room to be outdoors.")
 			end
 
 			-- Willowdale can add game area tracking here if needed
 		end
-		if #s > 0 then
-			if mapper.settings and mapper.settings.showmappingmessages then
-				mapper.notify(s)
-			end
-			centerview(mapper.currentroom)
-			-- Clear path cache since map was modified
+		if #report > 0 and mapper.settings and mapper.settings.showmappingmessages then
+			mapper.notify(report)
+		end
+		if topology then
 			raiseEvent("mapper updated map")
 		end
 	end, function(error)
@@ -393,7 +377,37 @@ function mapper.mappingnewroom(_, num)
 		echo("  ")
 		echoLink("view steps", "echo[[" .. debug.traceback() .. "]]", "View steps of code that led up to it")
 	end)
-	if not s then
-		mapper.notify(m)
+	if not ok then
+		mapper.notify(err)
 	end
+end
+
+-- What the game says about the kind of place a room is, kept on the room itself
+-- and drawn as its character when the roomchar setting asks for it. Stored on
+-- every arrival rather than only while mapping: the data belongs to the room
+-- whether or not new rooms are being created.
+function mapper.storebiome(num)
+	local basic = gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic
+	local environment = basic and basic.environment
+	if not environment or environment == "" then
+		return
+	end
+	local symbol = basic.biome_symbol or ""
+
+	if getRoomUserData(num, "biome") ~= environment then
+		setRoomUserData(num, "biome", environment)
+	end
+	if getRoomUserData(num, "biome_symbol") ~= symbol then
+		setRoomUserData(num, "biome_symbol", symbol)
+	end
+
+	-- What a room costs to cross follows from its biome, so it is set where the
+	-- biome is stored. A weight change is a change to the pathfinding graph.
+	if mapper.applyterrain(num, environment) then
+		raiseEvent("mapper updated map")
+	end
+
+	-- What the room draws is one rule shared with tagging and the roomchar
+	-- setting, so that they cannot each leave a different character behind.
+	mapper.refreshroomsymbol(num)
 end

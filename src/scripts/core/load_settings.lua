@@ -9,7 +9,6 @@ mapper = mapper or {}
 mapper.autowalking = mapper.autowalking or false
 mapper.currentroom = mapper.currentroom or 0
 mapper.currentroomname = mapper.currentroomname or "(unknown)"
-mapper.specials = mapper.specials or {}
 
 -- firstRun must be explicitly checked for nil since false is a valid value
 if mapper.firstRun == nil then
@@ -20,14 +19,15 @@ end
 if mapper.editing == nil then
 	mapper.editing = true
 end
-mapper.speedWalkWatch = createStopWatch()
+-- The walk's stopwatch is not made here: Mudlet refuses to create one while it
+-- is loading scripts, so one made at load time is nil. walking.lua makes it
+-- the first time a walk starts, when creation is allowed.
 -- speedWalkPath and speedWalkDir populated by Mudlet from getPath() and gotoRoom()
 speedWalkPath = speedWalkPath or {}
 speedWalkDir = speedWalkDir or {}
 
 -- actually used by the mapper for walking
 mapper.speedWalkCounter = 0
-mapper.speedWalk = mapper.speedWalk or {}
 mapper.speedWalkPath = mapper.speedWalkPath or {}
 mapper.speedWalkDir = mapper.speedWalkDir or {}
 local newversion = "__VERSION__"
@@ -51,42 +51,7 @@ function mapper.startup()
 		return
 	end
 
-	-- Load options from the simple definition table
-	local private_settings = mapper.convertOptionsFromDefinitions()
-
-	mapper.settings = mapper.createOptionsTable(private_settings)
-	mapper.settings.disp = mapper.echo
-
-	mapper.settings.dispOption = function(opt, val)
-		-- Format boolean values as on/off
-		local displayValue = val.value
-		if type(val.value) == "boolean" then
-			displayValue = val.value and "on" or "off"
-		end
-
-		-- Determine options available
-		local options = ""
-		if val.allowedVarTypes and table.contains(val.allowedVarTypes, "boolean") then
-			options = "on|off"
-		elseif opt == "walkdelay" then
-			options = "0-5 seconds"
-		else
-			options = val.use or ""
-		end
-
-		-- Truncate long values for display
-		local stateStr = tostring(displayValue)
-		if #stateStr > 29 then
-			stateStr = stateStr:sub(1, 26) .. "..."
-		end
-
-		-- Display in columns: Setting, State, Option
-		decho(string.format("<112,229,0>%-24s <255,255,255>%-10s <128,128,128>%s\n", opt, stateStr, options))
-	end
-
-	mapper.settings.dispDefaultWriteError = function()
-		mapper.echo("Please use the mconfig alias to set options!")
-	end
+	mapper.settings = mapper.newsettings()
 
 	-- Set environment colors if they're defined
 	if mapper.setEnvironmentColors then

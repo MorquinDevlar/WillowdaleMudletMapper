@@ -19,6 +19,13 @@ function mapper.onPackageInstalled(_, package)
             if mapper and mapper.reload then
                 mapper.reload()
             end
+            -- An update installs in the middle of a session, so the map it
+            -- finds may still carry the features and marks of the version it
+            -- replaced; sysLoadEvent, which normally turns them into tags,
+            -- does not fire for an install.
+            if mapper and mapper.migratetags then
+                mapper.migratetags()
+            end
             -- Restore Mudlet's current room from GMCP data so double-click works
             if gmcp and gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic then
                 local roomId = tonumber(gmcp.Room.Info.Basic.id)
@@ -34,8 +41,10 @@ function mapper.onPackageInstalled(_, package)
     end
 end
 
--- Register the event handler
+-- The version before this one registered the handler above anonymously and
+-- kept the id here; the table carries it across a reinstall so that it can be
+-- taken down, or the install would be handled twice.
 if mapper.packageInstalledHandler then
     killAnonymousEventHandler(mapper.packageInstalledHandler)
+    mapper.packageInstalledHandler = nil
 end
-mapper.packageInstalledHandler = registerAnonymousEventHandler("sysInstallPackage", "mapper.onPackageInstalled")

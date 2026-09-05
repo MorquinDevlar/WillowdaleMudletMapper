@@ -7,7 +7,8 @@ A custom GMCP mapper for WillowdaleMUD, providing automatic room mapping and nav
 - Automatic room mapping using GMCP data
 - Coordinate-based room positioning with exitsv2 support
 - Speedwalking and pathfinding
-- Map feature tracking
+- Room tags, with map symbols, to walk back to places you name
+- Terrain-aware routing, and the mapper's own right-click menu and map overlay
 - Crowdmap support (future implementation)
 
 ## Installation
@@ -21,12 +22,22 @@ A custom GMCP mapper for WillowdaleMUD, providing automatic room mapping and nav
 Common commands:
 - `mapper` - List every command the mapper has
 - `mapper goto <room ID>` - Walk to a specific room
-- `mapper goto <area name>` - Walk to an area, or `mapper goto feature <name>` for a feature
+- `mapper goto <area name>` - Walk to an area, or `mapper goto <tag>` for the nearest room with a tag
 - `mapper find <name>` - Find rooms by name, to get the ID to walk to
-- `showpath <room ID>` - Show the directions there and highlight the path, without walking it
-- `mstop` - Stop walking
-- `mconfig` - View or change mapper settings
-- `mapper start` / `mapper stop` - Turn the creation of new rooms on and off
+- `mapper path <room ID>` - Show the directions there and highlight the path, without walking it (`showpath` for short)
+- `mapper stop` - Stop walking (`mstop` for short)
+- `mapper tag <name> [room]` / `mapper untag <name> [room]` - Put a tag on a room, or take it off
+- `mapper tags [name]` - List the tags, or the rooms carrying one
+- `mapper terrain [biome weight]` - List what each kind of ground costs a walk, or make one cost more so walks go round it
+- `mapper config safewalk on` - Keep walks on roads, paths, inns and post offices, the ground the game marks safe from hostile mobs
+- `mapper config` - View or change mapper settings (`mconfig` for short)
+- `mapper on` / `mapper off` - Turn the creation of new rooms on and off
+
+Right-clicking a room on the map opens a "Willowdale mapper" submenu with Walk
+here, Show path here (Clear path while one is shown), Look at room, Lock/Unlock
+this area and Tag this room,
+which applies the tag you named last. The map also draws a line of information
+about the room you are standing in; turn it off in the map's own Info menu.
 
 ## Development
 

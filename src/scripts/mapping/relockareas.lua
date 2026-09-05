@@ -20,4 +20,8 @@ function mapper.relockareas()
 	for _, roomid in pairs(rooms) do
 		lockRoom(roomid, true)
 	end
+
+	-- Which rooms the pathfinder may enter has been rewritten across the map, so
+	-- nothing worked out against the old locks can be trusted.
+	mapper.clearpathcache()
 end

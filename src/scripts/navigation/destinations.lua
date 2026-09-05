@@ -8,7 +8,9 @@ function mapper.viewArea(where, exact)
 	end
 	local areaid, msg, multiples = mapper.findAreaID(where, exact)
 	if areaid then
-		local rooms = getAreaRooms(areaid) or {}
+		-- getAreaRooms1, not getAreaRooms: the latter starts at index 0, so a
+		-- one-room area looked empty here
+		local rooms = getAreaRooms1(areaid) or {}
 		if not rooms[1] then
 			mapper.echo("The area has no rooms in it.")
 		else
@@ -32,8 +34,7 @@ function mapper.viewArea(where, exact)
 	end
 end
 
-function mapper.gotoRoom(where, gotoType)
-	mapper.speedWalk.type = gotoType or "room"
+function mapper.gotoRoom(where)
 	if not where or not tonumber(where) then
 		mapper.echo("Where do you want to go to?")
 		return
@@ -46,36 +47,19 @@ function mapper.gotoRoom(where, gotoType)
 	-- if getPath worked, then the dirs and room #'s tables were populated for us
 	if not mapper.getPath(mapper.currentroom, tonumber(where)) then
 		mapper.echo("Don't know how to get to " .. mapper.roomName(where, true) .. " from here :(")
-		mapper.speedWalkPath = {}
-		mapper.speedWalkDir = {}
-		mapper.speedWalkCounter = 0
-		raiseEvent("mapper failed path")
+		mapper.endwalk("failed")
 		return
 	end
 	doSpeedWalk()
 end
 
 function mapper.gotoArea(where, number, exact)
-	mapper.speedWalk.type = "area"
 	if not where or type(where) ~= "string" then
 		mapper.echo("Where do you want to go to?")
 		return
 	end
 	local where = where:lower()
 	number = tonumber(number)
-	local tmp = getRoomUserData(1, "gotoMapping")
-	if not tmp or tmp == "" then
-		tmp = "[]"
-	end
-	local temp, maptable = yajl.to_value(tmp), {}
-	for k, v in pairs(temp) do
-		maptable[k:lower()] = v
-	end
-	local destinationRoom = maptable[where]
-	if destinationRoom then
-		mapper.gotoRoom(destinationRoom)
-		return
-	end
 	local areaid, _, multiples = mapper.findAreaID(where, exact)
 	if areaid then
 		mapper.gotoAreaID(areaid)
@@ -124,82 +108,41 @@ function mapper.gotoAreaID(areaid)
 		return
 	end
 	-- Check if the area is locked
-	if areaLocked(areaid) then
+	if mapper.locked and mapper.locked[areaid] then
 		mapper.echo("The area '" .. areaName .. "' is locked. Unlock it first with: mapper area unlock " .. areaName)
 		return
 	end
-	local possibleRooms, shortestBorder = {}, 0
+	local possibleRooms = {}
 	for id, _ in pairs(mapper.getAreaBorders(areaid)) do
 		possibleRooms[#possibleRooms + 1] = id
 	end
-	local shortestBorder, outoftime, checkedsofar = mapper.getShortestOfMultipleRooms(possibleRooms)
-	if shortestBorder == 0 then
-		if outoftime then
-			mapper.echo(
-				string.format(
-					'I checked %d of the %d possible exits "%s" has, but none of the ways there worked and it was taking too long :( try doing this again?',
-					checkedsofar,
-					table.size(possibleRooms),
-					areaName
-				)
-			)
-		else
-			mapper.echo(
-				"Checked "
-					.. table.size(possibleRooms)
-					.. " exits in that area, and none of them worked :( I Don't know how to get you there."
-			)
-		end
-		mapper.speedWalkPath = {}
-		mapper.speedWalkDir = {}
-		mapper.speedWalkCounter = 0
-		raiseEvent("mapper failed path")
-		return
-	end
-	mapper.gotoRoom(shortestBorder, "area")
+	mapper.gotoNearest(possibleRooms, string.format('into "%s"', areaName))
 end
 
-function mapper.gotoFeature(partialFeatureName)
-	local mapFeatures = mapper.getMapFeatures()
-	local feature
-	if mapFeatures[partialFeatureName:lower()] then
-		feature = partialFeatureName:lower()
+-- Walk to whichever of several rooms is quickest to reach - the ways into an
+-- area, or the rooms carrying a tag. `description` finishes the sentence
+-- "none of the ways ... worked" for the case where none of them can be reached.
+function mapper.gotoNearest(candidateRooms, description)
+	local closest, outoftime, checkedsofar = mapper.getShortestOfMultipleRooms(candidateRooms)
+	if closest ~= 0 then
+		mapper.gotoRoom(closest)
+		return
+	end
+
+	local total = table.size(candidateRooms)
+	if outoftime then
+		mapper.echo(string.format(
+			"I checked %d of the %d ways %s, but none of them worked and it was taking too long :( try doing this again?",
+			checkedsofar,
+			total,
+			description
+		))
 	else
-		for key in pairs(mapFeatures) do
-			if key:find(partialFeatureName:lower()) then
-				feature = key
-				break
-			end
-		end
+		mapper.echo(string.format(
+			"Checked all %d ways %s, and none of them worked :( I don't know how to get you there.",
+			total,
+			description
+		))
 	end
-	if not feature then
-		mapper.echo("No feature like " .. partialFeatureName .. " found.")
-		return
-	end
-	local possibleRooms = searchRoomUserData("feature-" .. feature, "true")
-	local closestFeature, outoftime, checkedsofar = mapper.getShortestOfMultipleRooms(possibleRooms)
-	if closestFeature == 0 then
-		if outoftime then
-			mapper.echo(
-				string.format(
-					'I checked %d of the %d possible features "%s" has, but none of the ways there worked and it was taking too long :( try doing this again?',
-					checkedsofar,
-					table.size(possibleRooms),
-					partialFeatureName
-				)
-			)
-		else
-			mapper.echo(
-				"Checked "
-					.. table.size(possibleRooms)
-					.. " rooms with that feature, and none of them worked :( I Don't know how to get you there."
-			)
-		end
-		mapper.speedWalkPath = {}
-		mapper.speedWalkDir = {}
-		mapper.speedWalkCounter = 0
-		raiseEvent("mapper failed path")
-		return
-	end
-	mapper.gotoRoom(closestFeature, "room")
+	mapper.endwalk("failed")
 end

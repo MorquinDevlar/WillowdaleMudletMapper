@@ -1,21 +1,5 @@
 -- functions internal to the mapper
 
--- Deep copy function to create a complete copy of a table
-function mapper.deepcopy(orig)
-    local orig_type = type(orig)
-    local copy
-    if orig_type == "table" then
-        copy = {}
-        for orig_key, orig_value in next, orig, nil do
-            copy[mapper.deepcopy(orig_key)] = mapper.deepcopy(orig_value)
-        end
-        setmetatable(copy, mapper.deepcopy(getmetatable(orig)))
-    else -- number, string, boolean, etc
-        copy = orig
-    end
-    return copy
-end
-
 -- Whether an area is one a player maps into, and so one worth offering in a
 -- listing. Area -1 is Mudlet's own "Default Area", where it parks rooms that
 -- have no area yet, and area 0 is not a real area either: both are work areas of
@@ -41,22 +25,6 @@ function mapper.roomName(roomId, withId)
         return string.format("%s (%s)", name, id)
     end
     return name
-end
-
-function mapper.highlight_unfinished_rooms()
-    if not mapper.areatable then
-        return
-    end
-    for a, b in pairs(mapper.areatable) do
-        local roomList = getAreaRooms(b) or {}
-        for c, d in pairs(roomList) do
-            if getRoomName(d) == "" then
-                local fgr, fgg, fgb = unpack(color_table.red)
-                local bgr, bgg, bgb = unpack(color_table.blue)
-                highlightRoom(d, fgr, fgg, fgb, bgr, bgg, bgb, 1, 100, 100)
-            end
-        end
-    end
 end
 
 -- Check if a biome is a Point of Interest (shop, inn, post office)
@@ -92,64 +60,23 @@ function mapper.shouldShowRoomChar(biome)
     return false
 end
 
--- Refresh room characters on all rooms that have stored biome data. Pass quiet
--- to skip the count, for a caller that reports on its own.
+-- Bring the room characters on the map in line with what decides them: a tag's
+-- symbol first, then the room's biome symbol when the roomchar setting shows
+-- it. mapper.roomsymbol is that whole rule, and is what tagging a single room
+-- goes through too, so a sweep here and a tag put on cannot disagree. Pass
+-- quiet to skip the count, for a caller that reports on its own.
 function mapper.refreshRoomChars(quiet)
-    if not mapper.areatable then
-        return
-    end
     local count = 0
-    if mapper.roomCharMode() == "none" then
-        return
-    end
-    for _, areaId in pairs(mapper.areatable) do
-        local roomList = getAreaRooms(areaId) or {}
-        for _, roomId in pairs(roomList) do
-            local biome = getRoomUserData(roomId, "biome")
-            local symbol = getRoomUserData(roomId, "biome_symbol")
-            if biome ~= "" and symbol ~= "" then
-                if mapper.shouldShowRoomChar(biome) then
-                    if getRoomChar(roomId) ~= symbol then
-                        setRoomChar(roomId, symbol)
-                        count = count + 1
-                    end
-                else
-                    -- Clear symbol if it shouldn't be shown with current setting
-                    if getRoomChar(roomId) == symbol then
-                        setRoomChar(roomId, "")
-                        count = count + 1
-                    end
-                end
-            end
+    for roomId in pairs(getRooms() or {}) do
+        -- One call for the whole of a room's user data rather than one per key
+        local wanted = mapper.roomsymbol(roomId, getAllRoomUserData(roomId) or {})
+        if getRoomChar(roomId) ~= wanted then
+            setRoomChar(roomId, wanted)
+            count = count + 1
         end
     end
     if count > 0 and not quiet then
         mapper.echo("Updated characters on " .. count .. " room(s).")
-    end
-end
-
--- Clear room characters from all rooms that have stored biome data. Pass quiet
--- to skip the count, for a caller that reports on its own.
-function mapper.clearRoomChars(quiet)
-    if not mapper.areatable then
-        return
-    end
-    local count = 0
-    for _, areaId in pairs(mapper.areatable) do
-        local roomList = getAreaRooms(areaId) or {}
-        for _, roomId in pairs(roomList) do
-            local biome = getRoomUserData(roomId, "biome")
-            local symbol = getRoomUserData(roomId, "biome_symbol")
-            if biome ~= "" and symbol ~= "" then
-                if getRoomChar(roomId) == symbol then
-                    setRoomChar(roomId, "")
-                    count = count + 1
-                end
-            end
-        end
-    end
-    if count > 0 and not quiet then
-        mapper.echo("Cleared characters from " .. count .. " room(s).")
     end
 end
 
@@ -270,6 +197,10 @@ end
 function mapper.clearShowPath()
     mapper.showPathDestination = nil
     mapper.clearPathHighlight()
+    -- The map menu's path entry reads "Clear path" only while there is one
+    if mapper.refreshmapmenu then
+        mapper.refreshmapmenu()
+    end
 end
 
 -- Update path highlight to show remaining path during speedwalk

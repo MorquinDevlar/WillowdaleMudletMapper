@@ -1,26 +1,30 @@
 [
     {
-        "name": "display",
+        "name": "mapper",
         "isActive": "yes",
-        "script": "",
-        "isFolder": "yes"
+        "regex": "^mapper(?: (.+))?$",
+        "script": "mapper.commands.dispatch(matches[2])",
+        "isFolder": "no"
     },
     {
-        "name": "mapping",
+        "name": "mconfig",
         "isActive": "yes",
-        "script": "",
-        "isFolder": "yes"
+        "regex": "^mconfig(?: (.+))?$",
+        "script": "mapper.commands.config(matches[2])",
+        "isFolder": "no"
     },
     {
-        "name": "navigation",
+        "name": "mstop",
         "isActive": "yes",
-        "script": "",
-        "isFolder": "yes"
+        "regex": "^mstop$",
+        "script": "mapper.stop()",
+        "isFolder": "no"
     },
     {
-        "name": "utility",
+        "name": "showpath",
         "isActive": "yes",
-        "script": "",
-        "isFolder": "yes"
+        "regex": "^showpath(?: (.+))?$",
+        "script": "mapper.commands.path(matches[2])",
+        "isFolder": "no"
     }
 ]

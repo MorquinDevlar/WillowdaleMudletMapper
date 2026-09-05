@@ -1,18 +1,6 @@
 [
     {
-        "name": "directions_translating_functions",
-        "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
         "name": "pathfinding",
-        "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "special_exits",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
@@ -36,7 +24,7 @@
         "isFolder": "no"
     },
     {
-        "name": "room_events",
+        "name": "room_pipeline",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
@@ -48,13 +36,13 @@
         "isFolder": "no"
     },
     {
-        "name": "centerroominfo",
+        "name": "roomlook",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "roomlook",
+        "name": "mapmenu",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"

@@ -6,13 +6,13 @@
         "isFolder": "no"
     },
     {
-        "name": "create_option_table",
+        "name": "directions",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
     },
     {
-        "name": "option_definitions",
+        "name": "options",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"
@@ -31,24 +31,6 @@
     },
     {
         "name": "biomecolors",
-        "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "mconfig_settings_functions",
-        "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "loadoptions",
-        "isActive": "yes",
-        "script": "",
-        "isFolder": "no"
-    },
-    {
-        "name": "saveoptions",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"

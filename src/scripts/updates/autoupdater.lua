@@ -45,12 +45,6 @@ function mapper.checkupdatestart(...)
 	end)
 end
 
--- Silent update check (for periodic timer)
-function mapper.checkupdatesilent()
-	mapper.updateCheckVerbose = false
-	mapper.checkforupdate()
-end
-
 -- Verbose update check (manual trigger)
 function mapper.checkupdateverbose()
 	mapper.updateCheckVerbose = true
@@ -65,11 +59,6 @@ end
 -- Called automatically on login via "mapper logged in" event
 function mapper.checkforupdate()
 	if mapper.checkingupdates then
-		return
-	end
-
-	if not downloadFile then
-		mapper.notify("Your version of Mudlet doesn't support downloading files - please upgrade to 2.0+")
 		return
 	end
 
