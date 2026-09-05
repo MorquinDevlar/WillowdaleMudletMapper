@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+## 1.6.0 - 2026-09-05
+
 - Added room tags, which are words you put on rooms to find your way back to them: `mapper tag <name> [room]` tags a room, `mapper untag <name> [room]` takes the tag off, `mapper tags` lists every tag with how many rooms carry it, `mapper tags <name>` lists those rooms, and `mapper goto <name>` walks to the nearest one
 - Added `mapper tag <name> symbol <char>`, which draws that character on every room carrying the tag, and `mapper tag <name> symbol none` to take it off again; a room with a tag symbol shows it in place of its biome symbol
 - Added a "Willowdale mapper" submenu to the map's right-click menu, with Walk here, Show path here, Look at room, Lock this area, Unlock this area and Tag this room, which applies the tag you named last; while a path is highlighted the Show path here entry reads Clear path and takes the highlight off
