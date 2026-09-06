@@ -14,6 +14,8 @@ mapper.events.list = {
 	sysUninstallPackage = { "mapper.handleUninstall" },
 	sysDownloadDone = { "mapper.downloadedfile" },
 	sysDownloadError = { "mapper.seedownloaderrors" },
+	-- The 2D map has switched area, including to the first one it shows after a load
+	sysMapAreaChanged = { "mapper.defaultzoom" },
 
 	-- Every way a different map can arrive, funnelled into one event below.
 	mapDataChanged = { "mapper.mapdata_changed" },

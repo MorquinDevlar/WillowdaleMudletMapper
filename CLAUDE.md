@@ -29,8 +29,8 @@ whole command tree. Everything else is scripts:
 - `src/scripts/navigation/` - the room-arrival pipeline
   (`room_pipeline.lua`, one handler on `gmcp.Room.Info.Exits`), walking and
   its watchdog (`walking.lua`), path cache (`pathfinding.lua`), doors, move
-  signals, destinations, the right-click map menu and map info line
-  (`mapmenu.lua`)
+  signals, destinations, the right-click map menu, map info line and starting
+  zoom (`mapmenu.lua`)
 - `src/scripts/game_specific/` - Willowdale environment ids and colours
 - `src/scripts/updates/` - the self-updater
 
@@ -128,6 +128,10 @@ Commit message best practices:
 - `getNetworkLatency()` returns seconds. `setExitStub` raises on a missing
   room. A map-info callback returning nil for its colour gets Mudlet's own
   adaptive one.
+- Mudlet keeps a 2D zoom per area, saved in the map file (default 20, minimum
+  3), and raises `sysMapAreaChanged` from the 2D map on every area switch,
+  including the first area shown after a load; `getMapZoom(areaId)` and
+  `setMapZoom(zoom, areaId)` read and set an area's zoom.
 - Local checkouts for checking such things: the server at
   `/Users/jens/mud/WillowdaleMUD` (`modules/gmcp/gmcp.Room.go`,
   `internal/usercommands/movesignals.go`) and Mudlet at

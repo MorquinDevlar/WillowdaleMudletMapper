@@ -1,7 +1,7 @@
--- The mapper on the map itself: its entries on the right-click menu, and the
--- line of information drawn over the map.
+-- The mapper on the map itself: its entries on the right-click menu, the line
+-- of information drawn over the map, and the zoom an area starts at.
 --
--- Both live in the map rather than in this package. Menus and entries are a
+-- All three live in the map rather than in this package. Menus and entries are a
 -- QMap insert keyed by their unique name, so installing them again is a
 -- no-op rather than a second copy - which is what lets a map that arrives
 -- without them (a fresh one, or one downloaded from elsewhere) be given them
@@ -241,5 +241,28 @@ end
 function mapper.removemapinfo()
     if killMapInfo then
         pcall(killMapInfo, INFO)
+    end
+end
+
+--------------------------------------------------------------------------------
+-- The zoom an area starts at
+--------------------------------------------------------------------------------
+
+local DEFAULT_ZOOM = 10
+local MUDLET_DEFAULT_ZOOM = 20
+
+-- Mudlet shows an area at 20 until someone zooms it, and from then on keeps
+-- that area's zoom in the map file. 20 is further out than this game's rooms
+-- want to be read at, so an area still sitting at Mudlet's default is brought
+-- in to 10; an area with any other zoom was zoomed by the player and keeps what
+-- they chose. This runs on the area switch because that is when the mapper
+-- widget is certain to exist and the area in hand is the one being drawn.
+function mapper.defaultzoom(_, newArea)
+    local area = tonumber(newArea)
+    if not area then
+        return
+    end
+    if getMapZoom(area) == MUDLET_DEFAULT_ZOOM then
+        setMapZoom(DEFAULT_ZOOM, area)
     end
 end

@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+- Changed the zoom an area is first shown at from Mudlet's 20 to 10, so the map starts closer in; an area you have zoomed yourself keeps the zoom you gave it, as before
+
 ## 1.6.1 - 2026-09-05
 
 - Fixed the mapper leaving `Applying existing settings...` as its last line after an update and on connecting, with nothing to say it had finished; it now says `Settings restored.` once they are
