@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+## 1.6.2 - 2026-09-06
+
 - Changed the zoom an area is first shown at from Mudlet's 20 to 10, so the map starts closer in; an area you have zoomed yourself keeps the zoom you gave it, as before
 
 ## 1.6.1 - 2026-09-05
