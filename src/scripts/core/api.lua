@@ -135,6 +135,37 @@ function mapper.debugging()
     return mapper.settings ~= nil and mapper.settings.debug == true
 end
 
+-- One stopwatch per kind of work, so timing a walk does not reset the watch
+-- of the path search it runs inside.
+local stopwatches = {}
+
+local function pack(...)
+    return { n = select("#", ...), ... }
+end
+
+-- Run fn(...) and hand back what it returns. With debug on, it is also timed
+-- and report(seconds, results...) says how long it took.
+function mapper.timed(kind, report, fn, ...)
+    if not mapper.debugging() then
+        return fn(...)
+    end
+    -- Mudlet will not make a stopwatch while it is loading scripts; without
+    -- one the work still runs, it just goes untimed.
+    local watch = stopwatches[kind]
+    if not watch then
+        watch = createStopWatch()
+        stopwatches[kind] = watch
+    end
+    if watch then
+        startStopWatch(watch)
+    end
+    local results = pack(fn(...))
+    if watch then
+        mapper.notify(report(stopStopWatch(watch), unpack(results, 1, results.n)))
+    end
+    return unpack(results, 1, results.n)
+end
+
 -- As mapper.echo, but leaves the cursor on the line for a caller that writes
 -- the rest of it itself.
 function mapper.echon(what)
@@ -322,84 +353,146 @@ function mapper.printfields(fields)
 end
 
 function mapper.findAreaID(areaname, exact)
-	local areaname = areaname:lower()
-	local list = getAreaTable()
+    local areaname = areaname:lower()
+    local list = getAreaTable()
 
-	-- iterate over the list of areas, matching them with substring match.
-	-- if we get match a single area, then return it's ID, otherwise return
-	-- 'false' and a message that there are than one are matches
-	local returnid, fullareaname, multipleareas = nil, nil, {}
-	for area, id in pairs(list) do
-		if (not exact and area:lower():find(areaname, 1, true)) or (exact and areaname == area:lower()) then
-			returnid = id
-			fullareaname = area
-			multipleareas[#multipleareas + 1] = area
-		end
-	end
+    -- iterate over the list of areas, matching them with substring match.
+    -- if we get match a single area, then return it's ID, otherwise return
+    -- 'false' and a message that there are than one are matches
+    local returnid, fullareaname, multipleareas = nil, nil, {}
+    for area, id in pairs(list) do
+        if (not exact and area:lower():find(areaname, 1, true)) or (exact and areaname == area:lower()) then
+            returnid = id
+            fullareaname = area
+            multipleareas[#multipleareas + 1] = area
+        end
+    end
 
-	if #multipleareas == 1 then
-		return returnid, fullareaname
-	else
-		return nil, nil, multipleareas
-	end
+    if #multipleareas == 1 then
+        return returnid, fullareaname
+    else
+        return nil, nil, multipleareas
+    end
 end
 
 function mapper.roomexists(num)
-	local id = tonumber(num)
-	return id ~= nil and roomExists(id)
+    local id = tonumber(num)
+    return id ~= nil and roomExists(id)
 end
 
-function mapper.isMapEmpty()
-	return next(getRooms()) == nil
+-- The room the player is standing in, or nil when the map does not have it.
+function mapper.inmappedroom()
+    local room = mapper.currentroom
+    if room and roomExists(room) then
+        return room
+    end
+    return nil
+end
+
+-- An area's name, from the mapper's own table where it has one, or nil for an
+-- area the map does not know.
+function mapper.areaname(areaid)
+    local name = mapper.areatabler and mapper.areatabler[areaid]
+    if not name then
+        name = getRoomAreaName(areaid)
+    end
+    if type(name) ~= "string" or name == "" then
+        return nil
+    end
+    return name
+end
+
+-- The name of the area a room is in, or nil.
+function mapper.roomareaname(roomid)
+    local id = tonumber(roomid)
+    if not id or not roomExists(id) then
+        return nil
+    end
+    return mapper.areaname(getRoomArea(id))
+end
+
+-- Ask which of several areas was meant, each name a link. codefor(name) is the
+-- Lua a click runs and hintfor(name) its tooltip; numbered puts a clickable
+-- number in front of each, for a command that also takes the number.
+function mapper.offerareas(prompt, names, codefor, hintfor, numbered)
+    mapper.echo(prompt)
+    fg("DimGrey")
+    for i, name in ipairs(names) do
+        echo("  ")
+        if numbered then
+            echoLink(i .. ") ", codefor(name), hintfor(name), true)
+        end
+        setUnderline(true)
+        echoLink(name, codefor(name), hintfor(name), true)
+        setUnderline(false)
+        echo("\n")
+    end
+    resetFormat()
+end
+
+-- What is worked out about an area from all of its rooms, kept until the map
+-- changes: the ways into it that `mapper goto <area>` picks from, and how many
+-- rooms it has. Both read every room of the area, and an area can run to a
+-- great many.
+local borders, roomcounts = {}, {}
+
+function mapper.forgetareas()
+    borders, roomcounts = {}, {}
+end
+
+function mapper.arearoomcount(areaid)
+    local count = roomcounts[areaid]
+    if not count then
+        count = #(getAreaRooms1(areaid) or {})
+        roomcounts[areaid] = count
+    end
+    return count
+end
+
+-- The rooms of an area that a room outside it has an exit into, as a set of
+-- room IDs, or nil after saying why there are none.
+local function findborders(areaid)
+    local roomlist = getAreaRooms1(areaid)
+    -- sometimes getAreaRooms1 can give us no result
+    if not roomlist then
+        mapper.echo(
+            "Sorry, seems we can't go there - getAreaRooms1("
+                .. areaid
+                .. ") didn't give us any results (Mudlet problem - redownloading the map might help fix it)"
+        )
+        return nil
+    end
+    if #roomlist == 0 then
+        mapper.echo("Sorry, seems we can't go there - " .. tostring(mapper.areaname(areaid)) .. " has no rooms in it.")
+        return nil
+    end
+    local inside = {}
+    for i = 1, #roomlist do
+        inside[roomlist[i]] = true
+    end
+    local found = {}
+    for i = 1, #roomlist do
+        local id = roomlist[i]
+        local entrances = getAllRoomEntrances(id) or {}
+        -- One entrance from outside is enough to make it a way in
+        for j = 1, #entrances do
+            if not inside[entrances[j]] then
+                found[id] = true
+                break
+            end
+        end
+    end
+    return found
 end
 
 -- returns rooms in an area that have entrances from outside the area (border rooms)
 function mapper.getAreaBorders(areaid)
-	if mapper.debugging() then
-		mapper.getAreaBordersTimer = mapper.getAreaBordersTimer or createStopWatch()
-		if mapper.getAreaBordersTimer then
-			startStopWatch(mapper.getAreaBordersTimer)
-		end
-	end
-	local roomlist, endresult = getAreaRooms1(areaid), {}
-	-- sometimes getAreaRooms1 can give us no result
-	if not roomlist then
-		mapper.echo(
-			"Sorry, seems we can't go there - getAreaRooms1("
-				.. areaid
-				.. ") didn't give us any results (Mudlet problem - redownloading the map might help fix it)"
-		)
-		return {}
-	end
-	if table.is_empty(roomlist) then
-		mapper.echo("Sorry, seems we can't go there - " .. getRoomAreaName(areaid) .. " has no rooms in it.")
-		return {}
-	end
-	-- make a key-value list of room IDs
-	local reverselist = {}
-	for _, id in ipairs(roomlist) do
-		reverselist[id] = true
-	end
-	local getRoomName = getRoomName
-	for _, id in ipairs(roomlist) do
-		local entrancesFrom = getAllRoomEntrances(id)
-		for remoteRoomIndex = 1, #entrancesFrom do
-			if not reverselist[entrancesFrom[remoteRoomIndex]] then
-				endresult[id] = getRoomName(id)
-			end
-		end
-	end
-	if mapper.debugging() then
-		mapper.notify(
-			"mapper.getAreaBorders() on areaid "
-				.. areaid
-				.. " took "
-				.. stopStopWatch(mapper.getAreaBordersTimer)
-				.. "s to run. Returned "
-				.. table.size(endresult)
-				.. " results."
-		)
-	end
-	return endresult
+    if not borders[areaid] then
+        borders[areaid] = mapper.timed("areaborders", function(elapsed, found)
+            return string.format("mapper.getAreaBorders() on areaid %s took %ss to run. Returned %d results.",
+                areaid, elapsed, table.size(found or {}))
+        end, findborders, areaid)
+    end
+    return borders[areaid] or {}
 end
 

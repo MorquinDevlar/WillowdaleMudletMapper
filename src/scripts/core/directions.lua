@@ -36,11 +36,14 @@ end
 
 -- The record for a direction given as a number, a short name or a long name in
 -- any case, or nil for anything else. Everything below is a field of this.
+-- GMCP and Mudlet already spell directions in lower case, so the lookup is
+-- tried as given first and a string is only lowered when that misses.
 local function record(any)
-    if type(any) == "string" then
-        return byname[any:lower()]
+    local dir = byname[any]
+    if dir or type(any) ~= "string" then
+        return dir
     end
-    return byname[any]
+    return byname[any:lower()]
 end
 
 function mapper.dirnumber(any)

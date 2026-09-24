@@ -17,11 +17,9 @@ mapper.events.list = {
 	-- The 2D map has switched area, including to the first one it shows after a load
 	sysMapAreaChanged = { "mapper.defaultzoom" },
 
-	-- Every way a different map can arrive, funnelled into one event below.
-	mapDataChanged = { "mapper.mapdata_changed" },
-	sysMapLoad = { "mapper.mapdata_changed" },
-	sys2DMapLoad = { "mapper.mapdata_changed" },
-	sys3DMapLoad = { "mapper.mapdata_changed" },
+	-- The two ways Mudlet says a different map has arrived - the map window
+	-- opening with one, and a map being downloaded - funnelled into one event
+	-- below.
 	sysMapDownloadEvent = { "mapper.mapdata_changed" },
 	mapOpenEvent = { "mapper.mapdata_changed" },
 
@@ -40,16 +38,20 @@ mapper.events.list = {
 
 	-- Custom mapper events
 	["mapper areas changed"] = { "mapper.regenerateareas" },
-	-- Anything the pathfinder reads has changed, so kept routes are worthless
-	["mapper updated map"] = { "mapper.clearpathcache" },
-	-- A freshly loaded map has its own areas and its own tags, and neither the
-	-- room locks that keep pathfinding out of an area the player locked nor the
-	-- mapper's right-click menu are part of the map file it arrived in.
+	-- Anything the pathfinder reads has changed, so kept routes are worthless,
+	-- and so is what was worked out about each area's rooms
+	["mapper updated map"] = { "mapper.clearpathcache", "mapper.forgetareas" },
+	-- A freshly loaded map has its own areas and its own tags, and the room
+	-- locks, weights and characters the player's settings call for may not be
+	-- the ones it was saved with; nor is the mapper's right-click menu part of
+	-- the map file it arrived in.
+	-- The tags go before the sync: migratetags drops the tag list of the map
+	-- before, and the sync draws rooms by the tags of this one.
 	["mapper map reloaded"] = {
 		"mapper.regenerateareas",
-		"mapper.relockareas",
-		"mapper.clearStalePathHighlights",
 		"mapper.migratetags",
+		"mapper.syncmap",
+		"mapper.clearStalePathHighlights",
 		"mapper.installmapmenu",
 	},
 

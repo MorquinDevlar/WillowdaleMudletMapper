@@ -15,6 +15,16 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+- Changed loading the profile, installing an update and opening the map so they no longer go over every room of the map to put back your area locks, terrain weights and room characters; the map remembers what it was last brought in line with and only what changed since is redone. The first load of a map after this update still goes over it once
+- Changed `mconfig roomchar`, `mconfig safewalk`, `mconfig safewalkcost` and `mapper terrain` to only touch the rooms whose biome they affect, instead of every room on the map
+- Changed `mapper rooms <area>` and looking up a room by a name many rooms share to show the first 30 rooms with a link to show them all, as `mapper find` already did, instead of printing every one
+- Changed a walk that lands further along its path than the next room, or back on it after a detour, to carry on from there instead of working the whole route out again
+- Changed `showpath` to follow you along the path it shows while you walk it by hand, instead of working the route out again in every room
+- Fixed a room mapped into a locked area being open to walks until the map was next loaded; it is locked as soon as it is mapped
+- Fixed a map downloaded or reopened while playing keeping the terrain weights and room characters it arrived with instead of taking on yours
+- Fixed room locks set by hand in Mudlet's map being taken off every time the map loaded
+- Fixed the clickable area names offered when a name matches several areas not working for an area whose name contains a quote
+
 ## 1.6.2 - 2026-09-06
 
 - Changed the zoom an area is first shown at from Mudlet's 20 to 10, so the map starts closer in; an area you have zoomed yourself keeps the zoom you gave it, as before

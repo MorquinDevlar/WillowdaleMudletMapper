@@ -37,8 +37,8 @@ end
 local function resolveArea(what)
     local id = tonumber(what)
     if id then
-        local name = getRoomAreaName(id)
-        if type(name) ~= "string" or name == "" then
+        local name = mapper.areaname(id)
+        if not name then
             return nil
         end
         return id, name
@@ -72,19 +72,15 @@ function mapper.commands.gotoDestination(where)
         })
     end
 
-    local dest = where:lower()
-    if mapper.debugging() then
-        mapper.gotoPerf = mapper.gotoPerf or createStopWatch()
-        if mapper.gotoPerf then
-            startStopWatch(mapper.gotoPerf)
-        end
-    end
-
     -- A number is a room, a word that names a tag is that tag, and anything else
     -- is an area. `goto tag <name>` says which for the name that is both.
-    if tonumber(dest) then
-        mapper.gotoRoom(dest)
-    else
+    mapper.timed("goto", function(elapsed)
+        return "goto took " .. elapsed .. "s to run."
+    end, function(dest)
+        if tonumber(dest) then
+            mapper.gotoRoom(dest)
+            return
+        end
         local parts = words(dest)
         if parts[1] == "tag" then
             table.remove(parts, 1)
@@ -96,11 +92,7 @@ function mapper.commands.gotoDestination(where)
         else
             mapper.gotoArea(dest)
         end
-    end
-
-    if mapper.debugging() and mapper.gotoPerf then
-        mapper.notify("goto took " .. stopStopWatch(mapper.gotoPerf) .. "s to run.")
-    end
+    end, where:lower())
 end
 
 -- Show the way somewhere without walking it, and highlight it on the map.
@@ -127,16 +119,19 @@ function mapper.commands.path(args)
         return
     end
 
-    local from = mapper.currentroom
+    local from
     if parts[2] then
         from = tonumber(parts[2])
         if not from then
             mapper.echo("Not a room ID: " .. parts[2])
             return
         end
-    elseif not from or not roomExists(from) then
-        mapper.echo("You have to be in a mapped room, or say which room to start from.")
-        return
+    else
+        from = mapper.inmappedroom()
+        if not from then
+            mapper.echo("You have to be in a mapped room, or say which room to start from.")
+            return
+        end
     end
 
     mapper.echoPath(from, to)
@@ -183,6 +178,9 @@ function mapper.commands.reset()
 
     mapper.regenerateareas()
     raiseEvent("mapper updated map")
+    -- The records of what the map was brought in line with went with it; an
+    -- empty map is in line with anything, so it says so from the start
+    mapper.syncmap()
     mapper.echo("Deleted the map. It will be built again as you walk.")
 end
 
@@ -204,8 +202,7 @@ end
 
 function mapper.commands.rooms(area)
     if not area or area == "" then
-        area = mapper.areatabler and mapper.currentroom and roomExists(mapper.currentroom)
-            and mapper.areatabler[getRoomArea(mapper.currentroom)]
+        area = mapper.roomareaname(mapper.inmappedroom())
         if not area then
             mapper.echo("Which area's rooms would you like listed? Use: mapper rooms <area>")
             return
@@ -216,11 +213,12 @@ end
 
 function mapper.commands.view(what)
     if not what or what == "" then
-        if not mapper.currentroom or not roomExists(mapper.currentroom) then
+        local room = mapper.inmappedroom()
+        if not room then
             mapper.echo("You are not in a mapped room. Use: mapper view <room id or area name>")
             return
         end
-        centerview(mapper.currentroom)
+        centerview(room)
     elseif tonumber(what) then
         centerview(tonumber(what))
     else
@@ -381,14 +379,14 @@ end
 
 -- Show current area and room info
 function mapper.commands.area.info()
-    if not mapper.currentroom or not roomExists(mapper.currentroom) then
+    local roomId = mapper.inmappedroom()
+    if not roomId then
         mapper.echo("You are not in a mapped room.")
         return
     end
 
-    local roomId = mapper.currentroom
     local areaId = getRoomArea(roomId)
-    local areaName = (mapper.areatabler and mapper.areatabler[areaId]) or getRoomAreaName(areaId) or "Unknown"
+    local areaName = mapper.areaname(areaId) or "Unknown"
     local rooms = areaRooms(areaId)
 
     local labels = getMapLabels(areaId) or {}
@@ -403,7 +401,7 @@ function mapper.commands.area.info()
     -- The room and the area it is in read as one block of fields rather than as
     -- two: the area carries its ID the way the room's exits carry theirs, so
     -- there is no second "ID:" line to work out which of the two it belongs to.
-    local locked = (mapper.locked and mapper.locked[areaId]) and true or false
+    local locked = mapper.arealocked(areaId)
     local fields = {
         { "Room:",   mapper.roomName(roomId) },
         { "ID:",     roomId },
@@ -460,8 +458,8 @@ function mapper.commands.area.list(filter)
                 areas[#areas + 1] = {
                     name = name,
                     id = id,
-                    rooms = #areaRooms(id),
-                    locked = (mapper.locked and mapper.locked[id]) and true or false,
+                    rooms = mapper.arearoomcount(id),
+                    locked = mapper.arealocked(id),
                 }
             end
         end
@@ -516,19 +514,13 @@ local function setAreaLock(what, lock)
         return mapper.doLockArea()
     end
 
-    local areaId, areaName = resolveArea(what)
+    local areaId = resolveArea(what)
     if not areaId then
         mapper.echo("Don't know of any area named '" .. tostring(what) .. "'.")
         return
     end
 
-    local isLocked = (mapper.locked and mapper.locked[areaId]) and true or false
-    if isLocked == lock then
-        mapper.echo("Area '" .. areaName .. "' is already " .. (lock and "locked" or "unlocked") .. ".")
-        return
-    end
-
-    mapper.lockArea(areaName, lock, true)
+    mapper.setarealock(areaId, lock)
 end
 
 function mapper.commands.area.lock(name)
@@ -543,12 +535,13 @@ function mapper.commands.area.labels(areaArg)
     local areaId, areaName
 
     if not areaArg or areaArg == "" then
-        if not mapper.currentroom or not roomExists(mapper.currentroom) then
+        local room = mapper.inmappedroom()
+        if not room then
             mapper.echo("You are not in a mapped room. Name an area instead.")
             return
         end
-        areaId = getRoomArea(mapper.currentroom)
-        areaName = (mapper.areatabler and mapper.areatabler[areaId]) or getRoomAreaName(areaId) or "Unknown"
+        areaId = getRoomArea(room)
+        areaName = mapper.areaname(areaId) or "Unknown"
     else
         areaId, areaName = resolveArea(areaArg)
         if not areaId then
@@ -639,12 +632,12 @@ local function setExitLock(args, lock)
     local roomId, direction
 
     if #parts == 1 then
-        if not mapper.currentroom or not roomExists(mapper.currentroom) then
+        roomId = mapper.inmappedroom()
+        if not roomId then
             mapper.echo("You are not in a mapped room. Name one: mapper "
                 .. (lock and "lock" or "unlock") .. " <room> <direction>")
             return
         end
-        roomId = mapper.currentroom
         direction = parts[1]:lower()
     else
         roomId = tonumber(parts[1])

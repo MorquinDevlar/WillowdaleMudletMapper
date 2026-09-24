@@ -16,9 +16,15 @@ mapper = mapper or {}
 -- quadratic in the number of tags.
 local cache
 
+-- The same list worked out for reading rooms: every tag in name order with the
+-- user data key a room carries it under, and apart from those the ones that
+-- draw a symbol. Built once per change to the list rather than for every room.
+local index
+
 -- Forget the cached list: a different map has different tags.
 function mapper.forgettags()
     cache = nil
+    index = nil
 end
 
 function mapper.loadtags()
@@ -41,6 +47,7 @@ end
 
 function mapper.savetags(tags)
     cache = tags
+    index = nil
     -- yajl writes an empty table as [], which reads back as a list rather than
     -- as the object every other tag write expects
     if next(tags) == nil then
@@ -72,18 +79,59 @@ function mapper.istag(word)
     return name ~= nil and mapper.loadtags()[name] ~= nil
 end
 
+local function tagindex()
+    if index then
+        return index
+    end
+    local tags = mapper.loadtags()
+    local names = {}
+    for name in pairs(tags) do
+        names[#names + 1] = name
+    end
+    table.sort(names)
+    local all, symbols = {}, {}
+    for _, name in ipairs(names) do
+        local tag = { name = name, key = "tag-" .. name, symbol = tags[name] or "" }
+        all[#all + 1] = tag
+        if tag.symbol ~= "" then
+            symbols[#symbols + 1] = tag
+        end
+    end
+    index = { all = all, symbols = symbols }
+    return index
+end
+
+-- A tag name as typed, made the name it is stored under, or nil once the
+-- player has been told what is wrong with it.
+local function validtag(word)
+    local name, why = mapper.tagname(word)
+    if not name then
+        mapper.echo(why)
+    end
+    return name
+end
+
+-- The same, for a command that needs the tag to exist already.
+local function existingtag(word)
+    local name = validtag(word)
+    if name and mapper.loadtags()[name] == nil then
+        mapper.echo("There is no '" .. name .. "' tag. 'mapper tags' lists them.")
+        return nil
+    end
+    return name
+end
+
 -- The tags on one room, sorted by name. Pass the room's user data when the
 -- caller already has it, which is what keeps a sweep over the map to one
 -- getAllRoomUserData per room.
 function mapper.roomtags(id, data)
     data = data or getAllRoomUserData(id) or {}
     local names = {}
-    for name in pairs(mapper.loadtags()) do
-        if data["tag-" .. name] == "1" then
-            names[#names + 1] = name
+    for _, tag in ipairs(tagindex().all) do
+        if data[tag.key] == "1" then
+            names[#names + 1] = tag.name
         end
     end
-    table.sort(names)
     return names
 end
 
@@ -94,10 +142,10 @@ end
 function mapper.roomsymbol(id, data)
     data = data or getAllRoomUserData(id) or {}
 
-    local tags = mapper.loadtags()
-    for _, name in ipairs(mapper.roomtags(id, data)) do
-        if tags[name] and tags[name] ~= "" then
-            return tags[name]
+    -- Only the tags with a symbol can decide it, and they are in name order
+    for _, tag in ipairs(tagindex().symbols) do
+        if data[tag.key] == "1" then
+            return tag.symbol
         end
     end
 
@@ -109,11 +157,14 @@ function mapper.roomsymbol(id, data)
 end
 
 -- Redraw one room's character after something that decides it changed.
+-- Returns whether the character actually changed.
 function mapper.refreshroomsymbol(id, data)
     local wanted = mapper.roomsymbol(id, data)
-    if getRoomChar(id) ~= wanted then
-        setRoomChar(id, wanted)
+    if getRoomChar(id) == wanted then
+        return false
     end
+    setRoomChar(id, wanted)
+    return true
 end
 
 -- The room a tag command works on: the one named, or the one we are standing in.
@@ -130,11 +181,11 @@ local function targetroom(arg, verb)
         end
         return id
     end
-    if not mapper.currentroom or not roomExists(mapper.currentroom) then
+    local room = mapper.inmappedroom()
+    if not room then
         mapper.echo("You are not in a mapped room. Name one: mapper " .. verb .. " <name> <room id>")
-        return nil
     end
-    return mapper.currentroom
+    return room
 end
 
 --------------------------------------------------------------------------------
@@ -145,9 +196,8 @@ end
 mapper.lasttag = mapper.lasttag or nil
 
 function mapper.tagroom(word, roomarg)
-    local name, why = mapper.tagname(word)
+    local name = validtag(word)
     if not name then
-        mapper.echo(why)
         return
     end
     local room = targetroom(roomarg, "tag")
@@ -170,14 +220,14 @@ function mapper.tagroom(word, roomarg)
 
     setRoomUserData(room, "tag-" .. name, "1")
     mapper.refreshroomsymbol(room)
+    mapper.mapinfodirty()
     mapper.echo(string.format("Tagged %s as '%s'.%s", mapper.roomName(room, true), name,
         isnew and " That is a new tag - 'mapper tag " .. name .. " symbol <char>' gives it a map symbol." or ""))
 end
 
 function mapper.untagroom(word, roomarg)
-    local name, why = mapper.tagname(word)
+    local name = validtag(word)
     if not name then
-        mapper.echo(why)
         return
     end
     local room = targetroom(roomarg, "untag")
@@ -192,23 +242,19 @@ function mapper.untagroom(word, roomarg)
 
     clearRoomUserDataItem(room, "tag-" .. name)
     mapper.refreshroomsymbol(room)
+    mapper.mapinfodirty()
     mapper.lasttag = name
     mapper.echo(string.format("Took the '%s' tag off %s.", name, mapper.roomName(room, true)))
 end
 
 -- Give a tag the character its rooms draw on the map, or take it away again.
 function mapper.tagsymbol(word, char)
-    local name, why = mapper.tagname(word)
+    local name = existingtag(word)
     if not name then
-        mapper.echo(why)
         return
     end
 
     local tags = mapper.loadtags()
-    if tags[name] == nil then
-        mapper.echo("There is no '" .. name .. "' tag. 'mapper tags' lists them.")
-        return
-    end
 
     local usage = "Use: mapper tag " .. name .. " symbol <char>, or 'none' to take it away."
     if not char or char == "" then
@@ -278,13 +324,8 @@ function mapper.listtags()
 end
 
 function mapper.listtagrooms(word)
-    local name, why = mapper.tagname(word)
+    local name = existingtag(word)
     if not name then
-        mapper.echo(why)
-        return
-    end
-    if mapper.loadtags()[name] == nil then
-        mapper.echo("There is no '" .. name .. "' tag. 'mapper tags' lists them.")
         return
     end
 
@@ -300,7 +341,7 @@ function mapper.listtagrooms(word)
         rows[#rows + 1] = {
             id,
             mapper.roomName(id),
-            (mapper.areatabler and mapper.areatabler[getRoomArea(id)]) or "?",
+            mapper.roomareaname(id) or "?",
             {
                 text = "Go to",
                 link = [[mapper.gotoRoom(]] .. id .. [[)]],
@@ -320,13 +361,8 @@ end
 
 -- Walk to whichever room carrying this tag is quickest to reach.
 function mapper.gotoTag(word)
-    local name, why = mapper.tagname(word)
+    local name = existingtag(word)
     if not name then
-        mapper.echo(why)
-        return
-    end
-    if mapper.loadtags()[name] == nil then
-        mapper.echo("There is no '" .. name .. "' tag. 'mapper tags' lists them.")
         return
     end
 
@@ -369,7 +405,8 @@ function mapper.migratetags()
     mapper.forgettags()
 
     local tags = mapper.loadtags()
-    local migrated, touched = 0, false
+    -- The rooms given a tag here, whose character the tag may now decide
+    local migrated, touched = 0, {}
 
     local features = getMapUserData("mapFeatures")
     if features and features ~= "" then
@@ -385,7 +422,7 @@ function mapper.migratetags()
                     for _, id in ipairs(searchRoomUserData("feature-" .. feature, "true") or {}) do
                         setRoomUserData(id, "tag-" .. name, "1")
                         clearRoomUserDataItem(id, "feature-" .. feature)
-                        touched = true
+                        touched[id] = true
                     end
                 end
             end
@@ -406,7 +443,7 @@ function mapper.migratetags()
                         migrated = migrated + 1
                     end
                     setRoomUserData(id, "tag-" .. name, "1")
-                    touched = true
+                    touched[id] = true
                 end
             end
         end
@@ -427,8 +464,17 @@ function mapper.migratetags()
     if migrated > 0 then
         mapper.savetags(tags)
     end
-    if touched then
-        mapper.refreshRoomChars(true)
+    if next(touched) then
+        -- Before the settings are loaded there is no roomchar mode to draw by,
+        -- so the rooms wait for mapper.syncmap to redraw them
+        for id in pairs(touched) do
+            if not mapper.optionsloaded then
+                mapper.deferroom(id)
+            elseif roomExists(id) then
+                mapper.refreshroomsymbol(id)
+            end
+        end
+        mapper.mapinfodirty()
     end
     if migrated > 0 then
         mapper.notify(string.format("Turned %d map feature%s into tag%s - 'mapper tags' lists them.",

@@ -42,7 +42,7 @@
         "isFolder": "no"
     },
     {
-        "name": "relockareas",
+        "name": "mapstate",
         "isActive": "yes",
         "script": "",
         "isFolder": "no"

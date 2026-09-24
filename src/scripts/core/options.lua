@@ -351,30 +351,12 @@ local function restoreterrain(saved)
     mapper.terrainweights = weights
 end
 
--- Read the file back and put the areas the player locked back under lock: a lock
--- keeps pathfinding out of an area, and it is the mapper's own state rather than
--- part of the map file, so a fresh map arrives with none of them in place.
-function mapper.loadlocks()
+-- What the options file holds, or an empty table when there is none yet.
+local function readoptionsfile()
     local loaded = {}
     if io.exists(optionsfile()) then
         table.load(optionsfile(), loaded)
     end
-
-    mapper.locked = loaded.locked_areas or mapper.locked or {}
-
-    local lockRoom, getAreaRooms1 = lockRoom, getAreaRooms1
-    local lockedany = false
-    for area in pairs(mapper.locked) do
-        for _, roomid in ipairs(getAreaRooms1(area) or {}) do
-            lockRoom(roomid, true)
-            lockedany = true
-        end
-    end
-    -- Reloading the mapper runs this again, over a cache that has routes in it.
-    if lockedany then
-        mapper.clearpathcache()
-    end
-
     return loaded
 end
 
@@ -389,37 +371,42 @@ function mapper.loadoptions()
         end
     end
 
-    local loaded = mapper.loadlocks()
-    -- Before the settings, and so before applysettings sweeps the map: what a
-    -- room should weigh is these weights and the safewalk setting together.
+    local loaded = readoptionsfile()
+    -- The areas the player locked. A lock keeps pathfinding out of an area, and
+    -- it is the mapper's own state rather than part of the map file, so a fresh
+    -- map arrives with none of them in place; mapper.syncmap puts them there.
+    mapper.locked = loaded.locked_areas or mapper.locked or {}
+    -- Before the settings, and so before the map is weighed against them: what
+    -- a room should weigh is these weights and the safewalk setting together.
     restoreterrain(loaded.terrain)
-    if not loaded.options then
-        return
-    end
-    for name, value in pairs(loaded.options) do
+    for name, value in pairs(loaded.options or {}) do
         -- A file written by an older version can name settings that are gone
         if mapper.option_definitions[name] then
             mapper.settings:setOption(name, value, true)
         end
     end
-    mapper.applysettings()
+    -- From here on the settings are the player's own, and what is drawn and
+    -- weighed on the map may follow from them
+    mapper.optionsloaded = true
+    mapper.applysettings(loaded.options ~= nil)
 end
 
 -- Settings are restored silently, so the handlers that act on the map never run.
 -- Put the loaded values into effect once, with one message instead of the
 -- running commentary each option would print on its own. The message comes
--- after the work: the sweeps below run inside one script call, so nothing
--- printed before them is shown any earlier, and a line that reads as "in
--- progress" with nothing after it looks like a restore that never finished.
-function mapper.applysettings()
-    mapper.refreshRoomChars(true)
+-- after the work: that runs inside one script call, so nothing printed before
+-- it is shown any earlier, and a line that reads as "in progress" with nothing
+-- after it looks like a restore that never finished. `restored` says whether
+-- there were saved settings to restore, which there are not on a first install.
+function mapper.applysettings(restored)
+    -- The room locks, weights and characters the settings call for. The map
+    -- carries them already unless the settings changed since it was saved, and
+    -- only what differs is redone.
+    mapper.syncmap()
     if not mapper.settings.showspeedwalkpath then
         mapper.clearPathHighlight()
     end
-    -- Room weights live in the map file rather than in the options file, so a
-    -- map built under other terrain weights, or under safewalk set the other
-    -- way, carries the wrong costs until they are put back in line with what
-    -- has just been loaded.
-    mapper.applyallterrain()
-    mapper.notify("Settings restored.")
+    if restored then
+        mapper.notify("Settings restored.")
+    end
 end

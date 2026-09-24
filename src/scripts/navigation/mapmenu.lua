@@ -26,26 +26,13 @@ local INFO = "Willowdale mapper"
 -- was picked.
 local actions = {}
 
-local function areaof(room)
-    local id = getRoomArea(room)
-    local name = (mapper.areatabler and mapper.areatabler[id]) or getRoomAreaName(id)
-    if not name or name == "" then
-        return nil
-    end
-    return id, name
-end
-
 local function setlock(room, lock)
-    local areaId, areaName = areaof(room)
-    if not areaId then
+    local areaId = getRoomArea(room)
+    if not mapper.areaname(areaId) then
         mapper.echo("That room is not in an area that can be locked.")
         return
     end
-    if ((mapper.locked and mapper.locked[areaId]) and true or false) == lock then
-        mapper.echo(string.format("Area '%s' is already %slocked.", areaName, lock and "" or "un"))
-        return
-    end
-    mapper.lockArea(areaName, lock, true)
+    mapper.setarealock(areaId, lock)
 end
 
 local entries = {
@@ -66,7 +53,7 @@ local entries = {
             mapper.echo("Path highlight cleared.")
             return
         end
-        if not mapper.currentroom or not roomExists(mapper.currentroom) then
+        if not mapper.inmappedroom() then
             mapper.echo("You have to be in a mapped room to be shown the way from it.")
             return
         end
@@ -146,10 +133,7 @@ local function clickedroom(...)
             return selection.center
         end
     end
-    if mapper.currentroom and roomExists(mapper.currentroom) then
-        return mapper.currentroom
-    end
-    return nil
+    return mapper.inmappedroom()
 end
 
 -- Menus and entries are stored in the map, so an uninstall that left them there
@@ -181,15 +165,18 @@ end
 -- The information line over the map
 --------------------------------------------------------------------------------
 
--- Mudlet calls this on every repaint and reads six results: the text, bold,
--- italic and a colour. The colour is left nil, which Mudlet treats as "pick one
--- that reads against this map background" - the same as its own info lines get.
--- The roomID it passes is the room under the mouse; what this says is about the
--- room the player is in, which is the one they want to read about while walking.
-local function mapinfo()
-    local room = mapper.currentroom
-    if not room or not roomExists(room) then
-        return "", false, false, nil, nil, nil
+-- What the line says about the room itself, kept between repaints: it only
+-- changes when the player moves, a tag goes on or comes off, or a lock changes,
+-- and each of those forgets it through mapper.mapinfodirty.
+local roominfo
+
+function mapper.mapinfodirty()
+    roominfo = nil
+end
+
+local function describeroom(room)
+    if roominfo and roominfo.room == room then
+        return roominfo.text
     end
 
     -- One read of the room's user data for the zone, the biome and the tags
@@ -205,11 +192,27 @@ local function mapinfo()
     if #tags > 0 then
         parts[#parts + 1] = "Tags: " .. table.concat(tags, ", ")
     end
-    if mapper.locked and mapper.locked[getRoomArea(room)] then
+    if mapper.arealocked(getRoomArea(room)) then
         parts[#parts + 1] = "Area locked"
     end
 
     local text = table.concat(parts, " | ")
+    roominfo = { room = room, text = text }
+    return text
+end
+
+-- Mudlet calls this on every repaint and reads six results: the text, bold,
+-- italic and a colour. The colour is left nil, which Mudlet treats as "pick one
+-- that reads against this map background" - the same as its own info lines get.
+-- The roomID it passes is the room under the mouse; what this says is about the
+-- room the player is in, which is the one they want to read about while walking.
+local function mapinfo()
+    local room = mapper.inmappedroom()
+    if not room then
+        return "", false, false, nil, nil, nil
+    end
+
+    local text = describeroom(room)
 
     local path = mapper.speedWalkPath or {}
     if mapper.autowalking and #path > 0 then

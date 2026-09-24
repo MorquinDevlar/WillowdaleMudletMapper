@@ -25,7 +25,8 @@ whole command tree. Everything else is scripts:
 - `src/scripts/mapping/` - room creation and GMCP mapping
   (`room_gmcp_handler.lua`, `room_creation.lua`), exit and lock wrappers
   (`exit_functions.lua`), area locks, tags (`tags.lua`), terrain weights
-  (`terrain.lua`), the command tree (`commands.lua`)
+  (`terrain.lua`), keeping the whole map in step with the settings
+  (`mapstate.lua`), the command tree (`commands.lua`)
 - `src/scripts/navigation/` - the room-arrival pipeline
   (`room_pipeline.lua`, one handler on `gmcp.Room.Info.Exits`), walking and
   its watchdog (`walking.lua`), path cache (`pathfinding.lua`), doors, move
@@ -155,6 +156,19 @@ Commit message best practices:
   3), and raises `sysMapAreaChanged` from the 2D map on every area switch,
   including the first area shown after a load; `getMapZoom(areaId)` and
   `setMapZoom(zoom, areaId)` read and set an area's zoom.
+- Maps can run to millions of rooms, so nothing that runs on its own may go
+  over every room. `mapstate.lua` records in the map's user data
+  (`mapper_locks`, `mapper_roomchars`, `mapper_terrain`) the settings the
+  map's room locks, characters and weights were last brought in line with, and
+  redoes only what differs; `searchRoomUserData("biome", value)` finds the
+  rooms of one biome in a single C++ pass. Bump `RULES` there when the rule for
+  a lock, weight or character changes.
+- `getPath` rebuilds Mudlet's whole pathfinding graph first whenever anything
+  has marked it stale: `addRoom`, `setExit`, `setRoomArea`, `setRoomWeight`
+  (even with the same weight), and `lockRoom`/`lockExit` when the lock
+  actually changes. It hands `speedWalkPath` back as strings.
+- The live wiki documents `mapOpenEvent` and `sysMapDownloadEvent` as the only
+  map-load events; `getMapUserData` returns nil and an error for a missing key.
 - Local checkouts for checking such things: the server at
   `/Users/jens/mud/WillowdaleMUD` (`modules/gmcp/gmcp.Room.go`,
   `internal/usercommands/movesignals.go`) and Mudlet at

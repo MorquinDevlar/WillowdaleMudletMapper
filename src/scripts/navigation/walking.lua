@@ -67,9 +67,10 @@ function mapper.armwatchdog(what, extra)
 	watchdog = tempTimer(waited + latency, function() movetimedout(waited, what) end)
 end
 
--- Simple delay function for movement
+-- The next move, after the walkdelay setting's pause unless given another.
 function mapper.delayedMove(delay)
-	if delay and delay > 0 then
+	delay = delay or (mapper.settings and mapper.settings.walkdelay) or 0
+	if delay > 0 then
 		tempTimer(delay, function() mapper.move() end)
 	else
 		mapper.move()
@@ -250,9 +251,7 @@ doSpeedWalk = function()
 	mapper.speedWalkCounter = 1
 	if mapper.canmove() then
 		-- Start moving immediately (with delay if configured)
-		local delay = mapper.settings.walkdelay
-		if delay == nil then delay = 0.3 end
-		mapper.delayedMove(delay)
+		mapper.delayedMove()
 	else
 		echo("(when we get balance back / aren't hindered)")
 	end

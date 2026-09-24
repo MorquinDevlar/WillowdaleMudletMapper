@@ -92,21 +92,19 @@ function mapper.updateDoorStatuses(roomNum)
 	end
 
 	-- Doors left on exits the room no longer has.
+	local present = {}
+	for gmcpExit in pairs(currentexits) do
+		local doorExit = mapper.dirdoor(gmcpExit)
+		if doorExit then
+			present[doorExit] = true
+		end
+	end
 	for exit, doorType in pairs(doorStatus) do
-		if doorType > 0 then
-			local found = false
-			for gmcpExit in pairs(currentexits) do
-				if mapper.dirdoor(gmcpExit) == exit then
-					found = true
-					break
-				end
-			end
-			if not found then
-				setDoor(roomNum, exit, 0)
-				changed = true
-				if mapper.debugging() then
-					mapper.notify(string.format("Removed door from %s in room %d - the exit is gone.", exit, roomNum))
-				end
+		if doorType > 0 and not present[exit] then
+			setDoor(roomNum, exit, 0)
+			changed = true
+			if mapper.debugging() then
+				mapper.notify(string.format("Removed door from %s in room %d - the exit is gone.", exit, roomNum))
 			end
 		end
 	end

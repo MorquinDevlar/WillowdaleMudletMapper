@@ -8,23 +8,58 @@
 -- one that is always last and always complete, so the whole pipeline hangs off
 -- that and nothing hangs off gmcp.Room.Info.
 
+-- Where a room comes on a list of room IDs, trying first the place the list
+-- says the player is headed for next.
+local function positionon(rooms, room, expected)
+    if expected and rooms[expected] == room then
+        return expected
+    end
+    for i = 1, #rooms do
+        if rooms[i] == room then
+            return i
+        end
+    end
+    return nil
+end
+
 -- Keeps the showpath highlight in step with a player walking by hand. Runs after
 -- mapping, because a room entered for the first time has no exits of its own
 -- until mapping links them - a path recalculated before that would find no way
 -- onward and the highlight would freeze where the mapped rooms ended.
 function mapper.updateshowpath(num)
-    if not mapper.showPathDestination or mapper.autowalking or not num then
+    local destination = mapper.showPathDestination
+    if not destination or mapper.autowalking or not num then
         return
     end
-    if num == mapper.showPathDestination then
+    if num == destination then
         mapper.clearShowPath()
         mapper.notify("You've arrived at your destination.")
-    elseif roomExists(num) then
-        -- A room the map does not have, or a path it cannot find, keeps the
-        -- existing highlight rather than clearing it
-        if mapper.getPath(num, mapper.showPathDestination) then
-            mapper.highlightPath(speedWalkPath, num)
+        return
+    end
+    -- A room the map does not have, or a path it cannot find, keeps the
+    -- existing highlight rather than clearing it
+    if not roomExists(num) then
+        return
+    end
+
+    -- Still on the route being shown, with nothing along the rest of it shut
+    -- since: the route goes on from here, and working it out again would be a
+    -- search of the whole map - after rebuilding Mudlet's whole pathfinding
+    -- graph, whenever this step mapped something new.
+    local route = mapper.showPathRoute
+    local at = route and positionon(route.rooms, num, route.first)
+    if at and mapper.routeopen(num, route.dirs, route.rooms, at + 1) then
+        -- One room on is one room's repaint; anything else is the path afresh
+        if at ~= route.first or not mapper.advancePathHighlight(num) then
+            mapper.highlightPath(route.rooms, num, at + 1)
         end
+        route.first = at + 1
+        return
+    end
+
+    if mapper.getPath(num, destination) then
+        mapper.showPathRoute = { dirs = speedWalkDir, rooms = speedWalkPath, first = 1 }
+        mapper.highlightPath(speedWalkPath, num)
     end
 end
 
@@ -59,24 +94,25 @@ function mapper.walkstep(num)
         return
     end
 
-    if num == mapper.speedWalkPath[#mapper.speedWalkPath] then
+    local path = mapper.speedWalkPath
+    if num == path[#path] then
         mapper.endwalk("arrived")
-    elseif mapper.speedWalkPath[mapper.speedWalkCounter] == num then
-        mapper.speedWalkCounter = mapper.speedWalkCounter + 1
-        if mapper.speedWalkCounter > #mapper.speedWalkPath then
-            mapper.endwalk("arrived")
-        else
-            mapper.updatePathHighlight()
-            local delay = mapper.settings.walkdelay
-            if delay == nil then
-                delay = 0.3
-            end
-            mapper.delayedMove(delay)
-        end
-    elseif #mapper.speedWalkPath > 0 then
+        return
+    end
+
+    local expected = mapper.speedWalkCounter
+    local at = positionon(path, num, expected)
+    if at then
+        -- The room the walk was heading for, or another room on its path: a
+        -- move that carried the player past a room, or back along the way. The
+        -- walk goes on from wherever on the path that is.
+        mapper.speedWalkCounter = at + 1
+        mapper.updatePathHighlight(at == expected and num or nil)
+        mapper.delayedMove()
+    elseif #path > 0 then
         -- ended up somewhere we didn't want to be - re-calculate path
         mapper.notify("Ended up off the path, recalculating a new path...")
-        local destination = mapper.speedWalkPath[#mapper.speedWalkPath]
+        local destination = path[#path]
         if not mapper.getPath(num, destination) then
             mapper.notify(
                 string.format(
@@ -107,18 +143,22 @@ function mapper.onroom()
 
     -- Mapping first: the rest of the pipeline works on a room that exists and
     -- has its exits, which on a first visit is only true once mapping has run.
+    -- It hands back the room's user data, so the arrival reads it once.
+    local data
     if mapper.editing then
-        mapper.mappingnewroom(num)
+        data = mapper.mappingnewroom(num)
     end
 
     if mapper.roomexists(num) then
-        mapper.storebiome(num)
+        mapper.storebiome(num, data)
         if mapper.updateDoorStatuses(num) and mapper.settings and mapper.settings.showmappingmessages then
             mapper.notify("Door statuses updated for room " .. num)
         end
         centerview(num)
     end
 
+    -- The line over the map is about the room the player is in
+    mapper.mapinfodirty()
     mapper.updateshowpath(num)
     mapper.walkstep(num)
 end

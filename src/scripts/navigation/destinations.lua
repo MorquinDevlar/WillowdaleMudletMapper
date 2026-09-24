@@ -17,16 +17,9 @@ function mapper.viewArea(where, exact)
 			centerview(rooms[1])
 		end
 	elseif multiples and #multiples > 0 then
-		mapper.echo("Which area would you like to view exactly?")
-		fg("DimGrey")
-		for _, areaname in ipairs(multiples) do
-			echo("  ")
-			setUnderline(true)
-			echoLink(areaname, 'mapper.viewArea("' .. areaname .. '", true)', "Click to view " .. areaname, true)
-			setUnderline(false)
-			echo("\n")
-		end
-		resetFormat()
+		mapper.offerareas("Which area would you like to view exactly?", multiples,
+			function(name) return string.format("mapper.viewArea(%q, true)", name) end,
+			function(name) return "Click to view " .. name end)
 		return
 	else
 		mapper.echo(string.format("Don't know of any area named '%s'.", where))
@@ -68,27 +61,9 @@ function mapper.gotoArea(where, number, exact)
 			mapper.gotoArea(multiples[number], nil, true)
 			return
 		end
-		mapper.echo("Which area would you like to go to?")
-		fg("DimGrey")
-		for key, areaname in ipairs(multiples) do
-			echo("  ")
-			echoLink(
-				key .. ") ",
-				'mapper.gotoArea("' .. areaname .. '", nil, true)',
-				"Click to go to " .. areaname,
-				true
-			)
-			setUnderline(true)
-			echoLink(
-				areaname,
-				'mapper.gotoArea("' .. areaname .. '", nil, true)',
-				"Click to go to " .. areaname,
-				true
-			)
-			setUnderline(false)
-			echo("\n")
-		end
-		resetFormat()
+		mapper.offerareas("Which area would you like to go to?", multiples,
+			function(name) return string.format("mapper.gotoArea(%q, nil, true)", name) end,
+			function(name) return "Click to go to " .. name end, true)
 		return
 	else
 		mapper.echo(string.format("Don't know of any area named '%s'.", where))
@@ -102,13 +77,13 @@ function mapper.gotoAreaID(areaid)
 		return
 	end
 	areaid = tonumber(areaid)
-	local areaName = getRoomAreaName(areaid)
-	if not areaName or areaName == "" then
+	local areaName = mapper.areaname(areaid)
+	if not areaName then
 		mapper.echo("Invalid area ID selected")
 		return
 	end
 	-- Check if the area is locked
-	if mapper.locked and mapper.locked[areaid] then
+	if mapper.arealocked(areaid) then
 		mapper.echo("The area '" .. areaName .. "' is locked. Unlock it first with: mapper area unlock " .. areaName)
 		return
 	end

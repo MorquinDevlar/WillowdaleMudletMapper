@@ -43,9 +43,11 @@ function mapper.roomCharMode()
     return mode:lower()
 end
 
--- Check if a room character should be shown based on current settings
-function mapper.shouldShowRoomChar(biome)
-    local mode = mapper.roomCharMode()
+-- Whether a room of this biome shows its biome symbol under a roomchar mode,
+-- the current one unless another is named. Naming one is how a change of mode
+-- works out which rooms it touches.
+function mapper.shouldShowRoomChar(biome, mode)
+    mode = mode or mapper.roomCharMode()
     if mode == "none" then
         return false
     end
@@ -60,26 +62,6 @@ function mapper.shouldShowRoomChar(biome)
     return false
 end
 
--- Bring the room characters on the map in line with what decides them: a tag's
--- symbol first, then the room's biome symbol when the roomchar setting shows
--- it. mapper.roomsymbol is that whole rule, and is what tagging a single room
--- goes through too, so a sweep here and a tag put on cannot disagree. Pass
--- quiet to skip the count, for a caller that reports on its own.
-function mapper.refreshRoomChars(quiet)
-    local count = 0
-    for roomId in pairs(getRooms() or {}) do
-        -- One call for the whole of a room's user data rather than one per key
-        local wanted = mapper.roomsymbol(roomId, getAllRoomUserData(roomId) or {})
-        if getRoomChar(roomId) ~= wanted then
-            setRoomChar(roomId, wanted)
-            count = count + 1
-        end
-    end
-    if count > 0 and not quiet then
-        mapper.echo("Updated characters on " .. count .. " room(s).")
-    end
-end
-
 -- Speedwalk path highlighting using room borders
 --
 -- The rooms currently carrying a highlight, as roomId -> role, where the role
@@ -87,6 +69,10 @@ end
 -- rooms whose part in the path actually changed.
 mapper.highlightedPathRooms = {}
 mapper.showPathDestination = nil  -- Destination for showpath command
+-- The route showpath is highlighting: { dirs, rooms, first }, where rooms[first]
+-- is the next room along it. A player walking it by hand is followed along
+-- this instead of having the route worked out again at every step.
+mapper.showPathRoute = nil
 
 -- Border colour per role, indexed the same way the tracking table is
 local pathHighlightColors = {
@@ -95,107 +81,170 @@ local pathHighlightColors = {
     ["end"] = { 100, 180, 255 } -- destination room: light blue
 }
 
--- Paint roomIds as the path, with fromRoom (or the current room) as its start.
--- The highlight already on the map is diffed against the one asked for, so a
--- walk one room further along only clears the room left behind and recolours
--- the room arrived in.
-function mapper.highlightPath(roomIds, fromRoom)
+-- The room painted as the start, so that a step along the path can move the
+-- start on without looking through the rest of the highlight.
+local startroom
+
+-- Whether the map may be carrying highlights: "1" while this session has put
+-- some on it, "0" once they are all off. It lives in the map because the
+-- highlights do, so a map saved in the middle of a walk says so when it is
+-- next loaded, and a clean one spares that load a search through every room.
+local HIGHLIGHTS = "mapper_highlights"
+local marked -- what this session last wrote there
+
+local function markhighlights(on)
+    local value = on and "1" or "0"
+    if marked ~= value then
+        setMapUserData(HIGHLIGHTS, value)
+        marked = value
+    end
+end
+
+local function paint(roomId, role, previous)
+    local color = pathHighlightColors[role]
+    setRoomBorderColor(roomId, color[1], color[2], color[3])
+    -- A room that only changed role keeps its thickness and its stored marker
+    if not previous then
+        setRoomBorderThickness(roomId, 2)
+        setRoomUserData(roomId, "showpath", "1")
+    end
+end
+
+local function unpaint(roomId)
+    clearRoomBorderColor(roomId)
+    clearRoomBorderThickness(roomId)
+    clearRoomUserDataItem(roomId, "showpath")
+end
+
+-- Paint roomIds[first..] as the path, with fromRoom (or the current room) as
+-- its start. The highlight already on the map is diffed against the one asked
+-- for, so only rooms whose part in the path changed are repainted.
+function mapper.highlightPath(roomIds, fromRoom, first)
     -- Check if the new border functions are available
     if not setRoomBorderColor then
         return
     end
 
-    if not roomIds or #roomIds == 0 then
+    first = first or 1
+    if not roomIds or first > #roomIds then
         mapper.clearPathHighlight()
         return
     end
 
-    -- Work out what the map should look like
+    -- Work out what the map should look like. Mudlet hands a route over with
+    -- its room IDs as strings, so they are made numbers here.
     local desired = {}
-    local startRoom = fromRoom or mapper.currentroom
+    local startRoom = tonumber(fromRoom or mapper.currentroom)
     if startRoom and roomExists(startRoom) then
         desired[startRoom] = "start"
     end
-    for i, roomId in ipairs(roomIds) do
-        if roomExists(roomId) and roomId ~= startRoom then
-            desired[roomId] = (i == #roomIds) and "end" or "mid"
+    local last = #roomIds
+    for i = first, last do
+        local roomId = tonumber(roomIds[i])
+        if roomId and roomId ~= startRoom and roomExists(roomId) then
+            desired[roomId] = (i == last) and "end" or "mid"
         end
     end
 
     -- Rooms that have dropped out of the path lose their highlight
-    for roomId, _ in pairs(mapper.highlightedPathRooms) do
+    local current = mapper.highlightedPathRooms
+    for roomId in pairs(current) do
         if not desired[roomId] and roomExists(roomId) then
-            clearRoomBorderColor(roomId)
-            clearRoomBorderThickness(roomId)
-            clearRoomUserDataItem(roomId, "showpath")
+            unpaint(roomId)
         end
     end
 
-    -- Rooms that are new to the path, or have changed their part in it, are
-    -- repainted; a room that only changed role keeps its thickness and its
-    -- stored marker, so it costs a single colour call
+    -- Rooms that are new to the path, or have changed their part in it
     for roomId, role in pairs(desired) do
-        local previous = mapper.highlightedPathRooms[roomId]
+        local previous = current[roomId]
         if previous ~= role then
-            local color = pathHighlightColors[role]
-            setRoomBorderColor(roomId, color[1], color[2], color[3])
-            if not previous then
-                setRoomBorderThickness(roomId, 2)
-                setRoomUserData(roomId, "showpath", "1")
-            end
+            paint(roomId, role, previous)
         end
     end
 
     mapper.highlightedPathRooms = desired
+    startroom = startRoom and desired[startRoom] and startRoom or nil
+    if next(desired) then
+        markhighlights(true)
+    elseif marked == "1" then
+        markhighlights(false)
+    end
+end
+
+-- One step along the highlighted path: the room left behind loses its
+-- highlight and the room arrived in becomes the start. Only those two rooms
+-- change, so a long walk does not go over its whole path at every step.
+-- Returns false when the room is not on the highlight at all, for the caller
+-- to paint the path afresh.
+function mapper.advancePathHighlight(roomId)
+    if not setRoomBorderColor then
+        return true
+    end
+    local rooms = mapper.highlightedPathRooms
+    local role = rooms[roomId]
+    if not role then
+        return false
+    end
+    if role == "start" then
+        return true
+    end
+    if startroom and startroom ~= roomId and rooms[startroom] == "start" then
+        if roomExists(startroom) then
+            unpaint(startroom)
+        end
+        rooms[startroom] = nil
+    end
+    paint(roomId, "start", role)
+    rooms[roomId] = "start"
+    startroom = roomId
+    return true
 end
 
 -- Clear path highlight from map (does not clear destination)
 function mapper.clearPathHighlight()
-    -- Check if the new border functions are available
-    if not clearRoomBorderColor then
-        -- Fallback to old method if new functions not available
-        for roomId, _ in pairs(mapper.highlightedPathRooms) do
-            if roomExists(roomId) then
-                unHighlightRoom(roomId)
-            end
-        end
-        mapper.highlightedPathRooms = {}
-        return
-    end
-
-    for roomId, _ in pairs(mapper.highlightedPathRooms) do
+    -- Mudlet before 4.21 has no room borders; the old highlight stands in
+    local clear = clearRoomBorderColor and unpaint or unHighlightRoom
+    for roomId in pairs(mapper.highlightedPathRooms) do
         if roomExists(roomId) then
-            clearRoomBorderColor(roomId)
-            clearRoomBorderThickness(roomId)
-            clearRoomUserDataItem(roomId, "showpath")
+            clear(roomId)
         end
     end
     mapper.highlightedPathRooms = {}
+    startroom = nil
+    if marked == "1" then
+        markhighlights(false)
+    end
 end
 
 -- Clear highlights the tracking table above knows nothing about: ones a session
 -- that ended mid-walk persisted into the map, or ones a package reload left
 -- behind when it dropped the table. The search reads every room on the map, so
--- this runs once when the package or a map loads rather than on every clear.
+-- it only runs for a map that does not say it is clean.
 function mapper.clearStalePathHighlights()
     if not clearRoomBorderColor then
         return
     end
 
-    -- searchRoomUserData with key and value returns a plain list of room IDs
-    local orphans = searchRoomUserData("showpath", "1") or {}
-    for _, roomId in ipairs(orphans) do
-        if roomExists(roomId) then
-            clearRoomBorderColor(roomId)
-            clearRoomBorderThickness(roomId)
-            clearRoomUserDataItem(roomId, "showpath")
+    -- A map saved by a version that did not keep the mark says nothing, and is
+    -- searched once; from then on it carries the mark.
+    local state = getMapUserData(HIGHLIGHTS)
+    if state ~= "0" then
+        -- searchRoomUserData with key and value returns a plain list of room IDs
+        for _, roomId in ipairs(searchRoomUserData("showpath", "1") or {}) do
+            -- The path being walked right now is not stale
+            if not mapper.highlightedPathRooms[roomId] and roomExists(roomId) then
+                unpaint(roomId)
+            end
         end
     end
+    marked = state
+    markhighlights(next(mapper.highlightedPathRooms) ~= nil)
 end
 
 -- Clear path highlight and destination (used by showpath clear)
 function mapper.clearShowPath()
     mapper.showPathDestination = nil
+    mapper.showPathRoute = nil
     mapper.clearPathHighlight()
     -- The map menu's path entry reads "Clear path" only while there is one
     if mapper.refreshmapmenu then
@@ -203,34 +252,20 @@ function mapper.clearShowPath()
     end
 end
 
--- Update path highlight to show remaining path during speedwalk
-function mapper.updatePathHighlight()
+-- Update path highlight to show remaining path during speedwalk. `arrived` is
+-- the room a walk has just stepped into along its path, which is one room's
+-- repaint; without it, the whole remaining path is painted afresh.
+function mapper.updatePathHighlight(arrived)
     if not mapper.settings.showspeedwalkpath then
         return
     end
+    if arrived and mapper.advancePathHighlight(arrived) then
+        return
+    end
 
-    -- Get remaining path from current position
-    local counter = mapper.speedWalkCounter or 1
+    -- The path from where the walk has got to, with the current room as start
     local path = mapper.speedWalkPath or {}
-
-    if #path == 0 or counter > #path then
-        mapper.clearPathHighlight()
-        return
-    end
-
-    -- Build remaining path
-    local remainingPath = {}
-    for i = counter, #path do
-        remainingPath[#remainingPath + 1] = path[i]
-    end
-
-    if #remainingPath == 0 then
-        mapper.clearPathHighlight()
-        return
-    end
-
-    -- Highlight remaining path with current room as start
-    mapper.highlightPath(remainingPath, mapper.currentroom)
+    mapper.highlightPath(path, mapper.currentroom, mapper.speedWalkCounter or 1)
 end
 
 -- Willowdale-specific utility functions can be added here
