@@ -5,6 +5,12 @@
 -- Returns the room's user data as it stands afterwards, so the rest of the
 -- arrival does not have to read it again, or nil if the room is not on the map.
 function mapper.mappingnewroom(num)
+	-- How rooms are placed, filed and cleared up follows the player's settings,
+	-- and until those are loaded - an update's first half second, say - there
+	-- is nothing to go by. A room first entered then is mapped when next entered.
+	if not mapper.optionsloaded then
+		return nil
+	end
 	local ok, result = xpcall(function()
 		if not gmcp.Room then
 			mapper.notify("You need to have GMCP turned on (see preferences on a recent Mudlet) for mapping stuff.")

@@ -15,6 +15,9 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+- Fixed an "Oops! Had a small problem" message when you moved in the moment after an update installed; a room entered for the first time in that moment is mapped the next time you enter it
+- Fixed `mapper tags` and `mapper goto` still knowing the tags of a map deleted with `mapper reset`
+
 ## 1.7.0 - 2026-09-24
 
 - Changed loading the profile, installing an update and opening the map so they no longer go over every room of the map to put back your area locks, terrain weights and room characters; the map remembers what it was last brought in line with and only what changed since is redone. The first load of a map after this update still goes over it once

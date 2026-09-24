@@ -177,6 +177,8 @@ function mapper.commands.reset()
     end
 
     mapper.regenerateareas()
+    -- The tags were kept in the map too, so the list read from it is gone
+    mapper.forgettags()
     raiseEvent("mapper updated map")
     -- The records of what the map was brought in line with went with it; an
     -- empty map is in line with anything, so it says so from the start
