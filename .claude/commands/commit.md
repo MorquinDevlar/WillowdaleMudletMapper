@@ -61,20 +61,25 @@ Example:
 
 ## Step 3: Verify
 
-There is no test suite in this repo, so a parse of every Lua file and the
-build are the checks. From the repo root:
+A parse of every Lua file, the tests and the build are the checks. From the
+repo root:
 
 ```bash
-luac5.1 -p src/scripts/*.lua src/scripts/*/*.lua tools/*.lua
+luac5.1 -p src/scripts/*.lua src/scripts/*/*.lua tools/*.lua tools/test/*.lua
+lua5.1 tools/test/run.lua
 muddle
 ```
 
-Both must succeed before committing. The parse is the only check of Lua
+All three must succeed before committing. The parse is the only check of Lua
 syntax: muddler packages the Lua without parsing it and reports success for a
-file with a syntax error. The build proves the muddler `__VERSION__`
-substitution still lands. The build cannot validate Qt rendering, live GMCP
-framing, or the mapper against a real map - say so if the change needs testing
-against the running game. Do not stage anything the build produced.
+file with a syntax error. The tests run the package against a stand-in for
+Mudlet (`tools/test/mudlet_stub.lua`) and exit non-zero on a failed check; a
+change to what the mapper does to the map, a walk or showpath gets a check in
+`tools/test/run.lua`. The build proves the muddler `__VERSION__` substitution
+still lands. Neither the tests nor the build can validate Qt rendering, live
+GMCP framing, Mudlet's own pathfinder, or the mapper against a real map - say
+so if the change needs testing against the running game. Do not stage anything
+the build produced.
 
 ## Step 4: Commit
 

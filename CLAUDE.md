@@ -86,14 +86,23 @@ on tag ordering - but do not read them as "the latest version".
 
 ## Verification
 
-There is no test suite and no luacheck config in this repo, so the checks
-before calling work done are a parse of every Lua file and the build, both run
-from the repo root:
+There is no luacheck config in this repo. The checks before calling work done
+are a parse of every Lua file, the tests and the build, all run from the repo
+root:
 
 ```bash
-luac5.1 -p src/scripts/*.lua src/scripts/*/*.lua tools/*.lua
+luac5.1 -p src/scripts/*.lua src/scripts/*/*.lua tools/*.lua tools/test/*.lua
+lua5.1 tools/test/run.lua   # the package against a stand-in for Mudlet
 muddle                      # builds build/WillowdaleMudletMapper.mpackage
 ```
+
+`tools/test/run.lua` loads the scripts in the order the package runs them
+(read from the `scripts.json` files) against `tools/test/mudlet_stub.lua`, a
+stand-in for Mudlet's map, pathfinding, events and timers, and checks what they
+do to a small map and how many map calls it takes them. It exits non-zero when
+a check fails. A change to what the mapper does to the map, a walk or showpath
+gets a check there, and a Mudlet call the scripts start making needs a stand-in
+in `mudlet_stub.lua` or the run stops on it.
 
 The build does not cover the parse: muddler packages the Lua without parsing
 it, and reports "Build completed successfully!" for a file with a syntax error.
@@ -102,9 +111,9 @@ such as `goto` or `//`, fails the parse as well.
 
 The build is what proves the muddler substitution still lands: `__VERSION__`
 becomes `mapper.version` at build time, so a package that builds is a package
-whose version is real. The build cannot validate Qt rendering, live GMCP
-framing, or the mapper against a real map - flag when a change needs testing
-against the running game.
+whose version is real. Neither the tests nor the build can validate Qt
+rendering, live GMCP framing, Mudlet's own pathfinder, or the mapper against a
+real map - flag when a change needs testing against the running game.
 
 ## Committing
 
