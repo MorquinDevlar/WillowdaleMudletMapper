@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+## 1.7.0 - 2026-09-24
+
 - Changed loading the profile, installing an update and opening the map so they no longer go over every room of the map to put back your area locks, terrain weights and room characters; the map remembers what it was last brought in line with and only what changed since is redone. The first load of a map after this update still goes over it once
 - Changed `mconfig roomchar`, `mconfig safewalk`, `mconfig safewalkcost` and `mapper terrain` to only touch the rooms whose biome they affect, instead of every room on the map
 - Changed `mapper rooms <area>` and looking up a room by a name many rooms share to show the first 30 rooms with a link to show them all, as `mapper find` already did, instead of printing every one
