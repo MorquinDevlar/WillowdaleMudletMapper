@@ -1,6 +1,6 @@
 ---
 description: Review the current changes, commit them, then offer to cut a release with tools/release.sh.
-allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(grep:*), Bash(rg:*), Bash(git merge-base:*), Bash(git show:*), Bash(git add:*), Bash(git commit:*), Bash(git status:*), Bash(muddle:*), Bash(tools/release.sh:*), Read, Edit, AskUserQuestion
+allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(grep:*), Bash(rg:*), Bash(git merge-base:*), Bash(git show:*), Bash(git add:*), Bash(git commit:*), Bash(git status:*), Bash(luac5.1:*), Bash(muddle:*), Bash(tools/release.sh:*), Read, Edit, AskUserQuestion
 ---
 
 IMPORTANT: Use ultrathink when doing the review.
@@ -61,14 +61,17 @@ Example:
 
 ## Step 3: Verify
 
-There is no test suite in this repo, so the build is the check. From the repo
-root:
+There is no test suite in this repo, so a parse of every Lua file and the
+build are the checks. From the repo root:
 
 ```bash
+luac5.1 -p src/scripts/*.lua src/scripts/*/*.lua tools/*.lua
 muddle
 ```
 
-It must succeed before committing. It also proves the muddler `__VERSION__`
+Both must succeed before committing. The parse is the only check of Lua
+syntax: muddler packages the Lua without parsing it and reports success for a
+file with a syntax error. The build proves the muddler `__VERSION__`
 substitution still lands. The build cannot validate Qt rendering, live GMCP
 framing, or the mapper against a real map - say so if the change needs testing
 against the running game. Do not stage anything the build produced.

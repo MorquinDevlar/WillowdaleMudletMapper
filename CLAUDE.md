@@ -85,14 +85,21 @@ on tag ordering - but do not read them as "the latest version".
 
 ## Verification
 
-There is no test suite and no luacheck config in this repo, so the one check
-before calling work done is the build, run from the repo root:
+There is no test suite and no luacheck config in this repo, so the checks
+before calling work done are a parse of every Lua file and the build, both run
+from the repo root:
 
 ```bash
+luac5.1 -p src/scripts/*.lua src/scripts/*/*.lua tools/*.lua
 muddle                      # builds build/WillowdaleMudletMapper.mpackage
 ```
 
-That is also what proves the muddler substitution still lands: `__VERSION__`
+The build does not cover the parse: muddler packages the Lua without parsing
+it, and reports "Build completed successfully!" for a file with a syntax error.
+`luac5.1` parses the Lua version Mudlet embeds, so syntax from a later Lua,
+such as `goto` or `//`, fails the parse as well.
+
+The build is what proves the muddler substitution still lands: `__VERSION__`
 becomes `mapper.version` at build time, so a package that builds is a package
 whose version is real. The build cannot validate Qt rendering, live GMCP
 framing, or the mapper against a real map - flag when a change needs testing
