@@ -136,7 +136,7 @@ function mapper.createroom(id, x, y, z, areaId, env)
 	addRoom(id)
 	setRoomCoordinates(id, x, y, z)
 	mapper.fileroom(id, areaId)
-	setRoomEnv(id, env)
+	mapper.setroomenv(id, env)
 end
 
 -- A room seen through an exit of oldid, which it takes its area from unless it

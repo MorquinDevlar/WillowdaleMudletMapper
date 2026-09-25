@@ -22,6 +22,7 @@ mapper.envids = {
     Mountain = 40,
     Orchard = 41,
     Path = 42,
+    Post = 46,
     Road = 43,
     Ship = 44,
     Shop = 45,
@@ -34,6 +35,8 @@ mapper.envids = {
     Glade = 51,
     Clearing = 52,
     Unexplored = 53,
+    Underground = 54,
+    Aether = 55,
 }
 
 mapper.colorcodes = {
@@ -61,7 +64,7 @@ mapper.colorcodes = {
     [43] = { 112, 128, 144, 255 }, -- Road: Slate gray
     [44] = { 255, 42, 42, 255 },   -- Ship: Red
     [45] = { 0, 190, 255, 255 },   -- Shop: Deep sky blue
-    [46] = { 138, 43, 226, 255 },  -- Temple: Blue violet
+    [46] = { 138, 43, 226, 255 },  -- Post (the game's Temple before): Blue violet
     [47] = { 85, 107, 47, 255 },   -- Thicket: Dark olive green
     [48] = { 255, 250, 250, 255 }, -- Tundra: Snow
     [49] = { 65, 105, 225, 255 },  -- Underwater: Royal blue
@@ -69,12 +72,18 @@ mapper.colorcodes = {
     [51] = { 144, 238, 144, 255 }, -- Glade: Light green
     [52] = { 143, 188, 143, 255 }, -- Clearing: Dark sea green
     [53] = { 120, 35, 35, 255 },   -- Unexplored: Dark brick red
+    [54] = { 115, 85, 74, 255 },   -- Underground: Umber
+    [55] = { 0, 0, 0, 255 },       -- Aether: Black
 }
 
 -- Build reverse lookup table
 mapper.envidsr = {}
 for name, id in pairs(mapper.envids) do
     mapper.envidsr[id] = name
+end
+-- An id more than one name leads to goes by the one the game uses now
+for _, name in ipairs({ "Home", "Post", "Tundra" }) do
+    mapper.envidsr[mapper.envids[name]] = name
 end
 
 -- Apply environment colors immediately at package load time
@@ -158,23 +167,36 @@ function mapper.buildSafeBiomeSet()
     end
 end
 
--- Build hex color → static env ID lookup from GMCP biome_colors
+-- Which environment each biome colour is drawn with, for mapper.getBiomeEnvId.
+-- The package's own colours are the game's, so the table is whole from the
+-- moment the package loads: the game sends Room before Game.Info on login, and
+-- the first room entered must come out on the same id as every other room of
+-- its biome. Game.Info, once it has come, names each biome's colour, and wins
+-- for a biome whose colour the game has changed since this version.
 function mapper.buildBiomeColorLookup()
-    if not (gmcp and gmcp.Game and gmcp.Game.Info and gmcp.Game.Info.biome_colors) then
-        return
-    end
-
-    mapper.hexToStaticEnvId = {}
-
-    for biomeName, hexColor in pairs(gmcp.Game.Info.biome_colors) do
-        -- Capitalize first letter to match mapper.envids keys (e.g., "road" → "Road")
-        local capitalizedName = biomeName:gsub("^%l", string.upper)
-        local envId = mapper.envids[capitalizedName]
-
-        if envId then
-            -- Normalize hex (remove #, uppercase)
-            local normalizedHex = hexColor:gsub("^#", ""):upper()
-            mapper.hexToStaticEnvId[normalizedHex] = envId
+    local lookup = {}
+    local unexplored = mapper.unexploredroomenv()
+    for id, rgba in pairs(mapper.colorcodes) do
+        -- Unexplored is the package's own colour, not one the game draws with
+        if id ~= unexplored then
+            lookup[string.format("%02X%02X%02X", rgba[1], rgba[2], rgba[3])] = id
         end
     end
+
+    local colors = gmcp and gmcp.Game and gmcp.Game.Info and gmcp.Game.Info.biome_colors
+    if type(colors) == "table" then
+        for biomeName, hexColor in pairs(colors) do
+            -- Capitalize first letter to match mapper.envids keys (e.g., "road" → "Road")
+            local capitalizedName = tostring(biomeName):gsub("^%l", string.upper)
+            local envId = mapper.envids[capitalizedName]
+            local hex = mapper.normalisehex(hexColor)
+            if envId and hex then
+                lookup[hex] = envId
+            end
+        end
+    end
+
+    mapper.hexToStaticEnvId = lookup
 end
+
+mapper.buildBiomeColorLookup()

@@ -15,6 +15,9 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+- Fixed "Updated room color" being reported for a room already in that colour, most often the first room after starting Mudlet; the message now only appears when a room's colour actually changes
+- Fixed Post Office, Underground and Aether rooms being given a new colour number every session, which could redraw the rooms of one of them in another's colour until each was visited again
+
 ## 1.7.1 - 2026-09-24
 
 - Fixed an "Oops! Had a small problem" message when you moved in the moment after an update installed; a room entered for the first time in that moment is mapped the next time you enter it

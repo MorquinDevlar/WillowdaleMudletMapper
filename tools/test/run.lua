@@ -239,6 +239,75 @@ STUB.clearout()
 mapper.echoAreaRooms(town)
 check(STUB.text():find("10 rooms") ~= nil, "area listing counts all rooms")
 
+print("== biome colours: one environment per colour, before Game.Info too")
+-- The game sends Room before Game.Info on login, so the first room is entered
+-- with no Game.Info at all
+gmcp.Game = nil
+mapper.buildBiomeColorLookup()
+check(mapper.getBiomeEnvId("#708090") == mapper.envids.Road, "road's colour gets road's id with no Game.Info")
+check(mapper.getBiomeEnvId("8a2be2") == mapper.envids.Post, "post office's colour gets post's id, in any case")
+check(mapper.getBiomeEnvId("#73554A") == mapper.envids.Underground and mapper.getBiomeEnvId("#000000") == mapper.envids.Aether,
+    "underground and aether have ids of their own")
+check(mapper.getBiomeEnvId("#782323") ~= mapper.envids.Unexplored, "no biome colour lands on unexplored")
+local ownid = true
+for id, c in pairs(mapper.colorcodes) do
+    if id ~= mapper.envids.Unexplored and mapper.getBiomeEnvId(string.format("#%02X%02X%02X", c[1], c[2], c[3])) ~= id then
+        ownid = false
+    end
+end
+check(ownid, "every package colour comes back as its own id")
+local newcolour = mapper.getBiomeEnvId("#123456")
+check(newcolour == mapper.getBiomeEnvId("123456") and newcolour ~= mapper.getBiomeEnvId("#123457"),
+    "a colour the package lacks gets an id of its own")
+check(mapper.getBiomeEnvId("#12345") == nil and mapper.getBiomeEnvId(nil) == nil, "no id for what is not a colour")
+gmcp.Game = { Info = { biome_colors = { road = "#707070" } } }
+mapper.buildBiomeColorLookup()
+check(mapper.getBiomeEnvId("#707070") == mapper.envids.Road, "a colour Game.Info gives a biome gets that biome's id")
+check(mapper.getBiomeEnvId("#708090") == mapper.envids.Road, "the package's colour for it still does")
+gmcp.Game = nil
+mapper.buildBiomeColorLookup()
+
+mapper.settings:setOption("showmappingmessages", "on", true)
+-- A room an earlier version put on an id it numbered for that session, which
+-- still has the room's colour
+setCustomEnvColor(1000, 112, 128, 144, 255)
+setRoomEnv(1, 1000)
+STUB.clearout(); STUB.reset_counts()
+gmcpfor(1, { biome_color = "#708090" }); mapper.onroom()
+check(STUB.map.rooms[1].env == mapper.envids.Road, "a room on an old id moves to its biome's")
+check(not STUB.text():find("Updated room color"), "in the colour it already had, nothing is said")
+check(STUB.c("setCustomEnvColor") == 0, "a package colour is not set again")
+-- The same, where a later session gave that id another colour
+setRoomEnv(2, 1000)
+STUB.clearout()
+gmcpfor(2, { biome_color = "#006400" }); mapper.onroom()
+check(STUB.map.rooms[2].env == mapper.envids.Forest, "a room on a recoloured old id moves to its biome's")
+check(STUB.text():find("Updated room color to #006400") ~= nil, "a colour that changes is reported")
+STUB.clearout()
+gmcpfor(2, { biome_color = "#006400" }); mapper.onroom()
+check(not STUB.text():find("Updated room color"), "nothing to report the second time")
+-- A biome newer than the package
+STUB.clearout(); STUB.reset_counts()
+gmcpfor(3, { biome_color = "#123456" }); mapper.onroom()
+local drawn = STUB.map.envcolours[STUB.map.rooms[3].env]
+check(STUB.map.rooms[3].env == newcolour and drawn and drawn[1] == 0x12 and drawn[2] == 0x34 and drawn[3] == 0x56,
+    "a new colour is drawn in itself")
+check(STUB.c("setCustomEnvColor") == 1, "its colour set once, as the room is put on it")
+STUB.reset_counts()
+gmcpfor(3, { biome_color = "#123456" }); mapper.onroom()
+check(STUB.c("setCustomEnvColor") == 0, "and not again on the next arrival")
+check(mapper.envname(newcolour) == "#123456" and mapper.envname(mapper.envids.Post) == "Post",
+    "look names a package id and a colour's id")
+-- A room made in a colour the package lacks
+gmcpfor(11, { name = "Odd room", coordinates = "Town zone, 4, 2, 0", environment = "Crystal", biome_color = "#ABCDEF" })
+gmcp.Room.Info.Exits = { west = { room_id = 6 } }
+mapper.onroom()
+local made = STUB.map.rooms[11]
+drawn = made and STUB.map.envcolours[made.env]
+check(made and made.env == mapper.getBiomeEnvId("#ABCDEF") and drawn and drawn[1] == 0xAB and drawn[3] == 0xEF,
+    "a room made in a new colour is drawn in it")
+mapper.settings:setOption("showmappingmessages", "off", true)
+
 print("== map deleted by reset writes fresh records")
 mapper.commands.reset(); mapper.commands.reset()
 check(STUB.map.data.mapper_terrain ~= nil and STUB.map.data.mapper_locks ~= nil, "records on the empty map")

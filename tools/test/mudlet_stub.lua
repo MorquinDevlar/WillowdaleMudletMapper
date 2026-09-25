@@ -176,13 +176,12 @@ function addMapMenu() end; function addMapEvent() end; function removeMapMenu() 
 function registerMapInfo(_, fn) STUB.mapinfo = fn end
 function enableMapInfo() end; function killMapInfo() end
 function getMapLabels() return {} end
-function setCustomEnvColor() end
 function highlightRoom() end; function unHighlightRoom() end
 
 -- ---------------------------------------------------------------- the map
 local M
 function STUB.newmap()
-    M = { rooms = {}, areas = { [-1] = "Default Area" }, nextarea = 1, data = {} }
+    M = { rooms = {}, areas = { [-1] = "Default Area" }, nextarea = 1, data = {}, envcolours = {} }
     STUB.map = M
 end
 STUB.newmap()
@@ -225,6 +224,13 @@ function setRoomName(id, n) R(id).name = n end
 function getRoomName(id) local r = M.rooms[tonumber(id)] return r and r.name end
 function setRoomEnv(id, e) R(id).env = e end
 function getRoomEnv(id) return R(id).env end
+-- The colours are the map's, as Mudlet keeps them in the map file
+function setCustomEnvColor(id, r, g, b, a) count("setCustomEnvColor") M.envcolours[id] = { r, g, b, a or 255 } return true end
+function getCustomEnvColorTable()
+    local t = {}
+    for id, c in pairs(M.envcolours) do t[id] = { c[1], c[2], c[3], c[4] } end
+    return t
+end
 function setRoomWeight(id, w) count("setRoomWeight") R(id).weight = w end
 function getRoomWeight(id) return R(id).weight end
 function lockRoom(id, b) count("lockRoom") local r = M.rooms[id] if r then r.locked = b end return r ~= nil end

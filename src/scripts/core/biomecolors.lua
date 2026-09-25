@@ -1,103 +1,89 @@
--- Biome color management for dynamic room coloring
--- Converts GMCP biome_color hex codes to environment IDs
+-- Which environment a room of each biome colour is drawn with.
+--
+-- The game sends a room's biome as a colour (Room.Info.Basic.biome_color) and
+-- Mudlet draws a room by an environment id, so each colour has to come out as
+-- the same id every time. A room is recoloured when the id it wants differs
+-- from the one it has, and two ids for one colour repaint it for nothing and
+-- report a change nobody can see.
 
--- Initialize storage for biome color mappings
-mapper.biomeColorToEnvId = mapper.biomeColorToEnvId or {}
-mapper.nextBiomeEnvId = mapper.nextBiomeEnvId or 1000  -- Start at 1000 to avoid conflicts with static env IDs
+-- A colour the package has no environment for - a biome the game added after
+-- this version - gets an id made from the colour itself, so it is the same in
+-- every session and on every map without being written down anywhere, and no
+-- two colours can share one. It sits above the package's own ids, Mudlet's
+-- palette and the ids earlier versions handed out from 1000 up.
+local COLOURENVS = 0x1000000
 
--- Convert hex color string to RGBA values
--- @param hexColor string - Hex color code (e.g., "#708090" or "708090")
--- @return r, g, b, a number - RGBA values (0-255)
-function mapper.hexToRGBA(hexColor)
-    if not hexColor or type(hexColor) ~= "string" then
+-- A GMCP colour as the six upper-case hex digits the lookups key on, or nil for
+-- anything that is not one.
+function mapper.normalisehex(color)
+    if type(color) ~= "string" then
         return nil
     end
-
-    -- Remove # if present
-    local hex = hexColor:gsub("^#", "")
-
-    -- Handle 6-character hex codes (RGB)
-    if #hex == 6 then
-        local r = tonumber(hex:sub(1, 2), 16)
-        local g = tonumber(hex:sub(3, 4), 16)
-        local b = tonumber(hex:sub(5, 6), 16)
-        return r, g, b, 255
+    local hex = color:gsub("^#", ""):upper()
+    if not hex:match("^%x%x%x%x%x%x$") then
+        return nil
     end
-
-    -- Handle 8-character hex codes (RGBA)
-    if #hex == 8 then
-        local r = tonumber(hex:sub(1, 2), 16)
-        local g = tonumber(hex:sub(3, 4), 16)
-        local b = tonumber(hex:sub(5, 6), 16)
-        local a = tonumber(hex:sub(7, 8), 16)
-        return r, g, b, a
-    end
-
-    -- Invalid format
-    return nil
+    return hex
 end
 
--- Get or create an environment ID for a biome color
--- @param biomeColor string - Hex color code from GMCP (e.g., "#708090")
--- @return number - Environment ID to use with setRoomEnv()
+-- The environment a room of this biome colour is drawn with: the package's own
+-- for a colour it knows (see mapper.buildBiomeColorLookup), else the one made
+-- from the colour. Nil for anything that is not a colour.
 function mapper.getBiomeEnvId(biomeColor)
-    if not biomeColor or type(biomeColor) ~= "string" then
+    local hex = mapper.normalisehex(biomeColor)
+    if not hex then
         return nil
     end
-
-    -- Normalize the color (remove #, convert to uppercase for consistency)
-    local normalizedColor = biomeColor:gsub("^#", ""):upper()
-
-    -- First, check if this matches a known static biome color
-    if mapper.hexToStaticEnvId and mapper.hexToStaticEnvId[normalizedColor] then
-        return mapper.hexToStaticEnvId[normalizedColor]
-    end
-
-    -- Fall back to dynamic color allocation for unknown colors
-    if mapper.biomeColorToEnvId[normalizedColor] then
-        return mapper.biomeColorToEnvId[normalizedColor]
-    end
-
-    -- Convert hex to RGBA
-    local r, g, b, a = mapper.hexToRGBA(biomeColor)
-    if not r then
-        return nil
-    end
-
-    -- Allocate a new environment ID
-    local envId = mapper.nextBiomeEnvId
-    mapper.nextBiomeEnvId = mapper.nextBiomeEnvId + 1
-
-    -- Register the color with Mudlet
-    setCustomEnvColor(envId, r, g, b, a)
-
-    -- Store the mapping
-    mapper.biomeColorToEnvId[normalizedColor] = envId
-
-    return envId
+    local known = mapper.hexToStaticEnvId and mapper.hexToStaticEnvId[hex]
+    return known or (COLOURENVS + tonumber(hex, 16))
 end
 
--- Initialize biome colors from stored settings
--- This is called when the mapper loads to restore previously registered colors
-function mapper.initializeBiomeColors()
-    if not mapper.biomeColorToEnvId then
-        mapper.biomeColorToEnvId = {}
+-- The red, green and blue of an environment made from a colour; nil for any
+-- other environment.
+local function colourenv(env)
+    local value = tonumber(env) and tonumber(env) - COLOURENVS
+    if not value or value < 0 or value > 0xFFFFFF then
+        return nil
     end
+    return math.floor(value / 65536), math.floor(value / 256) % 256, value % 256
+end
 
-    -- Re-register all previously seen colors
-    for colorHex, envId in pairs(mapper.biomeColorToEnvId) do
-        local r, g, b, a = mapper.hexToRGBA(colorHex)
-        if r then
-            setCustomEnvColor(envId, r, g, b, a)
+-- What the map calls an environment: the package's name for it, or the colour
+-- for one made from a colour. Nil for one it knows nothing about.
+function mapper.envname(env)
+    local name = mapper.envidsr and mapper.envidsr[env]
+    if name then
+        return name
+    end
+    local r, g, b = colourenv(env)
+    return r and string.format("#%02X%02X%02X", r, g, b) or nil
+end
+
+-- Put a room on an environment. One made from a colour is given its colour
+-- here, as a room is put on it, rather than on every arrival: Mudlet redraws
+-- the whole map for each colour set, and keeps the colour in the map file, so
+-- the map carries it from then on.
+function mapper.setroomenv(id, env)
+    local r, g, b = colourenv(env)
+    if r then
+        setCustomEnvColor(env, r, g, b, 255)
+    end
+    setRoomEnv(id, env)
+end
+
+-- Whether two environments are drawn in the same colour, as Mudlet's table of
+-- environment colours has them. One missing from it is drawn in something else
+-- entirely, so it matches nothing.
+function mapper.sameenvcolour(a, b)
+    local colours = getCustomEnvColorTable() or {}
+    local ca, cb = colours[a], colours[b]
+    if not ca or not cb then
+        return false
+    end
+    for i = 1, 4 do
+        if (ca[i] or 255) ~= (cb[i] or 255) then
+            return false
         end
     end
-
-    -- Update the next ID counter to be higher than any existing ID
-    local maxId = 999
-    for _, envId in pairs(mapper.biomeColorToEnvId) do
-        if envId > maxId then
-            maxId = envId
-        end
-    end
-    mapper.nextBiomeEnvId = maxId + 1
+    return true
 end

@@ -58,11 +58,6 @@ function mapper.startup()
 		mapper.setEnvironmentColors()
 	end
 
-	-- Initialize biome colors from saved mappings
-	if mapper.initializeBiomeColors then
-		mapper.initializeBiomeColors()
-	end
-
 	raiseEvent("mapper areas changed")
 	mapper.firstRun = false
 	mapper.notify("Willowdale mapper " .. tostring(mapper.version) .. " loaded.")

@@ -282,9 +282,14 @@ function mapper.mappingnewroom(num)
 		-- check for biome color update
 		if basic and basic.biome_color then
 			local envId = mapper.getBiomeEnvId(basic.biome_color)
-			if envId and envId ~= getRoomEnv(num) then
-				setRoomEnv(num, envId)
-				note("Updated room color to " .. basic.biome_color .. ".")
+			local current = getRoomEnv(num)
+			if envId and envId ~= current then
+				mapper.setroomenv(num, envId)
+				-- A room moved to another id for the colour it already had, as
+				-- one mapped by an earlier version is, looks no different
+				if not mapper.sameenvcolour(current, envId) then
+					note("Updated room color to " .. basic.biome_color .. ".")
+				end
 			end
 		end
 		-- check indoors status: a room is one or the other, so the two flags

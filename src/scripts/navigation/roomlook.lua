@@ -212,7 +212,7 @@ function mapper.roomlook(input)
 		local coords = { getRoomCoordinates(num) }
 		local specexits = getSpecialExits(num)
 		local env = getRoomEnv(num)
-		local envname = (mapper.envidsr and mapper.envidsr[env]) or "?"
+		local envname = mapper.envname(env) or "?"
 		-- generate a report
 		mapper.printfields({
 			{ "Room:", name },
