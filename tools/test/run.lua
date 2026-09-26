@@ -379,5 +379,58 @@ check(mapper.istag("market"), "the map's tag is known before the reset")
 mapper.commands.reset(); mapper.commands.reset()
 check(not mapper.istag("market") and next(mapper.loadtags()) == nil, "no tags after the reset")
 
+print("== deleting an area from the area list takes its rooms, on the second click")
+local t4 = buildtown()
+local camp = addAreaName("Camp")
+addRoom(20); setRoomArea(20, camp); setRoomCoordinates(20, 1, 1, 0); setRoomName(20, "Camp room")
+mapper.regenerateareas()
+mapper.lockArea(camp, true, true)
+local function lockedinmap(area)
+    for _, id in ipairs(yajl.to_value(STUB.map.data.mapper_locks).areas) do
+        if id == area then return true end
+    end
+    return false
+end
+check(lockedinmap(camp), "the map records the camp as locked")
+STUB.clearout()
+local listed, why = pcall(mapper.commands.area.list)
+check(listed and STUB.text():find("Delete") ~= nil, "the area list prints a Delete link: " .. tostring(why))
+check(mapper.arearoomcount(camp) == 1, "the list counted the camp's one room")
+STUB.clearout()
+listed, why = pcall(mapper.commands.area.list, "camp")
+check(listed and STUB.text():find("Camp") ~= nil and not STUB.text():find("Town"), "the filtered list too: " .. tostring(why))
+STUB.clearout()
+mapper.commands.area.delete(camp)
+check(roomExists(20) and mapper.areaname(camp) == "Camp", "the first click leaves the area and its room")
+check(mapper.pendingAreaDelete.id == camp and STUB.text():find("Delete it") ~= nil, "it warns, with a link to confirm")
+mapper.commands.area.delete(t4)
+check(roomExists(5) and mapper.pendingAreaDelete.id == t4, "a click on another area's Delete warns about that one instead")
+mapper.commands.area.delete(tostring(camp))
+check(roomExists(20) and mapper.pendingAreaDelete.id == camp, "so the camp's next click only warns again")
+STUB.files["/home/mapper.options.lua"] = nil
+STUB.clearout()
+mapper.commands.area.delete(camp)
+check(not roomExists(20) and mapper.areaname(camp) == nil and getAreaTable()["Camp"] == nil,
+    "the second click deletes the area and its room")
+check(mapper.locked[camp] == nil and not lockedinmap(camp), "its lock is gone from the settings and the map")
+check(STUB.files["/home/mapper.options.lua"] ~= nil, "and the settings file is saved without it")
+check(mapper.pendingAreaDelete == nil, "nothing is left waiting for a click")
+check(STUB.text():find("Deleted area 'Camp' and its 1 room%.") ~= nil, "it says what went")
+check(roomExists(5) and mapper.arearoomcount(t4) == 9, "the other area is untouched")
+check(mapper.arearoomcount(camp) == 0, "the deleted area's room count is not the one cached before")
+STUB.clearout()
+local gone, err = pcall(mapper.commands.area.delete, camp)
+check(gone and STUB.text():find("There is no area with ID " .. camp) ~= nil and mapper.pendingAreaDelete == nil,
+    "a click on a deleted area's link only says so: " .. tostring(err))
+-- Mudlet gives a freed ID to the next area made, so a warning left unconfirmed
+-- is about a name as well as an ID
+mapper.commands.area.delete(t4)
+STUB.map.areas[t4] = "Not Town"
+mapper.regenerateareas()
+mapper.commands.area.delete(t4)
+check(roomExists(5) and mapper.pendingAreaDelete.name == "Not Town", "an area that took over the ID only gets the warning")
+mapper.commands.reset(); mapper.commands.reset()
+check(mapper.pendingAreaDelete == nil, "a map reset drops the warning with the areas it was about")
+
 print(string.format("\n%d passed, %d failed", passes, failures))
 os.exit(failures == 0 and 0 or 1)

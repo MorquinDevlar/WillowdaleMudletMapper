@@ -261,6 +261,17 @@ function getMapUserData(k) local v = M.data[k] if v == nil then return nil, "no 
 function setMapUserData(k, v) count("setMapUserData") M.data[k] = v return true end
 function clearMapUserDataItem(k) M.data[k] = nil end
 function deleteMap() STUB.newmap() return true end
+-- By ID or by name, taking every room of the area with it, as Mudlet does
+function deleteArea(area)
+    local id = tonumber(area)
+    if not id then
+        for aid, name in pairs(M.areas) do if name == area then id = aid end end
+    end
+    if not id or not M.areas[id] then return nil, "no such area" end
+    for rid, r in pairs(M.rooms) do if r.area == id then M.rooms[rid] = nil end end
+    M.areas[id] = nil
+    return true
+end
 
 function setExit(from, to, dir)
     local d = dirnum(dir)

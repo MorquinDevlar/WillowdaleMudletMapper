@@ -169,6 +169,8 @@ function mapper.commands.reset()
         return
     end
     mapper.pendingMapReset = nil
+    -- An area delete left unconfirmed was about an area that is going too
+    mapper.pendingAreaDelete = nil
 
     local ok, err = deleteMap()
     if not ok then
@@ -371,7 +373,7 @@ mapper.commands.area = {}
 function mapper.commands.area.help()
     printCommands("Area commands:", {
         { cmd = "mapper area",        args = "",         desc = "Show the room and area you are in" },
-        { cmd = "mapper area list",   args = "[filter]", desc = "List the areas of the map" },
+        { cmd = "mapper area list",   args = "[filter]", desc = "List the areas, with links to lock, unlock or delete one" },
         { cmd = "mapper area lock",   args = "[name]",   desc = "Keep walks out of an area" },
         { cmd = "mapper area unlock", args = "<name>",   desc = "Let walks back into an area" },
         { cmd = "mapper area labels", args = "[area]",   desc = "List and delete an area's map labels" },
@@ -490,6 +492,8 @@ function mapper.commands.area.list(filter)
                 hint = "Unlock this area", color = GREEN }
             or { text = "Lock", link = [[mapper.commands.area.lock(]] .. area.id .. [[)]],
                 hint = "Lock this area", color = { 180, 180, 0 } },
+            { text = "Delete", link = [[mapper.commands.area.delete(]] .. area.id .. [[)]],
+                hint = "Delete this area and all its rooms", color = RED },
         }
     end
 
@@ -498,6 +502,7 @@ function mapper.commands.area.list(filter)
         { title = "Name:" },
         { title = "Rooms:", align = "right" },
         { title = "Status:" },
+        { title = "" },
         { title = "" },
     }, rows, {
         title = (filter and filter ~= "") and ("Areas matching '" .. filter .. "':") or "Areas:",
@@ -579,6 +584,66 @@ function mapper.commands.area.labels(areaArg)
         { title = "Text:" },
         { title = "" },
     }, rows, { title = "Labels in area '" .. areaName .. "':" })
+end
+
+-- Reached only from the Delete link on each row of `mapper area list`, so it
+-- takes the area's ID. Deleting an area takes its rooms and labels with it and
+-- only walking them again brings the rooms back, so, as with `mapper reset`,
+-- the first click only warns and the second one does it. The warning is kept
+-- for one area: a click on another area's Delete warns about that one instead.
+-- Mudlet hands a freed ID to the next area made, so the warning names the area
+-- as well: a click left unconfirmed must not delete whatever later got its ID.
+function mapper.commands.area.delete(areaId)
+    local id = tonumber(areaId)
+    local name = id and mapper.areaname(id)
+    if not name then
+        mapper.echo("There is no area with ID " .. tostring(areaId) .. " - it may have been deleted already.")
+        return
+    end
+    local count = #areaRooms(id)
+
+    local pending = mapper.pendingAreaDelete
+    if not (pending and pending.id == id and pending.name == name) then
+        mapper.pendingAreaDelete = { id = id, name = name }
+        mapper.echo(string.format("This deletes area '%s' (ID %d) with its %d room%s and any labels drawn in it.",
+            name, id, count, count == 1 and "" or "s"))
+        mapper.echon("To confirm, click Delete again: ")
+        setFgColor(unpack(RED))
+        setUnderline(true)
+        echoLink("Delete it", [[mapper.commands.area.delete(]] .. id .. [[)]], "Delete this area and all its rooms", true)
+        resetFormat()
+        echo("\n")
+        return
+    end
+    mapper.pendingAreaDelete = nil
+
+    local ok, err = deleteArea(id)
+    if not ok then
+        mapper.echo("Couldn't delete area '" .. name .. "': " .. tostring(err or "unknown error"))
+        return
+    end
+
+    -- A new area can be given this ID again, and must not start out locked
+    if mapper.locked and mapper.locked[id] then
+        mapper.locked[id] = nil
+        if mapper.marklocks then
+            mapper.marklocks()
+        end
+        if mapper.saveoptions then
+            mapper.saveoptions()
+        end
+    end
+
+    mapper.regenerateareas()
+    -- Routes through the rooms and the area's room count went out with them
+    raiseEvent("mapper updated map")
+    if mapper.mapinfodirty then
+        mapper.mapinfodirty()
+    end
+    -- The rooms come back only while mapping is on, so a player who has it off
+    -- is told what brings them back
+    mapper.echo(string.format("Deleted area '%s' and its %d room%s. Rooms are mapped again as you walk through them%s.",
+        name, count, count == 1 and "" or "s", mapper.editing and "" or " once mapping is on ('mapper on')"))
 end
 
 function mapper.commands.area.dispatch(args)
