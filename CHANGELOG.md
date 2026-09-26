@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+## 1.8.0 - 2026-09-27
+
 - Fixed "Updated room color" being reported for a room already in that colour, most often the first room after starting Mudlet; the message now only appears when a room's colour actually changes
 - Fixed Post Office, Underground and Aether rooms being given a new colour number every session, which could redraw the rooms of one of them in another's colour until each was visited again
 - Added a Delete link to each row of `mapper area list`, which removes that area and all its rooms from the map after a confirming click; the rooms are mapped again as you walk through them
