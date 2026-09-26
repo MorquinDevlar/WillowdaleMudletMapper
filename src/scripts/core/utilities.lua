@@ -31,7 +31,7 @@ end
 function mapper.isPOI(biome)
     if not biome then return false end
     local biomeLower = biome:lower()
-    return biomeLower == "shop" or biomeLower == "inn" or biomeLower == "post office"
+    return biomeLower == "shop" or biomeLower == "inn" or biomeLower == "post office" or biomeLower == "stable"
 end
 
 -- Which room characters the player wants drawn: all, biome, poi or none

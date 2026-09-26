@@ -37,6 +37,7 @@ mapper.envids = {
     Unexplored = 53,
     Underground = 54,
     Aether = 55,
+    Stable = 56,
 }
 
 mapper.colorcodes = {
@@ -74,6 +75,7 @@ mapper.colorcodes = {
     [53] = { 120, 35, 35, 255 },   -- Unexplored: Dark brick red
     [54] = { 115, 85, 74, 255 },   -- Underground: Umber
     [55] = { 0, 0, 0, 255 },       -- Aether: Black
+    [56] = { 232, 163, 61, 255 },  -- Stable: Amber
 }
 
 -- Build reverse lookup table

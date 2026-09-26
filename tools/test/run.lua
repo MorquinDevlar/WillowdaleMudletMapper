@@ -432,5 +432,10 @@ check(roomExists(5) and mapper.pendingAreaDelete.name == "Not Town", "an area th
 mapper.commands.reset(); mapper.commands.reset()
 check(mapper.pendingAreaDelete == nil, "a map reset drops the warning with the areas it was about")
 
+print("== a stable is a point of interest in its own colour")
+check(mapper.isPOI("Stable"), "the game's stable biome gets its symbol drawn in poi mode")
+check(mapper.getBiomeEnvId("#E8A33D") == mapper.envids.Stable, "the stable colour gets the stable environment")
+check(mapper.issafebiome("Stable") and mapper.issafebiome("City"), "stables and town streets are safe before the game says so")
+
 print(string.format("\n%d passed, %d failed", passes, failures))
 os.exit(failures == 0 and 0 or 1)

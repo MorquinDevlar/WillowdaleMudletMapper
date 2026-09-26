@@ -18,6 +18,7 @@ is generated, and the next release overwrites it.
 - Fixed "Updated room color" being reported for a room already in that colour, most often the first room after starting Mudlet; the message now only appears when a room's colour actually changes
 - Fixed Post Office, Underground and Aether rooms being given a new colour number every session, which could redraw the rooms of one of them in another's colour until each was visited again
 - Added a Delete link to each row of `mapper area list`, which removes that area and all its rooms from the map after a confirming click; the rooms are mapped again as you walk through them
+- Added the Stable biome: stable rooms get an amber colour, show their symbol in poi mode as a point of interest, and count as safe ground for safe walking, as do city rooms; a map made before this is gone over once on its next load so its stable rooms pick this up
 
 ## 1.7.1 - 2026-09-24
 

@@ -21,10 +21,12 @@ mapper.terrainweights = mapper.terrainweights or {}
 -- the names are written out here; mapper.buildSafeBiomeSet replaces the whole
 -- set if the game ever starts sending one.
 mapper.safebiomes = {
+    ["city"] = true,
     ["road"] = true,
     ["path"] = true,
     ["inn"] = true,
     ["post office"] = true,
+    ["stable"] = true,
 }
 
 function mapper.issafebiome(biome)

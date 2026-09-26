@@ -19,7 +19,7 @@ local TERRAIN = "mapper_terrain"
 -- The version of the rules the records were written under. A change to how
 -- rooms are locked, weighted or drawn bumps it, and every map is gone over
 -- again the next time it loads.
-local RULES = 1
+local RULES = 2
 
 -- Rooms entered or made before the settings were loaded - an update's first
 -- half second, say - whose lock, weight and character could not be set then.
