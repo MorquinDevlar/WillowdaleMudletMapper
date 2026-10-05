@@ -45,6 +45,12 @@ local function check(cond, what)
     if cond then passes = passes + 1 else failures = failures + 1; print("FAIL: " .. what) end
 end
 
+-- What the mapper printed without its colours and with its wrapped lines
+-- joined, so a message is found wherever a line happened to break it
+local function said()
+    return (STUB.text():gsub("<%d+,%d+,%d+>", ""):gsub("%s+", " "))
+end
+
 -- A 3x3 grid of rooms in area "Town", two biomes, exits both ways
 local function buildtown()
     STUB.newmap()
@@ -436,6 +442,75 @@ print("== a stable is a point of interest in its own colour")
 check(mapper.isPOI("Stable"), "the game's stable biome gets its symbol drawn in poi mode")
 check(mapper.getBiomeEnvId("#E8A33D") == mapper.envids.Stable, "the stable colour gets the stable environment")
 check(mapper.issafebiome("Stable") and mapper.issafebiome("City"), "stables and town streets are safe before the game says so")
+
+print("== a map deleted behind the mapper's back: new rooms go in the area made again")
+-- Deleting the map from Mudlet's preferences raises no event, so the next room
+-- arrives with the mapper still knowing the old map's areas and tags
+buildtown()
+setMapUserData("tags", yajl.to_string({ well = "W" }))
+raiseEvent("sysMapDownloadEvent"); STUB.runtimers()
+check(mapper.areaidbyname("Town") ~= nil and mapper.istag("well"), "the old map's area and tag are known")
+STUB.newmap()
+mapper.settings:setOption("showmappingmessages", "on", true)
+STUB.clearout(); STUB.reset_counts()
+gmcpfor(50, { name = "Market Street", coordinates = "Town zone, 2, 2, 0" })
+gmcp.Room.Info.Exits = { east = { room_id = 51 } }
+mapper.onroom()
+local remade = getAreaTable()["Town"]
+check(roomExists(50) and remade ~= nil and getRoomArea(50) == remade,
+    "the room is filed in Town made again, got area " .. tostring(roomExists(50) and getRoomArea(50)))
+check(roomExists(51) and getRoomArea(51) == remade, "a room made from its exits is in it too")
+check(said():find("Created room 50 at 2,2,0 in Town.", 1, true) ~= nil, "the room's creation is reported")
+check(not said():find("Moved room into area", 1, true), "no move is reported")
+STUB.runtimers()
+check(STUB.c("raise:mapper map reloaded") == 1, "the map is redone once, got " .. STUB.c("raise:mapper map reloaded"))
+check(not mapper.istag("well"), "the deleted map's tag is forgotten")
+mapper.settings:setOption("showmappingmessages", "off", true)
+
+print("== an area made in Mudlet's map window is used, not made twice")
+local inn = addAreaName("Inn")
+gmcpfor(52, { name = "Taproom", area = "Inn zone", area_name = "Inn", coordinates = "Inn zone, 0, 0, 0" })
+mapper.onroom()
+local inns = 0
+for _, name in pairs(STUB.map.areas) do if name == "Inn" then inns = inns + 1 end end
+check(inns == 1, "one area named Inn, got " .. inns)
+check(roomExists(52) and getRoomArea(52) == inn, "the room is mapped into it")
+
+print("== autocreateareas off: a new room goes in the Default Area and no area is made")
+local autocreate = mapper.settings.autocreateareas
+mapper.settings:setOption("autocreateareas", false, true)
+mapper.settings:setOption("showmappingmessages", "on", true)
+STUB.newmap()
+STUB.clearout()
+gmcpfor(53, { name = "Lonely room", coordinates = "Town zone, 0, 0, 0" })
+mapper.onroom()
+check(roomExists(53) and getRoomArea(53) == -1, "the room is mapped, in the Default Area")
+check(getAreaTable()["Town"] == nil, "no area is made")
+check(roomExists(53) and STUB.map.rooms[53].data.Area == "Town", "the room keeps the area the game named")
+check(said():find("Created room 53 at 0,0,0 in the Default Area, as there is no area 'Town' on the map.", 1, true) ~= nil,
+    "it says where the room went")
+STUB.runtimers()
+-- The same for an area the mapper has never known
+gmcpfor(54, { name = "Heath", area = "Wilds zone", area_name = "Wilds", coordinates = "Wilds zone, 5, 5, 0" })
+mapper.onroom()
+check(roomExists(54) and getRoomArea(54) == -1 and getAreaTable()["Wilds"] == nil,
+    "a room in an area the map never had is mapped without making it")
+mapper.settings:setOption("showmappingmessages", "off", true)
+mapper.settings:setOption("autocreateareas", autocreate, true)
+
+print("== a room of an area the mapper knows costs no table of the areas")
+buildtown()
+raiseEvent("sysMapDownloadEvent"); STUB.runtimers()
+STUB.reset_counts()
+gmcpfor(5); mapper.onroom()
+gmcpfor(10, { name = "New room", coordinates = "Town zone, 4, 1, 0" })
+gmcp.Room.Info.Exits = { west = { room_id = 3 } }
+mapper.onroom()
+STUB.runtimers()
+local tables = STUB.c("getAreaTable")
+check(tables == 0, "no area table read, got " .. tables)
+check(STUB.c("raise:mapper map reloaded") == 0, "and the map is not redone")
+check(roomExists(10) and getRoomArea(10) == getAreaTable()["Town"], "the new room is filed in Town")
 
 print(string.format("\n%d passed, %d failed", passes, failures))
 os.exit(failures == 0 and 0 or 1)

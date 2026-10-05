@@ -178,6 +178,14 @@ Commit message best practices:
   actually changes. It hands `speedWalkPath` back as strings.
 - The live wiki documents `mapOpenEvent` and `sysMapDownloadEvent` as the only
   map-load events; `getMapUserData` returns nil and an error for a missing key.
+- The "Delete map" button in Mudlet's preferences (`slot_deleteMap` ->
+  `TMap::mapClear`) raises no Lua event, and neither does deleting or renaming
+  an area in Mudlet's own UI, so the mapper's area tables can be stale without
+  it having been told. `setRoomArea` refuses an area ID the map does not have
+  (nil and a message, no error) and leaves the room in the Default Area, -1;
+  `addAreaName` refuses a name an area already has and gives a new area the
+  lowest free ID; `getRoomAreaName(id)` returns -1 and a message for a
+  missing ID.
 - Local checkouts for checking such things: the server at
   `/Users/jens/mud/WillowdaleMUD` (`modules/gmcp/gmcp.Room.go`,
   `internal/usercommands/movesignals.go`) and Mudlet at

@@ -1,19 +1,42 @@
 -- Room creation and coordinate calculation functions
 
--- An area's ID from its name, in whatever case the game gives it. The areas
--- are looked up in the mapper's own tables rather than asked of Mudlet: this
--- runs for every room the player walks into, and getAreaTable builds a fresh
--- table of every area on the map each time it is called. The tables are rebuilt
--- whenever the areas change, including by mapper.findOrCreateArea.
-function mapper.areaidbyname(areaName)
-	if not areaName or areaName == "" then
-		return nil
-	end
+-- An area's ID from the mapper's own tables, in whatever case the game gives
+-- the name, or nil.
+local function cachedareaid(areaName)
 	local id = mapper.areatable and mapper.areatable[areaName]
 	if id then
 		return id
 	end
 	return mapper.areatablelower and mapper.areatablelower[areaName:lower()]
+end
+
+-- An area's ID from its name, in whatever case the game gives it. The areas
+-- are looked up in the mapper's own tables rather than asked of Mudlet: this
+-- runs for every room the player walks into, and getAreaTable builds a fresh
+-- table of every area on the map each time it is called. The tables are rebuilt
+-- whenever the mapper changes the areas, including by mapper.findOrCreateArea.
+--
+-- Mudlet can change them without telling the mapper, though: deleting the map
+-- from the profile preferences raises no event, and nor does deleting or
+-- renaming an area in the map window. An ID the tables keep for a name is then
+-- refused by setRoomArea, and every room filed under it stays in the Default
+-- Area. So a found ID is checked against the one area Mudlet has under it,
+-- which is a single lookup; when the name there is not the one the tables have,
+-- the tables are rebuilt and the name looked up again, and the rest of what the
+-- mapper keeps about the map is redone as for any map it was not told about.
+function mapper.areaidbyname(areaName)
+	if not areaName or areaName == "" then
+		return nil
+	end
+	local id = cachedareaid(areaName)
+	if not id or getRoomAreaName(id) == mapper.areatabler[tonumber(id)] then
+		return id
+	end
+	mapper.regenerateareas()
+	if mapper.mapdata_changed then
+		mapper.mapdata_changed()
+	end
+	return cachedareaid(areaName)
 end
 
 function mapper.findOrCreateArea(areaName)
@@ -34,8 +57,14 @@ function mapper.findOrCreateArea(areaName)
 		if mapper.settings and mapper.settings.showmappingmessages then
 			mapper.notify("Created new area: " .. areaName)
 		end
+		return newId
 	end
-	return newId
+	-- Mudlet refuses a name an area already has, so the likeliest reason is an
+	-- area made where the mapper did not see it, in the map window or by
+	-- another script. Only then are the areas read again: a name the tables
+	-- miss is otherwise a new area, and reading them costs a table of them all.
+	mapper.regenerateareas()
+	return mapper.areaidbyname(areaName)
 end
 
 -- The area a room belongs to on the Mudlet map. GMCP names a room's place twice:
@@ -132,10 +161,14 @@ function mapper.fileroom(id, areaId)
 end
 
 -- Every room the mapper makes is made here: added, placed, filed and coloured.
+-- A room with no area to go in is left in the Default Area (-1), which is where
+-- Mudlet puts a new room anyway and an area setRoomArea refuses.
 function mapper.createroom(id, x, y, z, areaId, env)
 	addRoom(id)
 	setRoomCoordinates(id, x, y, z)
-	mapper.fileroom(id, areaId)
+	if areaId and areaId ~= -1 then
+		mapper.fileroom(id, areaId)
+	end
 	mapper.setroomenv(id, env)
 end
 

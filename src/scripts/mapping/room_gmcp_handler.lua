@@ -109,19 +109,31 @@ function mapper.mappingnewroom(num)
 					mapper.setEnvironmentColors()
 				end
 
-				local areaId = mapper.findOrCreateArea(currentRoomArea)
+				-- The mapper makes an area only while autocreateareas is on. With it
+				-- off, or with no area to be had, the room is still mapped, into the
+				-- Default Area; its user data keeps the area the game named.
+				local areaId
+				if mapper.settings.autocreateareas then
+					areaId = mapper.findOrCreateArea(currentRoomArea)
+				else
+					areaId = mapper.areaidbyname(currentRoomArea)
+				end
+				mapper.createroom(num, currentRoomX, currentRoomY, currentRoomZ, areaId, mapper.biomeenv(basic))
+				-- A room made a moment ago carries no data yet
+				data = {}
+				mapper.storeroomorigin(num, currentRoomArea, currentRoomZone, data)
+
+				local made
 				if areaId then
-					mapper.createroom(num, currentRoomX, currentRoomY, currentRoomZ, areaId, mapper.biomeenv(basic))
-					-- A room made a moment ago carries no data yet
-					data = {}
-					mapper.storeroomorigin(num, currentRoomArea, currentRoomZone, data)
+					made = string.format("Created room %d at %d,%d,%d in %s.", num, currentRoomX, currentRoomY, currentRoomZ, currentRoomArea)
+				else
+					made = string.format("Created room %d at %d,%d,%d in the Default Area, as there is no area '%s' on the map.",
+						num, currentRoomX, currentRoomY, currentRoomZ, currentRoomArea)
+				end
+				note(made, true)
 
-					local made = string.format("Created room %d at %d,%d,%d in %s.", num, currentRoomX, currentRoomY, currentRoomZ, currentRoomArea)
-					note(made, true)
-
-					if mapper.debugging() then
-						mapper.notify(made)
-					end
+				if mapper.debugging() then
+					mapper.notify(made)
 				end
 			-- otherwise place it next to a room we already know. This room has
 			-- `exit` leading to that one, so it sits one step the other way from it.

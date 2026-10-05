@@ -181,7 +181,7 @@ function highlightRoom() end; function unHighlightRoom() end
 -- ---------------------------------------------------------------- the map
 local M
 function STUB.newmap()
-    M = { rooms = {}, areas = { [-1] = "Default Area" }, nextarea = 1, data = {}, envcolours = {} }
+    M = { rooms = {}, areas = { [-1] = "Default Area" }, data = {}, envcolours = {} }
     STUB.map = M
 end
 STUB.newmap()
@@ -207,12 +207,45 @@ function deleteRoom(id) M.rooms[id] = nil end
 function getRooms() count("getRooms") local t = {} for id, r in pairs(M.rooms) do t[id] = r.name end return t end
 function setRoomCoordinates(id, x, y, z) local r = R(id) r.x, r.y, r.z = x, y, z end
 function getRoomCoordinates(id) local r = R(id) return r.x, r.y, r.z end
-function setRoomArea(id, area) count("setRoomArea") R(id).area = area end
+-- Mudlet refuses the Default Area (-1) and an area the map does not have with
+-- nil and a message, without raising, and leaves the room where it was
+function setRoomArea(id, area)
+    count("setRoomArea")
+    local r = R(id)
+    local aid = tonumber(area)
+    if not aid or aid < 1 or not M.areas[aid] then
+        return nil, "number " .. tostring(area) .. " is not a valid areaID"
+    end
+    r.area = aid
+    return true
+end
 function getRoomArea(id) return R(id).area end
-function addAreaName(name) local id = M.nextarea; M.nextarea = id + 1; M.areas[id] = name; return id end
-function getAreaTable() local t = {} for id, n in pairs(M.areas) do t[n] = id end return t end
+-- A name an area already has is refused with nil and a message; a new area
+-- gets the lowest free ID from 1 up, so a map wiped and mapped again hands out
+-- the IDs of the old one
+function addAreaName(name)
+    name = tostring(name):match("^%s*(.-)%s*$")
+    if name == "" then return nil, "area names may not be empty strings" end
+    for aid, n in pairs(M.areas) do
+        if n == name then return nil, "areaID " .. aid .. " already has the name '" .. name .. "'" end
+    end
+    local id = 1
+    while M.areas[id] do id = id + 1 end
+    M.areas[id] = name
+    return id
+end
+function getAreaTable() count("getAreaTable") local t = {} for id, n in pairs(M.areas) do t[n] = id end return t end
 function getAreaTableSwap() local t = {} for id, n in pairs(M.areas) do t[id] = n end return t end
-function getRoomAreaName(id) return M.areas[id] end
+-- By ID, the name; by name, the ID; -1 and a message for neither
+function getRoomAreaName(area)
+    local id = tonumber(area)
+    if id then
+        if M.areas[id] then return M.areas[id] end
+        return -1, "number " .. id .. " is not a valid area id"
+    end
+    for aid, n in pairs(M.areas) do if n == area then return aid end end
+    return -1, "string '" .. tostring(area) .. "' is not a valid area name"
+end
 function getAreaRooms1(area)
     if not M.areas[area] and area ~= 0 then return nil end
     local t = {}
