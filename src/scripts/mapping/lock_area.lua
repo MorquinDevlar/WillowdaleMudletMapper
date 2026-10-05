@@ -130,6 +130,48 @@ function mapper.lockArea(area, lock, dontreshow)
 	end
 end
 
+-- Forget the lock on an area that is gone, or on every area when no ID is
+-- given. A lock is kept by area ID, and Mudlet hands a freed ID to the next
+-- area made, so a lock left behind would close that new area, and every room
+-- mapped into it, to walks the player never closed. No room is unlocked: the
+-- rooms the lock was on went with the area. Returns how many locks it dropped.
+function mapper.forgetlocks(areaId)
+	local only
+	if areaId ~= nil then
+		only = tonumber(areaId)
+		if not only then
+			return 0
+		end
+	end
+	local locked = mapper.locked or {}
+	local dropped = 0
+	-- Read as numbers, as mapper.synclocks reads them: a settings file edited by
+	-- hand can carry an ID as a string
+	for id, lock in pairs(locked) do
+		if not only or tonumber(id) == only then
+			locked[id] = nil
+			if lock then
+				dropped = dropped + 1
+			end
+		end
+	end
+	if dropped == 0 then
+		return 0
+	end
+
+	-- Recorded as mapper.lockArea records a lock, once however many went
+	if mapper.marklocks then
+		mapper.marklocks()
+	end
+	if mapper.saveoptions then
+		mapper.saveoptions()
+	end
+	if mapper.mapinfodirty then
+		mapper.mapinfodirty()
+	end
+	return dropped
+end
+
 -- Lock or unlock an area by ID, or say that it already is.
 function mapper.setarealock(areaId, lock)
 	if mapper.arealocked(areaId) == lock then

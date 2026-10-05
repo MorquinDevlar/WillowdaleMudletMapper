@@ -512,5 +512,92 @@ check(tables == 0, "no area table read, got " .. tables)
 check(STUB.c("raise:mapper map reloaded") == 0, "and the map is not redone")
 check(roomExists(10) and getRoomArea(10) == getAreaTable()["Town"], "the new room is filed in Town")
 
+-- Mudlet hands a freed area ID to the next area made, and a lock is kept by ID,
+-- so a lock that outlives its area would close whatever area is made next
+local OPTIONS = "/home/mapper.options.lua"
+local function savedwithoutlocks()
+    local saved = STUB.files[OPTIONS]
+    return saved ~= nil and next(saved.locked_areas or {}) == nil
+end
+
+print("== mapper reset forgets the locks of the areas it deletes")
+local oldtown = getAreaTable()["Town"]
+mapper.lockArea(oldtown, true, true)
+check(mapper.arealocked(oldtown) and lockedinmap(oldtown), "Town is locked before the reset")
+STUB.files[OPTIONS] = nil
+STUB.clearout()
+mapper.commands.reset(); mapper.commands.reset()
+check(next(mapper.locked) == nil, "no area is left locked")
+check(savedwithoutlocks(), "the settings file is saved without the lock")
+check(said():find("Deleted the map and the lock on 1 area. It will be built again as you walk.", 1, true) ~= nil,
+    "it says the lock went")
+gmcpfor(60, { name = "Quay", area = "Harbour zone", area_name = "Harbour", coordinates = "Harbour zone, 0, 0, 0" })
+mapper.onroom()
+local harbour = getAreaTable()["Harbour"]
+check(harbour == oldtown, "the first area made after the reset is given Town's ID, got " .. tostring(harbour))
+check(roomExists(60) and getRoomArea(60) == harbour, "the room is filed in it")
+check(not mapper.arealocked(harbour), "the area that took the ID is not locked")
+check(roomExists(60) and not roomLocked(60), "nor is the room mapped into it")
+check(not lockedinmap(harbour), "nor does the map record it as locked")
+STUB.runtimers()
+
+print("== mapper reset with no lock to forget says what it always said")
+STUB.clearout()
+mapper.commands.reset(); mapper.commands.reset()
+check(said():find("Deleted the map. It will be built again as you walk.", 1, true) ~= nil, "the message is unchanged")
+check(not said():find("lock on", 1, true), "and mentions no lock")
+
+print("== a map deleted behind the mapper's back: an area it never knew does not take over a lock")
+local lockedtown = buildtown()
+raiseEvent("sysMapDownloadEvent"); STUB.runtimers()
+mapper.lockArea(lockedtown, true, true)
+-- No event: the next room is the first the mapper hears of it, and Wilds is a
+-- name it has never looked up, so nothing tells it the map went
+STUB.newmap()
+STUB.files[OPTIONS] = nil
+gmcpfor(61, { name = "Heath", area = "Wilds zone", area_name = "Wilds", coordinates = "Wilds zone, 5, 5, 0" })
+mapper.onroom()
+local wilds = getAreaTable()["Wilds"]
+check(wilds == lockedtown, "Wilds is given Town's old ID, got " .. tostring(wilds))
+check(roomExists(61) and getRoomArea(61) == wilds, "the room is filed in it")
+check(not mapper.arealocked(wilds), "Wilds is not locked")
+check(roomExists(61) and not roomLocked(61), "nor is the room mapped into it")
+check(mapper.locked[lockedtown] == nil, "Town's lock is forgotten")
+check(savedwithoutlocks(), "and the settings file is saved without it")
+STUB.runtimers()
+
+print("== a map deleted behind the mapper's back: Town made again is not locked either")
+lockedtown = buildtown()
+raiseEvent("sysMapDownloadEvent"); STUB.runtimers()
+mapper.lockArea(lockedtown, true, true)
+STUB.newmap()
+gmcpfor(62, { name = "Square", coordinates = "Town zone, 2, 2, 0" })
+mapper.onroom()
+local newtown = getAreaTable()["Town"]
+check(newtown == lockedtown, "Town is made again under its old ID, got " .. tostring(newtown))
+check(roomExists(62) and getRoomArea(62) == newtown, "the room is filed in it")
+check(not mapper.arealocked(newtown), "Town made again is not locked")
+check(roomExists(62) and not roomLocked(62), "nor is the room mapped into it")
+STUB.runtimers()
+
+print("== a lock on an area still on the map is kept when another area is made")
+lockedtown = buildtown()
+raiseEvent("sysMapDownloadEvent"); STUB.runtimers()
+mapper.lockArea(lockedtown, true, true)
+STUB.files[OPTIONS] = nil
+gmcpfor(63, { name = "Glade", area = "Grove zone", area_name = "Grove", coordinates = "Grove zone, 0, 0, 0" })
+mapper.onroom()
+local grove = getAreaTable()["Grove"]
+check(grove ~= nil and grove ~= lockedtown, "Grove gets an ID of its own, got " .. tostring(grove))
+check(mapper.arealocked(lockedtown) and lockedinmap(lockedtown), "Town stays locked")
+check(not mapper.arealocked(grove) and roomExists(63) and not roomLocked(63), "Grove and its room are open")
+check(STUB.files[OPTIONS] == nil, "with no lock forgotten, the settings file is not written")
+gmcpfor(10, { name = "New room", coordinates = "Town zone, 4, 1, 0" })
+gmcp.Room.Info.Exits = { west = { room_id = 3 } }
+mapper.onroom()
+check(roomExists(10) and getRoomArea(10) == lockedtown and roomLocked(10), "a new room mapped into Town is locked")
+mapper.lockArea(lockedtown, false, true)
+STUB.runtimers()
+
 print(string.format("\n%d passed, %d failed", passes, failures))
 os.exit(failures == 0 and 0 or 1)

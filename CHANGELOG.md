@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+- Fixed a newly mapped area starting out locked, with every room mapped into it closed to walks, when Mudlet gave it the number of a locked area that had been deleted by `mapper reset`, from Mudlet's preferences or in Mudlet's map window; `mapper reset` now drops your area locks along with the map and says so
+
 ## 1.8.1 - 2026-10-05
 
 - Fixed new rooms being put in Mudlet's "Default Area" after the map was deleted from Mudlet's preferences, or an area was deleted or renamed in Mudlet's map window, without reloading the profile; the mapper now notices that an area it knew is gone and creates it again, and forgets the tags of the deleted map

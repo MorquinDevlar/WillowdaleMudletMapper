@@ -181,11 +181,19 @@ function mapper.commands.reset()
     mapper.regenerateareas()
     -- The tags were kept in the map too, so the list read from it is gone
     mapper.forgettags()
+    -- Every area a lock was on is gone, and the areas made as the map is walked
+    -- again are given their IDs from 1 up, so none of them may inherit one
+    local locks = mapper.forgetlocks()
     raiseEvent("mapper updated map")
     -- The records of what the map was brought in line with went with it; an
     -- empty map is in line with anything, so it says so from the start
     mapper.syncmap()
-    mapper.echo("Deleted the map. It will be built again as you walk.")
+    if locks > 0 then
+        mapper.echo(string.format("Deleted the map and the lock%s on %d area%s. It will be built again as you walk.",
+            locks == 1 and "" or "s", locks, locks == 1 and "" or "s"))
+    else
+        mapper.echo("Deleted the map. It will be built again as you walk.")
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -624,15 +632,7 @@ function mapper.commands.area.delete(areaId)
     end
 
     -- A new area can be given this ID again, and must not start out locked
-    if mapper.locked and mapper.locked[id] then
-        mapper.locked[id] = nil
-        if mapper.marklocks then
-            mapper.marklocks()
-        end
-        if mapper.saveoptions then
-            mapper.saveoptions()
-        end
-    end
+    mapper.forgetlocks(id)
 
     mapper.regenerateareas()
     -- Routes through the rooms and the area's room count went out with them

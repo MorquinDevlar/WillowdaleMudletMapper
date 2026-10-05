@@ -52,6 +52,11 @@ function mapper.findOrCreateArea(areaName)
 	-- Create new area
 	local newId = addAreaName(areaName)
 	if newId then
+		-- An area made this moment cannot have been locked by the player, so a
+		-- lock under its ID was on an area that went without the mapper being
+		-- told, in Mudlet's preferences or its map window, and Mudlet has handed
+		-- the freed ID on. Forgotten before any room is filed under it.
+		mapper.forgetlocks(newId)
 		mapper.regenerateareas()
 		raiseEvent("mapper areas changed")
 		if mapper.settings and mapper.settings.showmappingmessages then
