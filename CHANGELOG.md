@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+## 1.8.1 - 2026-10-05
+
 - Fixed new rooms being put in Mudlet's "Default Area" after the map was deleted from Mudlet's preferences, or an area was deleted or renamed in Mudlet's map window, without reloading the profile; the mapper now notices that an area it knew is gone and creates it again, and forgets the tags of the deleted map
 - Fixed a room not being mapped at all when its area had been created in Mudlet's map window instead of by the mapper; the room now goes into that area
 - Changed `mconfig autocreateareas` so that with it off the mapper no longer creates an area for a room you walk into, and maps the room into Mudlet's Default Area instead; before, turning it off only stopped rooms being moved into the area the game names for them
