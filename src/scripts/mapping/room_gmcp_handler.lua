@@ -18,7 +18,7 @@ function mapper.mappingnewroom(num)
 		end
 		local getRoomName, getRoomCoordinates = getRoomName, getRoomCoordinates
 		local basic = gmcp.Room.Info and gmcp.Room.Info.Basic
-		num = tonumber(num) or (basic and tonumber(basic.id))
+		num = tonumber(num) or mapper.gmcproomid(basic)
 		local currentexits = gmcp.Room.Info and gmcp.Room.Info.Exits or {}
 
 		-- What this pass did, and whether any of it changed the shape of the map.
@@ -177,6 +177,33 @@ function mapper.mappingnewroom(num)
 				note("Moved room into area '" .. currentRoomArea .. "'.", true)
 			end
 		end
+		-- A copy of a room made for one player is mapped as the room it was
+		-- copied from (see mapper.gmcproomid). The game puts its copies on that
+		-- room's cell under ids it hands out per visit, and no two rooms share a
+		-- cell in the game's own frame, so anything else on the cell is an earlier
+		-- copy, mapped under its own id before the server sent which room it was
+		-- made from. One cell is read, on an arrival in a copy only. The Default
+		-- Area is left alone: with autocreateareas off it holds the rooms of every
+		-- map, and their cells overlap. getRoomsByPosition is 0-indexed, hence
+		-- pairs; the 1-indexed one only arrived in Mudlet 4.21 (June 2026).
+		if basic and tonumber(basic.instance_of) == num then
+			local area = getRoomArea(num)
+			if area and area ~= -1 then
+				local cx, cy, cz = getRoomCoordinates(num)
+				local removed, last = 0, nil
+				for _, id in pairs(getRoomsByPosition(area, cx, cy, cz) or {}) do
+					if id ~= num and deleteRoom(id) then
+						removed = removed + 1
+						last = id
+					end
+				end
+				if removed == 1 then
+					note("Removed room " .. last .. ", an earlier copy of this one.", true)
+				elseif removed > 1 then
+					note("Removed " .. removed .. " earlier copies of this room.", true)
+				end
+			end
+		end
 		-- autolink exits
 		local x = getRoomExits(num) or {}
 		-- The room's special exits by command, read when the first one is needed
@@ -189,9 +216,10 @@ function mapper.mappingnewroom(num)
 				-- A room script's or a mutator's exit is shown in the room but
 				-- never stored: no exit, stub or special exit, and no room on its
 				-- other side. One under the name of an exit the map already has
-				-- stands in for it only while it lasts, so the stored exit is left
-				-- as it is; the autoclear pass below goes by the names the game
-				-- sends, so it keeps that exit and its stub too.
+				-- stands in for it only while it lasts, so the stored exit is kept
+				-- (mapper.updateDoorStatuses closes it to walks while the two lead
+				-- to different rooms); the autoclear pass below goes by the names
+				-- the game sends, so it keeps that exit and its stub too.
 				if mapper.debugging() then
 					mapper.notify("Left the temporary " .. exit .. " exit to room " .. tostring(id) .. " off the map.")
 				end

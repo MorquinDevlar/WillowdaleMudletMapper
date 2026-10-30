@@ -190,6 +190,8 @@ local LONG = { "north", "northeast", "northwest", "east", "west", "south", "sout
 local NUM = {}
 for i, l in ipairs(LONG) do NUM[l] = i end
 local SHORT = { n = 1, ne = 2, nw = 3, e = 4, w = 5, s = 6, se = 7, sw = 8, u = 9, d = 10, i = 11, o = 12 }
+-- The names setDoor and getDoors key a direction by, in LONG's order
+local DOORKEY = { "n", "ne", "nw", "e", "w", "s", "se", "sw", "up", "down", "in", "out" }
 local function dirnum(d)
     if type(d) == "number" then return d end
     return NUM[d] or SHORT[d] or NUM[tostring(d):lower()]
@@ -203,7 +205,58 @@ function addRoom(id)
     return true
 end
 function roomExists(id) id = tonumber(id) return id ~= nil and M.rooms[id] ~= nil end
-function deleteRoom(id) M.rooms[id] = nil end
+-- Takes with it every exit and special exit of another room that leads into
+-- it, and their doors and locks, as Mudlet's TRoomDB::__removeRoom does; a
+-- stub names no room, so none goes. A direction that is also a stub keeps its
+-- door and lock there.
+function deleteRoom(id)
+    count("deleteRoom")
+    id = tonumber(id)
+    if not id or not M.rooms[id] then return nil, "number " .. tostring(id) .. " is not a valid roomID" end
+    for fid, r in pairs(M.rooms) do
+        if fid ~= id then
+            for long, to in pairs(r.exits) do
+                if to == id then
+                    local d = NUM[long]
+                    r.exits[long] = nil
+                    if not r.stubs[d] then
+                        r.doors[DOORKEY[d]] = nil
+                        r.exitlocks[d] = nil
+                    end
+                end
+            end
+            for cmd, to in pairs(r.special) do
+                if to == id then r.special[cmd] = nil; r.speclocks[cmd] = nil end
+            end
+        end
+    end
+    M.rooms[id] = nil
+    return true
+end
+-- The rooms of an area at one cell, sorted, or nil for an area the map does
+-- not have: 0-indexed as Mudlet has had it since 2010, and 1-indexed as
+-- Mudlet 4.21 added it
+local function roomsat(area, x, y, z)
+    if not M.areas[area] then return nil end
+    local t = {}
+    for id, r in pairs(M.rooms) do
+        if r.area == area and r.x == x and r.y == y and r.z == z then t[#t + 1] = id end
+    end
+    table.sort(t)
+    return t
+end
+function getRoomsByPosition(area, x, y, z)
+    count("getRoomsByPosition")
+    local sorted = roomsat(area, x, y, z)
+    if not sorted then return nil end
+    local t = {}
+    for i, id in ipairs(sorted) do t[i - 1] = id end
+    return t
+end
+function getRoomsByPosition1(area, x, y, z)
+    count("getRoomsByPosition1")
+    return roomsat(area, x, y, z)
+end
 function getRooms() count("getRooms") local t = {} for id, r in pairs(M.rooms) do t[id] = r.name end return t end
 function setRoomCoordinates(id, x, y, z) local r = R(id) r.x, r.y, r.z = x, y, z end
 function getRoomCoordinates(id) local r = R(id) return r.x, r.y, r.z end

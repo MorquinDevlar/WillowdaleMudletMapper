@@ -37,14 +37,53 @@ function mapper.updateDoorStatuses(roomNum)
 	local currentexits = gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Exits or {}
 	local doorStatus = getDoors(roomNum) or {}
 	local changed, locksChanged = false, false
+	-- The room's stored exits and special exits, each read the first time a
+	-- temporary exit needs them
+	local storedexits, storedspecials
 
 	for exit, exitData in pairs(currentexits) do
 		-- GMCP hands us a table per exit; anything else is not one. An exit
 		-- marked temporary, a room script's or an active mutator's, gets no door
-		-- or lock: either would stay on the map after the exit closed, and a
-		-- mutator exit under the name of one of the room's own would overwrite
-		-- that exit's door and lock while it lasts.
-		if type(exitData) == "table" and not mapper.temporaryexit(exitData) then
+		-- or lock of its own: either would stay on the map after the exit closed.
+		-- A mutator's exit can take over one of the room's own exits by name and
+		-- lead somewhere else. A walk would then go through it to the wrong room,
+		-- look for a new path from there and could come back through the same
+		-- exit until the mutator ended, so the stored exit is locked for
+		-- pathfinding while that lasts. Its door marker stays as it is: Mudlet
+		-- only draws doors, and only a lock keeps its pathfinder off an exit.
+		-- When the server sends the room's own exit again, it is handled below
+		-- like any other and its lock set from its own door, which takes this
+		-- one off; a mutator that ends while the player is elsewhere leaves the
+		-- exit locked until the player next enters the room. A temporary exit
+		-- leading where the stored one does, or one under a name the room has no
+		-- exit for, changes nothing.
+		if type(exitData) == "table" and mapper.temporaryexit(exitData) then
+			local destination = tonumber(exitData.room_id)
+			local longname = mapper.dirlong(exit)
+			local held
+			if longname then
+				storedexits = storedexits or getRoomExits(roomNum) or {}
+				local stored = tonumber(storedexits[longname])
+				if stored and stored ~= destination and not mapper.hasExitLock(roomNum, exit) then
+					mapper.lockExit(roomNum, exit, true)
+					held = stored
+				end
+			elseif hasSpecialExitLock then
+				storedspecials = storedspecials or getSpecialExitsSwap(roomNum) or {}
+				local stored = tonumber(storedspecials[exit])
+				if stored and stored ~= destination and not hasSpecialExitLock(roomNum, stored, exit) then
+					mapper.lockSpecialExit(roomNum, stored, exit, true)
+					held = stored
+				end
+			end
+			if held then
+				locksChanged = true
+				if mapper.debugging() then
+					mapper.notify(string.format("Locked exit %s to room %d in room %d for pathfinding while a temporary exit has its name.",
+						exit, held, roomNum))
+				end
+			end
+		elseif type(exitData) == "table" then
 			local details = exitData.details
 			local isDoor = (details and details.type == "door" and details.state) and true or false
 			-- The pathfinder may only be steered away from a door this player
@@ -97,7 +136,9 @@ function mapper.updateDoorStatuses(roomNum)
 
 	-- Doors left on exits the room no longer has. A temporary exit counts as
 	-- present: under the name of one of the room's own exits it stands in for
-	-- that exit only while it lasts, so the door stored on it stays.
+	-- that exit only while it lasts, so the door stored on it stays drawn as it
+	-- was, and the lock set above keeps walks off it where the two lead to
+	-- different rooms.
 	local present = {}
 	for gmcpExit in pairs(currentexits) do
 		local doorExit = mapper.dirdoor(gmcpExit)

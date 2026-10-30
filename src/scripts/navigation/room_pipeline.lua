@@ -129,7 +129,9 @@ end
 
 function mapper.onroom()
     local basic = gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic
-    local num = basic and tonumber(basic.id)
+    -- A copy of a room made for one player is the room it was copied from for
+    -- the whole arrival (see mapper.gmcproomid)
+    local num = mapper.gmcproomid(basic)
     if not num then
         return
     end

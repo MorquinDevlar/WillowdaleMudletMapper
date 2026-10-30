@@ -28,7 +28,7 @@ function mapper.onPackageInstalled(_, package)
             end
             -- Restore Mudlet's current room from GMCP data so double-click works
             if gmcp and gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic then
-                local roomId = tonumber(gmcp.Room.Info.Basic.id)
+                local roomId = mapper.gmcproomid(gmcp.Room.Info.Basic)
                 if roomId and roomExists(roomId) then
                     centerview(roomId)
                     mapper.currentroom = roomId

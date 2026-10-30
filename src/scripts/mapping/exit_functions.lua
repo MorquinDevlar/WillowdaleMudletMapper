@@ -108,13 +108,15 @@ do
 end
 
 -- Whether the server marks an exit as one that comes and goes: a way a room
--- script opens for a while, such as examining a thicket, or an exit of an
--- active mutator, which ends with the mutator. It is shown in the room while
--- it lasts, but nothing of it may reach the map: a stored exit, stub, door or
--- lock would stay after the exit closed, and speedwalks would be routed
--- through a way that is no longer there. A mutator exit can also take the
--- name of one of the room's own exits, which holds again, with its door and
--- lock, when the mutator ends, so the map keeps the room's own.
+-- script opens, such as the Aetherdrift's "spectral roots", which go with the
+-- copy of the room they are in, or an exit of an active mutator, which ends
+-- with the mutator. It is shown in the room while it lasts, but nothing of it
+-- may reach the map: a stored exit, stub, door or lock would stay after the
+-- exit closed, and speedwalks would be routed through a way that is no longer
+-- there. A mutator exit can also take over one of the room's own exits by
+-- name, and the room's own comes back, with its door and lock, when the
+-- mutator ends, so the map keeps the room's own, locked for walks while the
+-- mutator's leads somewhere else (see mapper.updateDoorStatuses).
 function mapper.temporaryexit(exitData)
 	return type(exitData) == "table" and type(exitData.details) == "table"
 		and exitData.details.temporary and true or false

@@ -599,9 +599,10 @@ check(roomExists(10) and getRoomArea(10) == lockedtown and roomLocked(10), "a ne
 mapper.lockArea(lockedtown, false, true)
 STUB.runtimers()
 
--- A room script's exit (examine thicket, examine log), the drift's spectral
--- roots and a mutator's exits come with details.temporary and go again, so the
--- map is left as it was without them
+-- The drift's spectral roots and a mutator's exits come with details.temporary
+-- and go again, so the map is left as it was without them, except that a stored
+-- exit whose name a mutator's exit has taken, leading elsewhere, is locked for
+-- walks while it lasts
 local MUTATOR_EAST = { room_id = 777, delta_x = 1, delta_y = 0, delta_z = 0, details = { temporary = true } }
 local function ownexits(eastdoor)
     gmcpfor(5)
@@ -633,25 +634,29 @@ check(not roomExists(339) and room5.exits.northwest == nil, "no room 339 and no 
 check(not roomExists(340) and room5.special["spectral roots"] == nil, "no room 340 and no spectral roots exit")
 check(next(room5.stubs) == nil, "no stub, got " .. table.concat(getExitStubs1(5), ","))
 check(room5.exits.east == 6 and not roomExists(777), "a mutator's east leaves the stored east to 6, got " .. tostring(room5.exits.east))
-check(room5.doors.e == nil and not hasExitLock(5, "east"), "and puts no door or lock on it")
-for _, word in ipairs({ "Created", "Added", "Marked", "removed", "Door statuses" }) do
+check(room5.doors.e == nil, "and puts no door on it")
+check(hasExitLock(5, "east"), "but locks it for walks, as the mutator's east leads elsewhere")
+for _, word in ipairs({ "Created", "Added", "Marked", "removed" }) do
     check(not said():find(word, 1, true), "nothing reported with '" .. word .. "': " .. said())
 end
-check(STUB.c("raise:mapper updated map") == 0, "the map is not reported changed, got " .. STUB.c("raise:mapper updated map"))
+check(STUB.c("raise:mapper updated map") == 1, "the lock is reported as a change to the map once, got "
+    .. STUB.c("raise:mapper updated map"))
 
-print("== a mutator's exit over a door the room has leaves the door as it is")
+print("== a mutator's exit over a door the room has leaves the door as it is and locks the exit")
 ownexits("open"); mapper.onroom(); STUB.runtimers()
 check(room5.doors.e == 1 and not hasExitLock(5, "east"), "the room's own open door is stored, unlocked")
 STUB.clearout()
 gmcpfor(5); gmcp.Room.Info.Exits.east = MUTATOR_EAST
 mapper.onroom(); STUB.runtimers()
-check(room5.exits.east == 6 and room5.doors.e == 1 and not hasExitLock(5, "east"),
-    "the mutator's east keeps the exit to 6, door 1 and no lock")
+check(room5.exits.east == 6 and room5.doors.e == 1 and hasExitLock(5, "east"),
+    "the mutator's east keeps the exit to 6 and door 1, and locks the exit")
+check(mapper.getPath(5, 6) and speedWalkDir[1] ~= "east" and #speedWalkPath == 3,
+    "a walk from 5 to 6 goes round, got " .. table.concat(speedWalkDir or {}, ","))
 -- The mutator ends, and the server sends the room's own exits again
 ownexits("open"); mapper.onroom(); STUB.runtimers()
-check(room5.exits.east == 6 and room5.doors.e == 1, "the room's own east is as it was")
-check(not said():find("removed", 1, true) and not said():find("Door statuses", 1, true),
-    "nothing reported removed or changed: " .. said())
+check(room5.exits.east == 6 and room5.doors.e == 1 and not hasExitLock(5, "east"),
+    "the room's own east is as it was, unlocked again")
+check(not said():find("removed", 1, true), "nothing reported removed: " .. said())
 -- A door this player cannot open keeps its lock while a mutator's exit has its name
 ownexits("locked"); mapper.onroom(); STUB.runtimers()
 check(room5.doors.e == 3 and hasExitLock(5, "east"), "the room's own locked door is stored, locked")
@@ -659,6 +664,109 @@ gmcpfor(5); gmcp.Room.Info.Exits.east = MUTATOR_EAST
 mapper.onroom(); STUB.runtimers()
 check(room5.exits.east == 6 and room5.doors.e == 3 and hasExitLock(5, "east"),
     "the mutator's east keeps the locked door and its lock")
+
+print("== a mutator's exit leading where the room's own does leaves it open")
+gmcpfor(5); mapper.onroom(); STUB.runtimers()
+check(room5.exits.east == 6 and room5.doors.e == nil and not hasExitLock(5, "east"), "the room's own east, no door or lock")
+gmcpfor(5); gmcp.Room.Info.Exits.east = { room_id = 6, details = { temporary = true } }
+STUB.reset_counts()
+mapper.onroom(); STUB.runtimers()
+check(room5.exits.east == 6 and not hasExitLock(5, "east"), "the exit to 6 stays unlocked")
+check(STUB.c("raise:mapper updated map") == 0, "and the map is not reported changed, got " .. STUB.c("raise:mapper updated map"))
+
+print("== a temporary exit over a special exit the room has locks it")
+gmcpfor(5); gmcp.Room.Info.Exits["enter portal"] = { room_id = 7 }
+mapper.onroom(); STUB.runtimers()
+check(room5.special["enter portal"] == 7 and not hasSpecialExitLock(5, 7, "enter portal"), "the portal to 7 is stored, unlocked")
+gmcpfor(5); gmcp.Room.Info.Exits["enter portal"] = { room_id = 340, details = { temporary = true } }
+mapper.onroom(); STUB.runtimers()
+check(hasSpecialExitLock(5, 7, "enter portal"), "the portal to 7 is locked while a temporary exit has its name")
+local to340 = false
+for _, to in pairs(room5.special) do if to == 340 then to340 = true end end
+check(room5.special["enter portal"] == 7 and not to340 and not roomExists(340), "no special exit to 340 and no room 340")
+gmcpfor(5); gmcp.Room.Info.Exits["enter portal"] = { room_id = 7 }
+mapper.onroom(); STUB.runtimers()
+check(room5.special["enter portal"] == 7 and not hasSpecialExitLock(5, 7, "enter portal"), "the room's own portal is open again")
+
+-- A copy of the drift's room made for one player per death, as the server
+-- sends it: its own id, and the id of the room it was copied from
+local DRIFT = { instance_of = 2, name = "Caedhriel's Embrace", area = "The Aetherdrift", area_name = "The Aetherdrift",
+    coordinates = "The Aetherdrift, 0, 0, 0", details = { "ephemeral" }, environment = "aether" }
+local function driftcopy(id)
+    gmcpfor(id, DRIFT)
+    gmcp.Room.Info.Exits = { ["spectral roots"] = { room_id = 3, details = { temporary = true } } }
+end
+local COPIES = { 1000000001, 1000000002 }
+local function leadstocopy()
+    for _, r in pairs(STUB.map.rooms) do
+        for _, to in pairs(r.exits) do if to == COPIES[1] or to == COPIES[2] then return true end end
+        for _, to in pairs(r.special) do if to == COPIES[1] or to == COPIES[2] then return true end end
+    end
+    return false
+end
+
+print("== a copy of a room is mapped as the room it was copied from, and earlier copies go")
+buildtown()
+local drift = addAreaName("The Aetherdrift")
+-- Two copies an earlier version mapped under their own ids, stacked on the
+-- cell of the room they were made from, with ways into them from rooms that
+-- stay, and a room of the same area on the next cell
+for _, id in ipairs(COPIES) do
+    addRoom(id); setRoomArea(id, drift); setRoomCoordinates(id, 0, 0, 0); setRoomName(id, "Caedhriel's Embrace")
+end
+setExit(COPIES[1], COPIES[2], "in")
+addSpecialExit(1, COPIES[1], "pray")
+setExit(9, COPIES[2], "up"); setDoor(9, "up", 1)
+addRoom(950); setRoomArea(950, drift); setRoomCoordinates(950, 1, 0, 0); setRoomName(950, "Drift edge")
+raiseEvent("sysMapDownloadEvent"); STUB.runtimers()
+STUB.clearout(); STUB.reset_counts()
+driftcopy(1000000005); mapper.onroom(); STUB.runtimers()
+local x2, y2, z2 = getRoomCoordinates(2)
+check(roomExists(2) and getRoomArea(2) == drift and x2 == 0 and y2 == 0 and z2 == 0
+    and getRoomName(2) == "Caedhriel's Embrace", "room 2 is the drift's room, at 0,0,0 in its area")
+check(not roomExists(1000000005), "no room is made for the copy's own id")
+check(not roomExists(COPIES[1]) and not roomExists(COPIES[2]), "the earlier copies are gone")
+check(not leadstocopy() and STUB.map.rooms[9].doors.up == nil, "nothing leads to them, and room 9's door into one went with its exit")
+local x950, y950, z950 = getRoomCoordinates(950)
+check(roomExists(950) and getRoomArea(950) == drift and x950 == 1 and y950 == 0 and z950 == 0
+    and getRoomName(950) == "Drift edge", "the room on the next cell is untouched")
+check(mapper.currentroom == 2, "the player is in room 2, got " .. tostring(mapper.currentroom))
+check(next(STUB.map.rooms[2].special) == nil, "the spectral roots are not stored on room 2")
+check(said():find("Removed 2 earlier copies of this room.", 1, true) ~= nil, "the removal is reported: " .. said())
+check(STUB.c("raise:mapper updated map") >= 1, "the map is reported changed")
+-- The next death, in another copy
+STUB.clearout(); STUB.reset_counts()
+driftcopy(1000000006); mapper.onroom(); STUB.runtimers()
+check(STUB.c("addRoom") == 0 and STUB.c("deleteRoom") == 0, "no room made or removed, got "
+    .. STUB.c("addRoom") .. "/" .. STUB.c("deleteRoom"))
+check(STUB.c("getRoomsByPosition") == 1, "one cell read, got " .. STUB.c("getRoomsByPosition"))
+local cell = getRoomsByPosition1(drift, 0, 0, 0)
+check(#cell == 1 and cell[1] == 2, "room 2 is the only room on its cell")
+check(not roomExists(1000000006) and mapper.currentroom == 2, "the second copy is room 2 as well")
+check(not said():find("Removed", 1, true), "nothing reported removed: " .. said())
+-- One copy left behind by an earlier version is named
+addRoom(1000000003); setRoomArea(1000000003, drift); setRoomCoordinates(1000000003, 0, 0, 0)
+STUB.clearout()
+driftcopy(1000000008); mapper.onroom(); STUB.runtimers()
+check(not roomExists(1000000003) and said():find("Removed room 1000000003, an earlier copy of this one.", 1, true) ~= nil,
+    "a single copy is removed and named: " .. said())
+-- An arrival in a room that is no copy reads no cell
+STUB.reset_counts()
+gmcpfor(5); mapper.onroom(); STUB.runtimers()
+check(STUB.c("getRoomsByPosition") == 0, "a room that is no copy reads no cell, got " .. STUB.c("getRoomsByPosition"))
+
+print("== a copy mapped into the Default Area removes nothing")
+-- With autocreateareas off, the rooms of every map go in the Default Area,
+-- where cells of different maps overlap
+local autocreatedrift = mapper.settings.autocreateareas
+mapper.settings:setOption("autocreateareas", false, true)
+STUB.newmap()
+raiseEvent("sysMapDownloadEvent"); STUB.runtimers()
+addRoom(70); setRoomCoordinates(70, 0, 0, 0); setRoomName(70, "Village square")
+driftcopy(1000000007); mapper.onroom(); STUB.runtimers()
+check(roomExists(2) and getRoomArea(2) == -1, "room 2 is mapped, in the Default Area")
+check(roomExists(70), "a room of another map on the same cell stays")
+mapper.settings:setOption("autocreateareas", autocreatedrift, true)
 mapper.settings:setOption("showmappingmessages", "off", true)
 mapper.settings:setOption("autoclear", autoclear, true)
 

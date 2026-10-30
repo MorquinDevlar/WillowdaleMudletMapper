@@ -94,6 +94,18 @@ function mapper.gmcpareaname()
 	return name
 end
 
+-- The map room a Room.Info.Basic describes. A copy of a room made for one
+-- player, such as the Aetherdrift copy made per death, comes with the id of
+-- the room it was copied from in instance_of, and is mapped, entered and walked
+-- from as that room, so every visit is one room on the map rather than a new
+-- room stacked on the same cell.
+function mapper.gmcproomid(basic)
+	if not basic then
+		return nil
+	end
+	return tonumber(basic.instance_of) or tonumber(basic.id)
+end
+
 -- A room reached through an exit is known only by the zone GMCP names on the
 -- other side of it, and a zone is not necessarily the name of the map its rooms
 -- are drawn on. So the zone is used as an area only when it already names one -
@@ -186,7 +198,7 @@ function mapper.makeroom(oldid, newid, x, y, z, targetAreaId)
 	-- exits leading somewhere unvisited, stay in the muted unexplored color until
 	-- they are entered and GMCP reports their own biome.
 	local basic = gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic
-	local iscurrentroom = basic and tonumber(basic.id) == tonumber(newid)
+	local iscurrentroom = basic and mapper.gmcproomid(basic) == tonumber(newid)
 	mapper.createroom(newid, x, y, z, targetAreaId or getRoomArea(oldid),
 		iscurrentroom and mapper.biomeenv(basic) or mapper.unexploredroomenv())
 	local fgr, fgg, fgb = unpack(color_table.red)
