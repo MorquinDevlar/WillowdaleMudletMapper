@@ -39,8 +39,12 @@ function mapper.updateDoorStatuses(roomNum)
 	local changed, locksChanged = false, false
 
 	for exit, exitData in pairs(currentexits) do
-		-- GMCP hands us a table per exit; anything else is not one.
-		if type(exitData) == "table" then
+		-- GMCP hands us a table per exit; anything else is not one. An exit
+		-- marked temporary, a room script's or an active mutator's, gets no door
+		-- or lock: either would stay on the map after the exit closed, and a
+		-- mutator exit under the name of one of the room's own would overwrite
+		-- that exit's door and lock while it lasts.
+		if type(exitData) == "table" and not mapper.temporaryexit(exitData) then
 			local details = exitData.details
 			local isDoor = (details and details.type == "door" and details.state) and true or false
 			-- The pathfinder may only be steered away from a door this player
@@ -91,7 +95,9 @@ function mapper.updateDoorStatuses(roomNum)
 		end
 	end
 
-	-- Doors left on exits the room no longer has.
+	-- Doors left on exits the room no longer has. A temporary exit counts as
+	-- present: under the name of one of the room's own exits it stands in for
+	-- that exit only while it lasts, so the door stored on it stays.
 	local present = {}
 	for gmcpExit in pairs(currentexits) do
 		local doorExit = mapper.dirdoor(gmcpExit)

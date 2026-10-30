@@ -140,8 +140,9 @@ function mapper.mappingnewroom(num)
 			else
 				for exit, exitData in pairs(currentexits) do
 					local id = exitData.room_id
-					-- Only use standard exits for coordinate calculation
-					if mapper.roomexists(id) and mapper.isStandardExit(exit) then
+					-- Only use standard exits for coordinate calculation, and none
+					-- that is temporary: where it leads is not where this room sits
+					if mapper.roomexists(id) and mapper.isStandardExit(exit) and not mapper.temporaryexit(exitData) then
 						local x, y, z = mapper.shiftcoords(mapper.dirreverse(exit), getRoomCoordinates(id))
 						if x then
 							note(mapper.makeroom(id, num, x, y, z), true)
@@ -184,7 +185,17 @@ function mapper.mappingnewroom(num)
 		for exit, exitData in pairs(currentexits) do
 			local id = exitData.room_id
 			local longname = mapper.dirlong(exit)
-			if id == 0 then
+			if mapper.temporaryexit(exitData) then
+				-- A room script's or a mutator's exit is shown in the room but
+				-- never stored: no exit, stub or special exit, and no room on its
+				-- other side. One under the name of an exit the map already has
+				-- stands in for it only while it lasts, so the stored exit is left
+				-- as it is; the autoclear pass below goes by the names the game
+				-- sends, so it keeps that exit and its stub too.
+				if mapper.debugging() then
+					mapper.notify("Left the temporary " .. exit .. " exit to room " .. tostring(id) .. " off the map.")
+				end
+			elseif id == 0 then
 				-- The game says there is a way out here but will not name the
 				-- room on the other side. A stub is exactly that: the map draws
 				-- the exit as one nobody has been through, instead of drawing

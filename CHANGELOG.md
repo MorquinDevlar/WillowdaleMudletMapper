@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+- Changed the mapper to leave off the map every exit the game marks as temporary: a passage that opens when you examine something and closes again after a while, or an exit an active mutator adds; you still see it in the room, but it no longer stays on the map after it closes, and speedwalks are not routed through it later; an upcoming server update starts sending these exits
+
 ## 1.8.2 - 2026-10-05
 
 - Fixed a newly mapped area starting out locked, with every room mapped into it closed to walks, when Mudlet gave it the number of a locked area that had been deleted by `mapper reset`, from Mudlet's preferences or in Mudlet's map window; `mapper reset` now drops your area locks along with the map and says so

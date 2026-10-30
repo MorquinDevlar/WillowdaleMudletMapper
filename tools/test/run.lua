@@ -599,5 +599,68 @@ check(roomExists(10) and getRoomArea(10) == lockedtown and roomLocked(10), "a ne
 mapper.lockArea(lockedtown, false, true)
 STUB.runtimers()
 
+-- A room script's exit (examine thicket, examine log), the drift's spectral
+-- roots and a mutator's exits come with details.temporary and go again, so the
+-- map is left as it was without them
+local MUTATOR_EAST = { room_id = 777, delta_x = 1, delta_y = 0, delta_z = 0, details = { temporary = true } }
+local function ownexits(eastdoor)
+    gmcpfor(5)
+    gmcp.Room.Info.Exits.east = { room_id = 6, details = { type = "door", name = "gate", state = eastdoor,
+        passable = eastdoor ~= "locked" } }
+end
+
+print("== exits marked temporary are not stored")
+local autoclear = mapper.settings.autoclear
+mapper.settings:setOption("autoclear", true, true)
+mapper.settings:setOption("showmappingmessages", "on", true)
+buildtown()
+raiseEvent("sysMapDownloadEvent"); STUB.runtimers()
+-- One plain arrival first, so the room's own flags are settled and the next
+-- one reports only what its exits do
+gmcpfor(5); mapper.onroom(); STUB.runtimers()
+local room5 = STUB.map.rooms[5]
+STUB.clearout()
+gmcpfor(5)
+local exits = gmcp.Room.Info.Exits
+exits.northwest = { room_id = 339, delta_x = -1, delta_y = 1, delta_z = 0, details = { temporary = true } }
+exits["spectral roots"] = { room_id = 340, details = { temporary = true } }
+exits.up = { room_id = 0, details = { temporary = true } }
+exits.east = { room_id = 777, delta_x = 1, delta_y = 0, delta_z = 0,
+    details = { temporary = true, type = "door", name = "gate", state = "locked", passable = false } }
+STUB.reset_counts()
+mapper.onroom(); STUB.runtimers()
+check(not roomExists(339) and room5.exits.northwest == nil, "no room 339 and no northwest exit")
+check(not roomExists(340) and room5.special["spectral roots"] == nil, "no room 340 and no spectral roots exit")
+check(next(room5.stubs) == nil, "no stub, got " .. table.concat(getExitStubs1(5), ","))
+check(room5.exits.east == 6 and not roomExists(777), "a mutator's east leaves the stored east to 6, got " .. tostring(room5.exits.east))
+check(room5.doors.e == nil and not hasExitLock(5, "east"), "and puts no door or lock on it")
+for _, word in ipairs({ "Created", "Added", "Marked", "removed", "Door statuses" }) do
+    check(not said():find(word, 1, true), "nothing reported with '" .. word .. "': " .. said())
+end
+check(STUB.c("raise:mapper updated map") == 0, "the map is not reported changed, got " .. STUB.c("raise:mapper updated map"))
+
+print("== a mutator's exit over a door the room has leaves the door as it is")
+ownexits("open"); mapper.onroom(); STUB.runtimers()
+check(room5.doors.e == 1 and not hasExitLock(5, "east"), "the room's own open door is stored, unlocked")
+STUB.clearout()
+gmcpfor(5); gmcp.Room.Info.Exits.east = MUTATOR_EAST
+mapper.onroom(); STUB.runtimers()
+check(room5.exits.east == 6 and room5.doors.e == 1 and not hasExitLock(5, "east"),
+    "the mutator's east keeps the exit to 6, door 1 and no lock")
+-- The mutator ends, and the server sends the room's own exits again
+ownexits("open"); mapper.onroom(); STUB.runtimers()
+check(room5.exits.east == 6 and room5.doors.e == 1, "the room's own east is as it was")
+check(not said():find("removed", 1, true) and not said():find("Door statuses", 1, true),
+    "nothing reported removed or changed: " .. said())
+-- A door this player cannot open keeps its lock while a mutator's exit has its name
+ownexits("locked"); mapper.onroom(); STUB.runtimers()
+check(room5.doors.e == 3 and hasExitLock(5, "east"), "the room's own locked door is stored, locked")
+gmcpfor(5); gmcp.Room.Info.Exits.east = MUTATOR_EAST
+mapper.onroom(); STUB.runtimers()
+check(room5.exits.east == 6 and room5.doors.e == 3 and hasExitLock(5, "east"),
+    "the mutator's east keeps the locked door and its lock")
+mapper.settings:setOption("showmappingmessages", "off", true)
+mapper.settings:setOption("autoclear", autoclear, true)
+
 print(string.format("\n%d passed, %d failed", passes, failures))
 os.exit(failures == 0 and 0 or 1)
