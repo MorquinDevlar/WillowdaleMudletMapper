@@ -168,7 +168,8 @@ function getMudletHomeDir() return "/home" end
 function createStopWatch() return nil end
 function getNetworkLatency() return 0 end
 function getModulePath() return nil end
-function centerview() end
+-- The room the map was last centred on, which is also where Mudlet has the player
+function centerview(id) STUB.centered = tonumber(id) end
 function updateMap() end
 function getMapZoom() return 20 end
 function setMapZoom() end

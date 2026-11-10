@@ -770,5 +770,29 @@ mapper.settings:setOption("autocreateareas", autocreatedrift, true)
 mapper.settings:setOption("showmappingmessages", "off", true)
 mapper.settings:setOption("autoclear", autoclear, true)
 
+print("== a map that arrives shows the player in the room they are standing in")
+-- Mudlet keeps the player's room per profile name, so a map saved under
+-- another profile's name arrives without one for this player
+buildtown()
+gmcpfor(5)
+mapper.currentroom = nil; STUB.centered = nil
+raiseEvent("sysMapDownloadEvent"); STUB.runtimers()
+check(STUB.centered == 5 and mapper.currentroom == 5, "the player is put in room 5, got "
+    .. tostring(STUB.centered) .. "/" .. tostring(mapper.currentroom))
+check(mapper.currentroomname == getRoomName(5), "under the room's name, got " .. tostring(mapper.currentroomname))
+-- A copy of a room is shown as the room it was copied from
+mapper.currentroom = nil; STUB.centered = nil
+gmcpfor(1000000009, { instance_of = 5 })
+raiseEvent("sysMapDownloadEvent"); STUB.runtimers()
+check(STUB.centered == 5 and mapper.currentroom == 5, "a copy of room 5 puts the player in room 5, got "
+    .. tostring(STUB.centered) .. "/" .. tostring(mapper.currentroom))
+-- A map without the player's room is left as it came
+STUB.newmap()
+gmcpfor(5)
+mapper.currentroom = nil; STUB.centered = nil
+raiseEvent("sysMapDownloadEvent"); STUB.runtimers()
+check(STUB.centered == nil and mapper.currentroom == nil, "a map without the room puts the player nowhere, got "
+    .. tostring(STUB.centered) .. "/" .. tostring(mapper.currentroom))
+
 print(string.format("\n%d passed, %d failed", passes, failures))
 os.exit(failures == 0 and 0 or 1)

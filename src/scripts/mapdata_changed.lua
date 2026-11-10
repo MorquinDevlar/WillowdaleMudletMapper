@@ -20,3 +20,22 @@ function mapper.mapdata_changed()
 		raiseEvent("mapper updated map")
 	end)
 end
+
+-- A map that has just arrived knows nothing of where this player is: Mudlet
+-- keeps the player's room per profile name, and a downloaded map was saved
+-- under another profile's. The room the game last sent is the one to show,
+-- when the new map has it.
+function mapper.centeronplayer()
+	local basic = gmcp and gmcp.Room and gmcp.Room.Info and gmcp.Room.Info.Basic
+	if not basic then
+		return
+	end
+	local roomId = mapper.gmcproomid(basic)
+	if not roomId or not roomExists(roomId) then
+		return
+	end
+	centerview(roomId)
+	mapper.currentroom = roomId
+	mapper.currentroomname = getRoomName(roomId) or basic.name or "(unknown)"
+	updateMap()
+end

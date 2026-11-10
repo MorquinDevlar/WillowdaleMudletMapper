@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+- Fixed the map showing you in the wrong room after a map download; the mapper now puts you in the room you are standing in as soon as the downloaded map has loaded
+
 ## 1.9.0 - 2026-11-10
 
 - Changed the mapper to leave off the map every exit the game marks as temporary: the Aetherdrift's spectral roots, or an exit an active mutator adds; you still see it in the room, but it no longer stays on the map after it closes, and speedwalks are not routed through it later; an upcoming server update starts sending these exits

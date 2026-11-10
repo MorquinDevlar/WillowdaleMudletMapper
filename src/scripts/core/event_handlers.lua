@@ -47,12 +47,14 @@ mapper.events.list = {
 	-- the map file it arrived in.
 	-- The tags go before the sync: migratetags drops the tag list of the map
 	-- before, and the sync draws rooms by the tags of this one.
+	-- The player goes back into their room last, on the finished map.
 	["mapper map reloaded"] = {
 		"mapper.regenerateareas",
 		"mapper.migratetags",
 		"mapper.syncmap",
 		"mapper.clearStalePathHighlights",
 		"mapper.installmapmenu",
+		"mapper.centeronplayer",
 	},
 
 	-- One entry of the mapper's right-click map menu was picked. Nothing else
