@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+## 1.9.0 - 2026-11-10
+
 - Changed the mapper to leave off the map every exit the game marks as temporary: the Aetherdrift's spectral roots, or an exit an active mutator adds; you still see it in the room, but it no longer stays on the map after it closes, and speedwalks are not routed through it later; an upcoming server update starts sending these exits
 - Changed the mapper to close one of a room's own exits to speedwalks while an active mutator's exit has taken its name and leads somewhere else; the exit opens to speedwalks again once the mutator has ended and you are in the room
 - Fixed each visit to the Aetherdrift mapping a new room stacked on the same spot as the ones before; the Aetherdrift is now one room on the map, and the copies mapped on earlier visits are removed when you next arrive there; this starts working when an upcoming server update sends which room each copy is made from
