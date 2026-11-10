@@ -15,6 +15,8 @@ is generated, and the next release overwrites it.
 
 ## Unreleased
 
+## 1.9.1 - 2026-11-10
+
 - Fixed the map showing you in the wrong room after a map download; the mapper now puts you in the room you are standing in as soon as the downloaded map has loaded
 
 ## 1.9.0 - 2026-11-10
